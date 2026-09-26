@@ -1,0 +1,11 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agents": {
+    "explore": {
+      "model": "opencode-go/muse-spark-1.3-contributor#xhigh"
+    },
+    "general": {
+      "model": "opencode-go/glm-5.3-flash#max"
+    }
+  }
+}

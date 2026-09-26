@@ -1,0 +1,12 @@
+# Judging
+
+Checked 2026-09-26. [Official Rules §6](rules.md#6-judges--criteria) controls; the [Devpost “Got an idea?” update](https://amazonappdev2026.devpost.com/updates/46456-got-an-idea) is informative.
+
+1. **Stage One (pass/fail):** reasonable fit with the theme and reasonable use of the featured required APIs/SDKs. For Alexa+, apply the actual [chosen route](alexa.md): the Rules explicitly exempt the **simulated web experience** from the runtime-technology hook; do not misread the general hook as forbidding it.
+2. **Stage Two:** four equally weighted criteria: **Tech Implementation** (working build and effective use of relevant tech), **Design** (coherent, intuitive experience), **Potential Impact** (credible customer need and broader audience), and **Quality of the Idea** (creative use of tools and understanding of users/ecosystem). The [Devpost update](https://amazonappdev2026.devpost.com/updates/46456-got-an-idea) describes a **1–5 scale**, but that scale is not specified in the Rules extract.
+3. **Optional friction-log bonus:** Amazon's Stage One internal reviewers assess submitted friction entries and recommend **up to 10%** for the Stage Two panel, which applies it to the final spreadsheet score. Capture task, steps, expected vs actual, severity, workaround, and actionable suggestion; see the [submission checklist](submission.md#optional-but-useful).
+4. **Ties:** compare criteria in listed order (Tech Implementation → Design → Potential Impact → Quality of the Idea), then a judge vote if still tied (Rules §6).
+
+The Rules' **Alexa+ examples** contrast a single-turn Q&A bot or basic wrapper with agentic orchestration across services, context-aware continuity, purchasing, media cards/carousels, MCP Apps, or Agent Skills. These are judging **examples**, not a new requirement to integrate Amazon's preview client. For **AWS Builder**, a single Bedrock text call or S3 storage is contrasted with multi-service/agent orchestration; for **Open Source**, minor documentation edits are contrasted with meaningful tested features, fixes, or integrations. Other-track examples are in [Rules §6](rules.md#6-judges--criteria).
+
+**Recommendation:** make the actual working experience and the user's benefit obvious early in the video and description. [Rules §4](rules.md#4-how-to-enter) permits judges to score only those materials and images without running the repository. The panel and methods may change; see the live Rules for details.

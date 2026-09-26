@@ -1,0 +1,37 @@
+# Alexa+ track: both eligible routes
+
+Checked 2026-09-26. The [Official Rules §4](rules.md#4-how-to-enter) govern eligibility; the [Devpost FAQs](https://amazonappdev2026.devpost.com/details/faqs) clarify practical access but cannot override the Rules. **Choose the route you actually implement and make it unambiguous in the repo, description, and demo.** Neither route requires a physical Alexa device.
+
+| | Working Agent Skill or self-hosted MCP server | Simulated Alexa+ web experience |
+| --- | --- | --- |
+| Rules §4 project requirement | Working Agent Skill **or** self-hosted MCP server; MCP spec minimum **2025-11-25** | Web app simulating an Alexa+ experience using your own AI/agentic tools |
+| Rules §4 submission requirement | MCP **2025-11-25**, or later **once confirmed**, over **Streamable HTTP**; show track technology used at runtime in code, not merely named in README | Any AI/agentic tool; **no required SDK, framework, or MCP-shaped interface**; expressly **exempt from the runtime-technology hook** |
+| Evidence | Include actual working integration code/config and demonstrate it through your own front end or test client | Include simulation source in the GitHub repo and **clearly show the simulated experience** in the demo video |
+
+The Rules' “How To Enter” line says to start by developing an MCP, but their more specific Project and Submission Requirements explicitly allow the simulation alternative. The homepage's “New to MCP?” phrasing is not a restriction on who may choose it. See the [submission checklist](submission.md) for obligations shared by both routes.
+
+## Real Agent Skill / MCP route
+
+- [Rules §4](rules.md#4-how-to-enter) names a working **Agent Skill or self-hosted MCP server**, with MCP 2025-11-25 or later once confirmed and Streamable HTTP in its Submission Requirements. For an MCP server, implement and test the [versioned MCP transport specification](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#streamable-http); the older standalone HTTP+SSE transport is not a substitute. Show an actual invoked tool/capability, not a README-only mention.
+- **Ambiguity:** the Rules do not define what qualifies as a standalone “Agent Skill” or how that alternative relates to the MCP/transport wording. Do **not** assume that installing a coding-agent skill or merely providing a `SKILL.md` satisfies the track. If entering on an Agent-Skill-only basis, obtain written clarification under Rules §11.6 before the deadline.
+- **Access and demo:** the [hackathon FAQs](https://amazonappdev2026.devpost.com/details/faqs) say participants cannot apply for the preview Alexa+ Add-on Toolkit, CLI, Category SDK, or Amazon web simulator. They advise building the self-hosted MCP server/Agent Skill and demonstrating it through **your own web-based simulator or front end**. That is a demo client for the real route, **not** the exempt simulation route merely because it has a web UI. The FAQs also say a locally runnable public repo and demo video suffice for judging; hosting is not required. Keep clear run/test instructions and observe the Rules' access requirement.
+- The Rules link the [MCP getting-started guide](https://modelcontextprotocol.io/docs/getting-started/intro) for the real route. [Devpost Resources](https://amazonappdev2026.devpost.com/resources) links the [MCP Streamable HTTP spec](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#streamable-http) and an unfortunately named [“Build with Agent Skills” guide](https://apps.extensions.modelcontextprotocol.io/api/#build-with-agent-skills). That guide scaffolds **MCP Apps** (interactive in-chat UI); it is not itself an Alexa+ SDK or proof that a generic coding skill qualifies for this track.
+
+## Simulated-web-experience route
+
+- The [Rules §4](rules.md#4-how-to-enter) expressly allow a **simulated Alexa+ experience instead**, built with any AI/agentic tool, with no required framework, SDK, or MCP-shaped surface. This route does **not** have to ship an MCP server or obtain partner-preview access. Its **source code** must be in the repo and the video must **clearly demonstrate** the experience.
+- **Recommendation, not a rule:** label it “simulated Alexa+ experience” in the UI, README, video, and submission; demonstrate a real end-to-end interaction rather than implying access to Amazon's official client. If useful for future portability, design your own backend tools and structured UI payloads so an MCP adapter could be added later. A later adapter is **not** a competition requirement.
+- Amazon's own [add-on web simulator](https://developer.amazon.com/docs/alexaplus/add-ons/test-with-web-simulator.html) requires a **deployed add-on** and preview access. It is **not** the independently built web simulation allowed by the hackathon Rules. See the [FAQ access answer](https://amazonappdev2026.devpost.com/details/faqs).
+
+## Amazon product docs: reference, not extra hackathon requirements
+
+These describe **integrating a real add-on into Amazon's Alexa+ client**. The [public Alexa+ for Builders page](https://developer.amazon.com/alexaplus/) says onboarding is currently for select partners. The hackathon FAQ explicitly says participants cannot gain preview access. Do not make certification, deployment through Amazon's CLI, or Echo Show access a dependency of the submission.
+
+| Reference | Useful fact / boundary |
+| --- | --- |
+| [MCP Toolkit overview](https://developer.amazon.com/docs/alexaplus/add-ons/mcp-toolkit-overview.html) | Alexa+ is the MCP client; your server exposes tools; [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) can render interactive cards. Toolkit availability is US-specific. |
+| [QuickStart](https://developer.amazon.com/docs/alexaplus/add-ons/mcp-toolkit-quickstart.html) and [authentication](https://developer.amazon.com/docs/alexaplus/add-ons/mcp-toolkit-authentication.html) | For a deployed Alexa+ add-on: remote HTTPS endpoint, OAuth 2.1/PKCE integration and a **<500 ms** round-trip target. These are product-integration constraints, **not** an SLA or auth requirement for an independently simulated web app. |
+| [Client lifecycle](https://developer.amazon.com/docs/alexaplus/add-ons/mcp-toolkit-client-lifecycle.html) and [development stages](https://developer.amazon.com/docs/alexaplus/add-ons/alexa-plus-add-on-development-stages.html) | Conversation context, elicitation, `_meta.ui.resourceUri` cards vs data-only responses; voice-first and screen-fragment patterns. Its `2025-03-26` initialize **example** conflicts with the hackathon's 2025-11-25 floor—follow the Rules, not the stale example. |
+| [Testing add-ons](https://developer.amazon.com/docs/alexaplus/add-ons/mcp-toolkit-test-add-ons.html) and [setup](https://developer.amazon.com/docs/alexaplus/add-ons/set-up-your-development-environment.html) | Amazon's simulator needs a deployed add-on; its CLI setup needs private-preview credentials. Neither is needed for the Rules' independent simulation path. |
+
+**Terminology trap:** the MCP Apps guide's “Agent Skills” scaffold MCP App UIs; Amazon's [Add-on Agent Skill](https://developer.amazon.com/docs/alexaplus/add-ons/mcp-toolkit-quickstart.html) helps preview partners onboard an add-on; a generic [`SKILL.md` Agent Skill](https://agentskills.io/) is a coding-agent format. These are not interchangeable proof of eligibility. The Rules' “Agent Skill” term remains undefined, so seek written clarification if it is the sole basis for your entry.
