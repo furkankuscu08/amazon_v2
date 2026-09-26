@@ -8,6 +8,7 @@ import re
 import sqlite3
 import time
 import uuid
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 
 from workbot.llm import ModelError
 from workbot.models import AreaEvaluation, Impact, Priority
@@ -23,6 +24,7 @@ from workbot.storage import (
 )
 
 log = logging.getLogger(__name__)
+MAX_PARALLEL_AREA_CALLS = 2
 
 
 class Conflict(Exception):
@@ -102,6 +104,25 @@ def run_safely(db, sid: str, model, searcher) -> None:
         _state(db, sid, "refusal")
 
 
+def _collect_area_reviews(
+    db, card: dict, pending: dict[Future, tuple[dict, dict, float]]
+) -> None:
+    done, _ = wait(pending, return_when=FIRST_COMPLETED)
+    for future in done:
+        item, pool, started = pending.pop(future)
+        try:
+            evaluation = future.result()
+            if not isinstance(evaluation, AreaEvaluation):
+                raise ModelError("Invalid area contract")
+            audit_area(db, item, pool, evaluation)
+        except Exception as exc:  # noqa: BLE001 — each area must fail closed independently.
+            log.warning("area_review_incomplete type=%s", type(exc).__name__)
+            item["status"] = "review_incomplete"
+            item["people"] = []
+        finally:
+            card["duration_seconds"][item["id"]] = round(time.monotonic() - started, 3)
+
+
 def run(db, sid: str, model, searcher) -> None:
     session = load_session(db, sid)
     if not session or session["state"] != "processing":
@@ -154,73 +175,82 @@ def run(db, sid: str, model, searcher) -> None:
         "calls": {"impact": 1, "area": 0, "priority": 0},
         "duration_seconds": {"impact": round(time.monotonic() - impact_started, 3)},
     }
-    for area in impact.areas:
-        item = {
-            "id": area.id,
-            "label": area.label,
-            "rationale": area.rationale,
-            "mapping": area.mapping,
-            "org_unit_id": area.org_unit_id,
-            "mapping_reason": area.mapping_reason,
-            "status": "mapping_unresolved"
-            if area.mapping == "mapping_unresolved"
-            else "not_found",
-            "people": [],
-            "direct_review_incomplete": False,
-            "no_visible_work_trace": False,
-            "retrieval": {
-                "bm25": 0,
-                "qdrant": 0,
-                "visible_records": 0,
-                "candidates": 0,
-            },
-        }
-        card["areas"].append(item)
-        if area.mapping == "mapping_unresolved":
-            continue
-        started = time.monotonic()
-        try:
-            # A missing index/search service is incomplete, not proof of no people.
-            records = searcher.records(
-                db, [intent.model_dump() for intent in area.search_intents]
-            )
-            item["retrieval"] = {
-                "bm25": sum(
-                    "bm25" in record.get("retrieval_channels", []) for record in records
-                ),
-                "qdrant": sum(
-                    "qdrant" in record.get("retrieval_channels", [])
-                    for record in records
-                ),
-                "visible_records": len(records),
-                "candidates": 0,
+    pending: dict[Future, tuple[dict, dict, float]] = {}
+    with ThreadPoolExecutor(max_workers=MAX_PARALLEL_AREA_CALLS) as executor:
+        for area in impact.areas:
+            item = {
+                "id": area.id,
+                "label": area.label,
+                "rationale": area.rationale,
+                "mapping": area.mapping,
+                "org_unit_id": area.org_unit_id,
+                "mapping_reason": area.mapping_reason,
+                "status": "mapping_unresolved"
+                if area.mapping == "mapping_unresolved"
+                else "not_found",
+                "people": [],
+                "direct_review_incomplete": False,
+                "no_visible_work_trace": False,
+                "retrieval": {
+                    "bm25": 0,
+                    "qdrant": 0,
+                    "visible_records": 0,
+                    "candidates": 0,
+                },
             }
-            pool = candidate_pool(db, area.model_dump(), records)
-            item["retrieval"]["candidates"] = len(pool["people"])
-            item["no_visible_work_trace"] = pool["no_visible_work_trace"]
-            if not pool["people"]:
+            card["areas"].append(item)
+            if area.mapping == "mapping_unresolved":
                 continue
-            prompt = {
-                "idea": session["sentence"],
-                "answers": payload["answers"],
-                "area": area.model_dump(),
-                "candidates": pool["people"],
-            }
-            if len(json.dumps(prompt)) > 18000:
+            if len(pending) == MAX_PARALLEL_AREA_CALLS:
+                _collect_area_reviews(db, card, pending)
+            started = time.monotonic()
+            submitted = False
+            try:
+                # Search and all permissioned directory reads stay on this thread.
+                records = searcher.records(
+                    db, [intent.model_dump() for intent in area.search_intents]
+                )
+                item["retrieval"] = {
+                    "bm25": sum(
+                        "bm25" in record.get("retrieval_channels", [])
+                        for record in records
+                    ),
+                    "qdrant": sum(
+                        "qdrant" in record.get("retrieval_channels", [])
+                        for record in records
+                    ),
+                    "visible_records": len(records),
+                    "candidates": 0,
+                }
+                pool = candidate_pool(db, area.model_dump(), records)
+                item["retrieval"]["candidates"] = len(pool["people"])
+                item["no_visible_work_trace"] = pool["no_visible_work_trace"]
+                if not pool["people"]:
+                    continue
+                prompt = {
+                    "idea": session["sentence"],
+                    "answers": payload["answers"],
+                    "area": area.model_dump(),
+                    "candidates": pool["people"],
+                }
+                if len(json.dumps(prompt)) > 18000:
+                    item["status"] = "review_incomplete"
+                    continue
+                future = executor.submit(model.complete, "area", prompt)
+                pending[future] = (item, pool, started)
+                submitted = True
+                card["calls"]["area"] += 1
+            except Exception as exc:  # noqa: BLE001 — search/preparation must fail closed.
+                log.warning("area_review_incomplete type=%s", type(exc).__name__)
                 item["status"] = "review_incomplete"
-                continue
-            card["calls"]["area"] += 1
-            evaluation = model.complete("area", prompt)
-            if not isinstance(evaluation, AreaEvaluation):
-                raise ModelError("Invalid area contract")
-            audit_area(db, item, pool, evaluation)
-        except Exception as exc:  # noqa: BLE001 — third-party search/model failures must fail closed.
-            log.warning("area_review_incomplete type=%s", type(exc).__name__)
-            # No partial list from a failed/truncated whole-area response or search.
-            item["status"] = "review_incomplete"
-            item["people"] = []
-        finally:
-            card["duration_seconds"][area.id] = round(time.monotonic() - started, 3)
+                item["people"] = []
+            finally:
+                if not submitted:
+                    card["duration_seconds"][area.id] = round(
+                        time.monotonic() - started, 3
+                    )
+        while pending:
+            _collect_area_reviews(db, card, pending)
 
     priority_started = time.monotonic()
     try:
@@ -232,14 +262,15 @@ def run(db, sid: str, model, searcher) -> None:
             isinstance(priority, Priority)
             and len(priority.order) == len(card["areas"])
             and set(priority.order) == {a["id"] for a in card["areas"]}
-            and (
+        ):
+            safe_shared_question = (
                 priority.shared_question is None
                 or _safe_shared_question(db, priority.shared_question, card)
             )
-        ):
             order = {area_id: index for index, area_id in enumerate(priority.order)}
             card["areas"].sort(key=lambda area: order[area["id"]])
-            card["shared_question"] = priority.shared_question
+            if safe_shared_question:
+                card["shared_question"] = priority.shared_question
             card["priority_applied"] = True
     except Exception as exc:  # noqa: BLE001 — no raw model errors may reach user/logs.
         log.warning("priority_fallback type=%s", type(exc).__name__)

@@ -28,10 +28,10 @@
 - `compose.yaml` runs local Qdrant and, optionally, the app; `.env.example` is the configuration template, while `.gitignore` excludes secrets and generated files. `requirements.in` lists direct dependencies; `requirements.txt` is the compiled Python 3.12 dependency lock.
 - `workbot/main.py`: FastAPI routes and server-rendered flow.
 - `workbot/models.py`: strict structured-output models and schema validation.
-- `workbot/service.py`: session orchestration, evidence audits, and card states.
+- `workbot/service.py`: session orchestration, bounded concurrent per-area model calls, evidence audits, and card states. Keep SQLite/search/permission reads and evidence audits on the request thread; only independent area model requests belong in workers. Wait for all areas before the card-wide priority call, keep area failures isolated as `review_incomplete`, and discard an unsafe shared question without discarding a valid priority order. Check the question before reordering so a guard error leaves the original card order intact.
 - `workbot/search.py`: visible BM25/Qdrant retrieval and directory candidate selection.
 - `workbot/storage.py`: SQLite schema, visibility, sources, and reload snapshots.
-- `workbot/llm.py`: three structured OpenRouter model tasks.
+- `workbot/llm.py`: three structured OpenRouter model tasks, pinned to a tested parameter-compatible provider endpoint with local schema validation. Do not treat a strict JSON-schema request as proof that the provider enforces local cross-field rules; do not log raw provider bodies or silently accept malformed responses.
 - `workbot/seed.py`: small synthetic fixtures and index seeding.
 - `workbot/templates/`: English server-rendered UI and source views.
 - `tests/test_workflow.py`: session states, evidence audits, and visibility rules; `tests/test_search_and_ui.py`: hybrid search and HTTP flow; `tests/test_llm.py`: model request and response contracts. These are offline tests.

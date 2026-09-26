@@ -1,7 +1,9 @@
 import json
+from threading import Event, Lock
 
 import pytest
 
+from workbot import service
 from workbot.llm import ModelError
 from workbot.models import AreaEvaluation, Impact, Priority
 from workbot.search import candidate_pool
@@ -42,6 +44,18 @@ UNMAPPED = {
     "mapping": "mapping_unresolved",
     "org_unit_id": None,
     "mapping_reason": "No region was specified and no primary team can be selected.",
+}
+BRAND = {
+    **AREA,
+    "id": "brand_review",
+    "label": "Brand Review",
+    "org_unit_id": "brand",
+}
+PLATFORM = {
+    **AREA,
+    "id": "platform_review",
+    "label": "Campaign Platform",
+    "org_unit_id": "platform",
 }
 
 
@@ -369,6 +383,132 @@ def test_area_model_error_is_incomplete_not_not_found(db):
     assert card["areas"][0]["people"] == []
 
 
+def test_area_calls_overlap_but_are_audited_in_area_order(db):
+    class ConcurrentModel:
+        def __init__(self):
+            self.lock = Lock()
+            self.active = 0
+            self.peak = 0
+            self.third_started = Event()
+            self.release_first = Event()
+            self.priority_after_areas = False
+
+        def complete(self, task, payload):
+            if task == "impact":
+                return impact(AREA, BRAND, PLATFORM)
+            if task == "priority":
+                with self.lock:
+                    self.priority_after_areas = self.active == 0
+                return priority("platform_review", "campaign_review", "brand_review")
+            area_id = payload["area"]["id"]
+            with self.lock:
+                self.active += 1
+                self.peak = max(self.peak, self.active)
+            try:
+                if area_id == "campaign_review":
+                    assert self.third_started.wait(5)
+                    self.release_first.set()
+                    return evaluation(
+                        proposal("nina", "direct_contact", ["jira:MKT-482"])
+                    )
+                if area_id == "brand_review":
+                    return evaluation(
+                        proposal("priya", "advisor", ["docs:campaign-review-2023"])
+                    )
+                self.third_started.set()
+                assert self.release_first.wait(5)
+                return evaluation(
+                    proposal("owen", "advisor", ["github:campaign-scheduler-76"])
+                )
+            finally:
+                with self.lock:
+                    self.active -= 1
+
+    model = ConcurrentModel()
+    searcher = StubSearcher(
+        ids=(
+            "jira:MKT-482",
+            "docs:campaign-review-2023",
+            "github:campaign-scheduler-76",
+        )
+    )
+    _, card = card_for(db, model, searcher)
+    assert model.peak == 2
+    assert model.priority_after_areas
+    assert searcher.calls == 3
+    assert card["calls"] == {"impact": 1, "area": 3, "priority": 1}
+    assert [a["id"] for a in card["areas"]] == [
+        "platform_review",
+        "campaign_review",
+        "brand_review",
+    ]
+    assert [a["people"][0]["person_id"] for a in card["areas"]] == [
+        "owen",
+        "nina",
+        "priya",
+    ]
+
+
+def test_parallel_area_failure_does_not_hide_other_area_or_skip_priority(db):
+    class PartialFailureModel:
+        def complete(self, task, payload):
+            if task == "impact":
+                return impact(AREA, BRAND)
+            if task == "priority":
+                assert [area["status"] for area in payload["areas"]] == [
+                    "people",
+                    "review_incomplete",
+                ]
+                return priority("brand_review", "campaign_review")
+            if payload["area"]["id"] == "brand_review":
+                raise ModelError("truncated")
+            return evaluation(proposal("nina", "direct_contact", ["jira:MKT-482"]))
+
+    _, card = card_for(db, PartialFailureModel())
+    assert card["calls"] == {"impact": 1, "area": 2, "priority": 1}
+    assert card["priority_applied"]
+    assert [area["status"] for area in card["areas"]] == [
+        "review_incomplete",
+        "people",
+    ]
+    assert card["areas"][0]["people"] == []
+    assert card["areas"][1]["people"][0]["person_id"] == "nina"
+
+
+def test_parallel_review_drops_a_source_revoked_during_model_call(db):
+    path = db.execute("PRAGMA database_list").fetchone()[2]
+    both_started = Event()
+
+    class RevokingModel:
+        def complete(self, task, payload):
+            if task == "impact":
+                return impact(AREA, BRAND)
+            if task == "priority":
+                return priority("campaign_review", "brand_review")
+            if payload["area"]["id"] == "campaign_review":
+                assert both_started.wait(5)
+                return evaluation(proposal("nina", "direct_contact", ["jira:MKT-482"]))
+            other = connect(path)
+            try:
+                other.execute(
+                    "UPDATE work_records SET visibility='restricted' WHERE id='jira:MKT-482'"
+                )
+                other.commit()
+            finally:
+                other.close()
+            both_started.set()
+            return evaluation(
+                proposal("priya", "advisor", ["docs:campaign-review-2023"])
+            )
+
+    _, card = card_for(db, RevokingModel())
+    assert card["areas"][0]["status"] == "review_incomplete"
+    assert card["areas"][0]["people"] == []
+    assert card["areas"][1]["status"] == "people"
+    assert card["areas"][1]["people"][0]["person_id"] == "priya"
+    assert "jira:MKT-482" not in json.dumps(card)
+
+
 def test_rejected_direct_keeps_safe_advisor_but_never_manager(db):
     model = StubModel(
         [impact(AREA)],
@@ -518,4 +658,55 @@ def test_priority_cannot_introduce_a_new_directory_person(db):
     _, card = card_for(db, model)
     assert card["areas"][0]["people"][0]["person_id"] == "nina"
     assert card["shared_question"] is None
-    assert not card["priority_applied"]
+    assert card["priority_applied"]
+
+
+def test_unsafe_shared_question_does_not_discard_valid_area_order(db):
+    model = StubModel(
+        [impact(AREA, UNMAPPED)],
+        [evaluation(proposal("nina", "direct_contact", ["jira:MKT-482"]))],
+        [
+            Priority.model_validate(
+                {
+                    "order": ["regional_compliance", "campaign_review"],
+                    "shared_question": "See https://example.org for more context?",
+                }
+            )
+        ],
+    )
+    _, card = card_for(db, model)
+    assert [a["id"] for a in card["areas"]] == [
+        "regional_compliance",
+        "campaign_review",
+    ]
+    assert card["priority_applied"]
+    assert card["shared_question"] is None
+    assert "https://example.org" not in json.dumps(card)
+
+
+def test_priority_guard_error_does_not_leave_a_partially_reordered_card(
+    db, monkeypatch
+):
+    def unavailable_guard(*args):
+        raise RuntimeError("simulated directory read failure")
+
+    monkeypatch.setattr(service, "_safe_shared_question", unavailable_guard)
+    model = StubModel(
+        [impact(AREA, UNMAPPED)],
+        [evaluation(proposal("nina", "direct_contact", ["jira:MKT-482"]))],
+        [
+            Priority.model_validate(
+                {
+                    "order": ["regional_compliance", "campaign_review"],
+                    "shared_question": "Who should review the launch process?",
+                }
+            )
+        ],
+    )
+    _, card = card_for(db, model)
+    assert [a["id"] for a in card["areas"]] == [
+        "campaign_review",
+        "regional_compliance",
+    ]
+    assert card["priority_applied"] is False
+    assert card["shared_question"] is None
