@@ -1,0 +1,335 @@
+"""Permission-isolated work-trace search and deterministic directory candidacy."""
+
+from __future__ import annotations
+
+import re
+import uuid
+from collections import defaultdict
+from threading import Lock
+
+from workbot.storage import (
+    current,
+    current_managers,
+    visible_directory_source,
+    visible_fts_matches,
+    visible_index_version,
+    visible_record,
+)
+
+COLLECTION = "maya_visible_work"
+EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+MIN_SEMANTIC_SCORE = (
+    0.38  # Initial small-corpus threshold; tune against labeled hard negatives.
+)
+_embedder = None
+_embedder_lock = Lock()
+_stop = {
+    "the",
+    "and",
+    "that",
+    "with",
+    "what",
+    "which",
+    "this",
+    "from",
+    "about",
+    "for",
+    "who",
+    "can",
+    "will",
+    "should",
+    "into",
+    "our",
+    "how",
+    "are",
+    "them",
+    "their",
+    "find",
+    "current",
+    "process",
+    "review",
+}
+
+
+def embed(text: str) -> list[float]:
+    global _embedder
+    if _embedder is None:
+        with _embedder_lock:
+            if _embedder is None:
+                from fastembed import TextEmbedding
+
+                _embedder = TextEmbedding(model_name=EMBEDDING_MODEL)
+    return next(_embedder.embed([text])).tolist()
+
+
+def index_visible_records(db, url: str, client=None, embed_fn=None) -> int:
+    from qdrant_client import QdrantClient, models
+
+    records = [
+        dict(row)
+        for row in db.execute(
+            "SELECT * FROM work_records WHERE visibility='maya' ORDER BY id"
+        )
+    ]
+    client = client or QdrantClient(url=url, timeout=20)
+    embed_fn = embed_fn or embed
+    vectors = [embed_fn(item["text"]) for item in records]
+    if not vectors:
+        raise ValueError("There are no visible records to index")
+    # The old marker may still match unchanged SQLite rows even if rebuilding
+    # Qdrant fails after deleting its collection. Invalidate it first.
+    db.execute("DELETE FROM index_meta WHERE key='visible_vector'")
+    db.commit()
+    if client.collection_exists(COLLECTION):
+        client.delete_collection(COLLECTION)
+    client.create_collection(
+        COLLECTION,
+        vectors_config=models.VectorParams(
+            size=len(vectors[0]), distance=models.Distance.COSINE
+        ),
+    )
+    client.upsert(
+        COLLECTION,
+        points=[
+            models.PointStruct(
+                id=str(uuid.uuid5(uuid.NAMESPACE_URL, item["id"])),
+                vector=vector,
+                payload={"record_id": item["id"], "visibility": "maya"},
+            )
+            for item, vector in zip(records, vectors, strict=True)
+        ],
+        wait=True,
+    )
+    db.execute(
+        "INSERT OR REPLACE INTO index_meta(key, value) VALUES ('visible_vector', ?)",
+        (visible_index_version(db),),
+    )
+    db.commit()
+    return len(records)
+
+
+def keywords(text: str) -> list[str]:
+    return list(
+        dict.fromkeys(
+            term
+            for term in re.findall(r"[a-z0-9]{3,}", text.lower())
+            if term not in _stop
+        )
+    )[:12]
+
+
+class Searcher:
+    def __init__(self, url: str, client=None, embed_fn=None):
+        self.url = url
+        self.client = client
+        self.embed_fn = embed_fn or embed
+        self._client_lock = Lock()
+
+    def records(self, db, intents: list[dict], limit: int = 12) -> list[dict]:
+        from qdrant_client import QdrantClient, models
+
+        version = db.execute(
+            "SELECT value FROM index_meta WHERE key='visible_vector'"
+        ).fetchone()
+        if (
+            not version
+            or version["value"] != visible_index_version(db)
+            or not visible_fts_matches(db)
+        ):
+            raise RuntimeError("Visible vector index needs reseeding")
+        if self.client is None:
+            with self._client_lock:
+                if self.client is None:
+                    self.client = QdrantClient(url=self.url, timeout=15)
+        client = self.client
+        scores: dict[str, float] = defaultdict(float)
+        channels: dict[str, set[str]] = defaultdict(set)
+        for intent in intents:
+            terms = keywords(intent["keyword"])
+            if terms:
+                query = " OR ".join(f'"{term}"' for term in terms)
+                rows = db.execute(
+                    "SELECT record_id FROM visible_fts WHERE visible_fts MATCH ? ORDER BY bm25(visible_fts), record_id LIMIT 12",
+                    (query,),
+                ).fetchall()
+                for rank, row in enumerate(rows):
+                    scores[row["record_id"]] += 1 / (60 + rank + 1)
+                    channels[row["record_id"]].add("bm25")
+            result = client.query_points(
+                COLLECTION,
+                query=self.embed_fn(intent["semantic"]),
+                limit=12,
+                query_filter=models.Filter(
+                    must=[
+                        models.FieldCondition(
+                            key="visibility", match=models.MatchValue(value="maya")
+                        )
+                    ]
+                ),
+                with_payload=True,
+            )
+            for rank, point in enumerate(result.points):
+                if point.score < MIN_SEMANTIC_SCORE:
+                    continue
+                scores[point.payload["record_id"]] += 1 / (60 + rank + 1)
+                channels[point.payload["record_id"]].add("qdrant")
+        found = []
+        for rid in sorted(scores, key=lambda item: (-scores[item], item)):
+            # A revoked source must not be read, shown, or passed to the model.
+            record = visible_record(db, rid)
+            if record:
+                record["retrieval_channels"] = sorted(channels[rid])
+                found.append(record)
+            if len(found) == limit:
+                break
+        return found
+
+
+def candidate_pool(db, area: dict, records: list[dict]) -> dict:
+    """No vector similarity over directory people; keyword match grants candidacy only."""
+    candidates: dict[str, dict] = {}
+    for record in records:
+        # Re-read from the permissioned store, never trust a stale search payload.
+        fresh = visible_record(db, record["id"])
+        if (
+            not fresh
+            or fresh["version"] != record["version"]
+            or fresh["text"] != record["text"]
+        ):
+            raise RuntimeError("Search result changed before candidate evaluation")
+        record = fresh
+        links = db.execute(
+            "SELECT person_id, relation FROM work_links WHERE record_id=? ORDER BY person_id, relation",
+            (record["id"],),
+        ).fetchall()
+        for link in links:
+            row = db.execute(
+                "SELECT * FROM people WHERE id=? AND active=1", (link["person_id"],)
+            ).fetchone()
+            if row:
+                person = candidates.setdefault(
+                    row["id"],
+                    {
+                        "person_id": row["id"],
+                        "name": row["name"],
+                        "title": row["title"],
+                        "org_id": row["org_id"],
+                        "evidence": [],
+                    },
+                )
+                person["evidence"].append(
+                    {
+                        "id": record["id"],
+                        "kind": record["kind"],
+                        "date": record["occurred_at"],
+                        "relation": link["relation"],
+                        "text": record["text"],
+                    }
+                )
+    strength = {
+        "assignee": 0,
+        "author": 0,
+        "contributor": 0,
+        "reporter": 1,
+        "mention": 2,
+    }
+    work = sorted(
+        candidates.values(),
+        key=lambda item: (
+            min(strength.get(e["relation"], 3) for e in item["evidence"]),
+            -max(int(e["date"].replace("-", "")) for e in item["evidence"]),
+            item["person_id"],
+        ),
+    )[:10]
+    people = {item["person_id"]: item for item in work}
+    terms = set(keywords(" ".join(i["keyword"] for i in area["search_intents"])))
+    org = area["org_unit_id"]
+    org_options = []
+    for row in db.execute(
+        "SELECT * FROM people WHERE org_id=? AND active=1 ORDER BY id", (org,)
+    ):
+        responsibility_evidence = []
+        for resp in db.execute(
+            "SELECT * FROM responsibilities WHERE person_id=? AND org_id=? ORDER BY id",
+            (row["id"], org),
+        ):
+            resp = dict(resp)
+            if current(resp) and visible_directory_source(db, resp["source_id"]):
+                responsibility_evidence.append(
+                    {
+                        "id": resp["source_id"],
+                        "kind": "responsibility",
+                        "relation": resp["relation"],
+                        "date": resp["verified_at"],
+                        "text": resp["scope"],
+                    }
+                )
+        title_match = bool(terms & set(keywords(row["title"])))
+        duty_match = any(
+            terms & set(keywords(e["text"])) for e in responsibility_evidence
+        )
+        if title_match or duty_match:
+            org_options.append(
+                (0 if duty_match else 1, row["id"], dict(row), responsibility_evidence)
+            )
+    for _, pid, row, evidence in sorted(org_options)[:11]:
+        item = people.setdefault(
+            pid,
+            {
+                "person_id": pid,
+                "name": row["name"],
+                "title": row["title"],
+                "org_id": org,
+                "evidence": [],
+            },
+        )
+        item["evidence"].extend(
+            e
+            for e in evidence
+            if e["id"] not in {old["id"] for old in item["evidence"]}
+        )
+    # Reserve a separate slot for a manager, conditional on an actual, visible team remit.
+    remits = [
+        dict(row)
+        for row in db.execute(
+            "SELECT * FROM team_remits WHERE org_id=? ORDER BY id", (org,)
+        )
+        if current(dict(row))
+        and visible_directory_source(db, row["source_id"])
+        and terms & set(keywords(row["scope"]))
+    ]
+    managers = current_managers(db, org)
+    if remits and len({row["id"] for _, row in managers}) == 1:
+        manager, row = managers[0]
+        item = people.setdefault(
+            row["id"],
+            {
+                "person_id": row["id"],
+                "name": row["name"],
+                "title": row["title"],
+                "org_id": org,
+                "evidence": [],
+            },
+        )
+        item["evidence"].extend(
+            [
+                {
+                    "id": manager["source_id"],
+                    "kind": "manager",
+                    "relation": "manages",
+                    "date": manager["valid_from"],
+                    "text": "Currently manages " + org,
+                },
+                *(
+                    {
+                        "id": remit["source_id"],
+                        "kind": "remit",
+                        "relation": "team_scope",
+                        "date": remit["valid_from"],
+                        "text": remit["scope"],
+                    }
+                    for remit in remits
+                ),
+            ]
+        )
+    return {"people": list(people.values()), "no_visible_work_trace": not records}

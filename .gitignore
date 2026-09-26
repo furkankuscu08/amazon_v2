@@ -1,0 +1,40 @@
+# ---- Secrets: never commit .env ----
+.env
+.env.*
+!.env.example
+
+# ---- Local data (SQLite, Qdrant storage) ----
+data/
+*.sqlite3
+*.sqlite3-*
+*.sqlite-*
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# ---- Tooling caches ----
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# ---- Local model / embedding caches ----
+models/
+.cache/
+
+# ---- Editors / OS ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

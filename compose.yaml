@@ -1,0 +1,58 @@
+# WorkBot — local development stack.
+#
+# Qdrant starts by default; the app container is opt-in via the "app" profile
+# (most development happens locally with uvicorn against containerized Qdrant).
+#
+#   docker compose up -d                                  # Qdrant only
+#   docker compose --profile app up -d --build            # app + Qdrant
+#   docker compose --profile app run --rm app python -m workbot.seed
+#   docker compose down                                   # stop (-v to wipe Qdrant data)
+#
+# App code (workbot/) must exist; .env is optional until live model calls.
+# UI language is English by product decision; comments/instructions stay dev-facing.
+
+name: workbot
+
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.19.1 # pinned (Sep 2026 stable); bump deliberately, not blindly
+    container_name: workbot-qdrant
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${QDRANT_HOST_PORT:-6333}:6333" # local REST API + dashboard
+    volumes:
+      - qdrant_data:/qdrant/storage
+    # Synthetic local-only instance; do not expose unauthenticated Qdrant publicly.
+
+  app:
+    profiles: ["app"] # opt-in: plain `up -d` starts Qdrant only
+    build:
+      context: . # requires the workbot/ package to exist at build time
+      dockerfile_inline: |
+        FROM python:3.12-slim
+        WORKDIR /app
+        ENV PIP_DISABLE_PIP_VERSION_CHECK=1 PYTHONDONTWRITEBYTECODE=1
+        COPY requirements.txt ./
+        RUN python -m pip install --no-cache-dir -r requirements.txt
+        COPY workbot/ ./workbot/
+        CMD ["uvicorn", "workbot.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    container_name: workbot-app
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${WORKBOT_HOST_PORT:-8000}:8000"
+    env_file:
+      - path: .env # optional; required: false keeps Qdrant-only startups working
+        required: false
+    environment:
+      # Inside the compose network the container reaches Qdrant by service name,
+      # overriding the localhost default from .env.
+      QDRANT_URL: http://qdrant:6333
+      WORKBOT_DB_PATH: /data/workbot.sqlite3
+    volumes:
+      - workbot_data:/data
+    depends_on:
+      - qdrant
+
+volumes:
+  qdrant_data:
+  workbot_data:
