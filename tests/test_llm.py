@@ -88,6 +88,7 @@ def test_truncated_openrouter_response_is_not_parsed_as_partial_card(monkeypatch
                         "id": "growth_review",
                         "label": "Growth Review",
                         "rationale": "Review the campaign launch process.",
+                        "consultation_need": "How this campaign launch is reviewed.",
                         "search_intents": [
                             {
                                 "keyword": "campaign approval",

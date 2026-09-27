@@ -2,6 +2,7 @@ import json
 from threading import Event, Lock
 
 import pytest
+from pydantic import ValidationError
 
 from workbot import service
 from workbot.llm import ModelError
@@ -24,6 +25,7 @@ AREA = {
     "id": "campaign_review",
     "label": "Campaign launch review",
     "rationale": "Review of retail campaign planning and approvals is needed.",
+    "consultation_need": "What campaign launch approvals are needed before retail launch.",
     "search_intents": [
         {
             "keyword": "campaign launch approval",
@@ -38,6 +40,7 @@ UNMAPPED = {
     "id": "regional_compliance",
     "label": "Regional compliance",
     "rationale": "The launch region is not established for this idea.",
+    "consultation_need": "Which regional rules apply to this launch.",
     "search_intents": [
         {"keyword": "regional compliance", "semantic": "Local rules for launches"}
     ],
@@ -98,10 +101,16 @@ def evaluation(*people):
     return AreaEvaluation.model_validate({"people": list(people)})
 
 
-def proposal(pid, role, evidence):
+def proposal(pid, role, evidence, primary=None, relevance=None):
     return {
         "person_id": pid,
         "role": role,
+        "primary_evidence_id": evidence[0] if primary is None else primary,
+        "relevance": (
+            relevance
+            if relevance is not None
+            else ("direct" if role == "direct_contact" else "adjacent")
+        ),
         "evidence_ids": evidence,
         "confidence": "medium",
         "ask": "Who should review this proposal?",
@@ -163,6 +172,132 @@ def test_direct_responsibility_without_matching_title(db):
     _, card = card_for(db, model, StubSearcher(ids=()))
     assert card["areas"][0]["people"][0]["person_id"] == "jules"
     assert "Currently reviewer" in card["areas"][0]["people"][0]["why"][0]
+
+
+def test_current_visible_responsibility_can_support_an_advisor(db):
+    model = StubModel(
+        [impact(AREA)],
+        [evaluation(proposal("jules", "advisor", ["directory:jules-approval"]))],
+        [priority("campaign_review")],
+    )
+    _, card = card_for(db, model, StubSearcher(ids=()))
+    assert card["areas"][0]["status"] == "people"
+    assert [(p["person_id"], p["role"]) for p in card["areas"][0]["people"]] == [
+        ("jules", "advisor")
+    ]
+    db.execute(
+        "UPDATE responsibilities SET valid_to='2025-12-31' WHERE id='jules-approval'"
+    )
+    db.commit()
+    _, expired = card_for(
+        db,
+        StubModel(
+            [impact(AREA)],
+            [evaluation(proposal("jules", "advisor", ["directory:jules-approval"]))],
+            [priority("campaign_review")],
+        ),
+        StubSearcher(ids=()),
+        key="expired-advisor",
+    )
+    assert expired["areas"][0]["status"] == "not_found"
+
+
+def test_manager_and_remit_alone_cannot_support_an_advisor(db):
+    model = StubModel(
+        [impact(AREA)],
+        [
+            evaluation(
+                proposal(
+                    "marcus",
+                    "advisor",
+                    ["directory:growth-manager", "directory:growth-remit"],
+                )
+            )
+        ],
+        [priority("campaign_review")],
+    )
+    _, card = card_for(db, model, StubSearcher(ids=()))
+    assert card["areas"][0]["status"] == "not_found"
+
+
+def test_area_requires_a_consultation_need():
+    invalid = {key: value for key, value in AREA.items() if key != "consultation_need"}
+    with pytest.raises(ValidationError):
+        Impact.model_validate({"question": None, "areas": [invalid]})
+
+
+def test_primary_evidence_must_be_one_of_the_citations():
+    with pytest.raises(ValidationError):
+        AreaEvaluation.model_validate(
+            {
+                "people": [
+                    proposal(
+                        "nina",
+                        "advisor",
+                        ["jira:MKT-482"],
+                        primary="docs:campaign-review-2023",
+                    )
+                ]
+            }
+        )
+
+
+def test_direct_contact_cannot_borrow_strength_from_an_unrelated_record(db):
+    # Elena is only a reporter on the relevant checklist but an assignee on the
+    # unrelated metrics record. A strong tie on a secondary citation must not
+    # upgrade a weak primary tie into a direct contact.
+    model = StubModel(
+        [impact(AREA)],
+        [
+            evaluation(
+                proposal(
+                    "elena",
+                    "direct_contact",
+                    ["jira:MKT-482", "jira:MKT-483"],
+                    primary="jira:MKT-482",
+                )
+            )
+        ],
+        [priority("campaign_review")],
+    )
+    _, card = card_for(db, model, StubSearcher(ids=("jira:MKT-482", "jira:MKT-483")))
+    assert card["areas"][0]["status"] == "review_incomplete"
+    assert card["areas"][0]["people"] == []
+
+
+def test_indirect_relevance_keeps_a_useful_contact_as_advisor(db):
+    model = StubModel(
+        [impact(AREA)],
+        [
+            evaluation(
+                proposal(
+                    "nina", "direct_contact", ["jira:MKT-482"], relevance="adjacent"
+                )
+            )
+        ],
+        [priority("campaign_review")],
+    )
+    _, card = card_for(db, model)
+    area = card["areas"][0]
+    assert area["status"] == "people"
+    assert [(p["person_id"], p["role"]) for p in area["people"]] == [
+        ("nina", "advisor")
+    ]
+
+
+def test_mention_only_contact_is_not_proposed(db):
+    model = StubModel(
+        [impact(AREA)],
+        [
+            evaluation(
+                proposal("elena", "advisor", ["slack:mention-55"], relevance="weak")
+            )
+        ],
+        [priority("campaign_review")],
+    )
+    _, card = card_for(db, model, StubSearcher(ids=("slack:mention-55",)))
+    assert card["areas"][0]["status"] == "not_found"
+    assert card["areas"][0]["people"] == []
 
 
 def test_expired_responsibility_and_weak_reporter_do_not_prove_direct_contact(db):
@@ -298,6 +433,21 @@ def test_restricted_rows_are_not_searchable_and_have_no_person_signal(db):
     pool = candidate_pool(db, AREA, [visible_record(db, "jira:MKT-482")])
     assert "eve" not in [item["person_id"] for item in pool["people"]]
     assert "directory:secret-duty" not in json.dumps(pool)
+
+
+def test_title_match_without_visible_evidence_cannot_expose_restricted_only_person(db):
+    area = {
+        **AREA,
+        "search_intents": [{"keyword": "operations", "semantic": "operations"}],
+    }
+    pool = candidate_pool(db, area, [])
+    assert "eve" not in [person["person_id"] for person in pool["people"]]
+    assert "directory:secret-duty" not in json.dumps(pool)
+    assert "jules" in [person["person_id"] for person in pool["people"]]
+    model = StubModel([impact(area)], [evaluation()], [priority("campaign_review")])
+    _, card = card_for(db, model, StubSearcher(ids=()))
+    assert card["areas"][0]["status"] == "not_found"
+    assert "eve" not in json.dumps(model.calls)
 
 
 def test_reload_fails_closed_when_source_or_org_changes(db):

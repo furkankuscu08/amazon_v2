@@ -268,7 +268,9 @@ def candidate_pool(db, area: dict, records: list[dict]) -> dict:
         duty_match = any(
             terms & set(keywords(e["text"])) for e in responsibility_evidence
         )
-        if title_match or duty_match:
+        # A title alone is not citeable evidence. In particular, it must not
+        # expose someone whose only duty source is restricted to the model.
+        if responsibility_evidence and (title_match or duty_match):
             org_options.append(
                 (0 if duty_match else 1, row["id"], dict(row), responsibility_evidence)
             )

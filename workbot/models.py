@@ -18,6 +18,7 @@ class Area(StrictModel):
     id: str = Field(pattern=r"^[a-z][a-z0-9_-]{1,39}$")
     label: str = Field(min_length=2, max_length=100)
     rationale: str = Field(min_length=5, max_length=500)
+    consultation_need: str = Field(min_length=5, max_length=300)
     search_intents: list[SearchIntent] = Field(min_length=1, max_length=3)
     mapping: Literal["mapped", "mapping_unresolved"]
     org_unit_id: str | None
@@ -53,10 +54,23 @@ class Impact(StrictModel):
 class PersonProposal(StrictModel):
     person_id: str
     role: Literal["direct_contact", "advisor", "routing_contact"]
+    # The single source the model relies on for this role, and its own read of how
+    # closely that source matches the area's consultation need. Local validation
+    # checks that the primary is cited; the direct-contact evidence requirement is
+    # enforced in the deterministic audit, not this schema, so one odd field cannot
+    # void a whole area review.
+    primary_evidence_id: str
+    relevance: Literal["direct", "adjacent", "weak"]
     evidence_ids: list[str] = Field(min_length=1, max_length=8)
     confidence: Literal["high", "medium", "low"]
     ask: str = Field(min_length=5, max_length=240)
     unverified: str = Field(min_length=3, max_length=300)
+
+    @model_validator(mode="after")
+    def primary_is_cited(self) -> PersonProposal:
+        if self.primary_evidence_id not in self.evidence_ids:
+            raise ValueError("primary_evidence_id must be one of evidence_ids")
+        return self
 
 
 class AreaEvaluation(StrictModel):

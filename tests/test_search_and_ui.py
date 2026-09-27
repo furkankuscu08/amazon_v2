@@ -114,6 +114,7 @@ class WebModel:
                             "id": "growth",
                             "label": "Growth Marketing",
                             "rationale": "Campaign approval should be reviewed before launch.",
+                            "consultation_need": "Who reviews retail campaign launches before go-live.",
                             "search_intents": [
                                 {
                                     "keyword": "campaign launch",
@@ -134,6 +135,8 @@ class WebModel:
                         {
                             "person_id": "nina",
                             "role": "direct_contact",
+                            "primary_evidence_id": "jira:MKT-482",
+                            "relevance": "direct",
                             "evidence_ids": ["jira:MKT-482"],
                             "confidence": "high",
                             "ask": "Who reviews campaign launches?",

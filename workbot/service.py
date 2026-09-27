@@ -182,6 +182,7 @@ def run(db, sid: str, model, searcher) -> None:
                 "id": area.id,
                 "label": area.label,
                 "rationale": area.rationale,
+                "consultation_need": area.consultation_need,
                 "mapping": area.mapping,
                 "org_unit_id": area.org_unit_id,
                 "mapping_reason": area.mapping_reason,
@@ -352,6 +353,11 @@ def _evidence(db, candidate: dict, evidence_id: str) -> tuple[str, str] | None:
     return evidence["relation"], description
 
 
+WORK_STRONG = {"assignee", "author", "contributor"}
+DIRECT_KINDS = WORK_STRONG | {"responsibility"}
+ADVISOR_KINDS = WORK_STRONG | {"responsibility", "reporter"}
+
+
 def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
     candidates = {p["person_id"]: p for p in pool["people"]}
     accepted = []
@@ -362,6 +368,7 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
             not candidate
             or not _safe_question(proposal.ask)
             or len(set(proposal.evidence_ids)) != len(proposal.evidence_ids)
+            or proposal.primary_evidence_id not in proposal.evidence_ids
         ):
             rejected_direct |= proposal.role == "direct_contact"
             continue
@@ -371,35 +378,48 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
         if not person or person["org_id"] != candidate["org_id"]:
             rejected_direct |= proposal.role == "direct_contact"
             continue
-        facts = [_evidence(db, candidate, sid) for sid in proposal.evidence_ids]
-        if any(f is None for f in facts):
+        facts = {sid: _evidence(db, candidate, sid) for sid in proposal.evidence_ids}
+        if any(fact is None for fact in facts.values()):
             rejected_direct |= proposal.role == "direct_contact"
             continue
-        kinds = {f[0] for f in facts}
-        work = {"assignee", "author", "contributor"}
-        if proposal.role == "direct_contact" and not (
-            kinds & (work | {"responsibility"})
-        ):
-            rejected_direct = True
+        kinds = {fact[0] for fact in facts.values()}
+        primary_kind = facts[proposal.primary_evidence_id][0]
+        role = proposal.role
+        if role == "direct_contact":
+            # A direct contact needs a strong work tie on its *primary* source, so
+            # that a weak link on the relevant record cannot borrow strength from an
+            # unrelated record in the same citation list.
+            if proposal.relevance == "direct" and primary_kind in DIRECT_KINDS:
+                pass
+            # The model itself judged the link adjacent or weak. Keep an explainable
+            # contact as an advisor rather than dropping it or asserting a direct tie.
+            elif (
+                proposal.relevance in {"adjacent", "weak"}
+                and primary_kind in ADVISOR_KINDS
+            ):
+                role = "advisor"
+            else:
+                rejected_direct = True
+                continue
+        elif role == "advisor" and not kinds & ADVISOR_KINDS:
+            # A mention-only mirror of a name is not a useful consultation contact.
             continue
-        if proposal.role == "advisor" and not kinds & work:
-            continue
-        if proposal.role == "routing_contact" and not {"manager", "remit"} <= kinds:
+        elif role == "routing_contact" and not {"manager", "remit"} <= kinds:
             continue
         accepted.append(
             {
                 "person_id": proposal.person_id,
                 "name": candidate["name"],
-                "role": proposal.role,
+                "role": role,
                 "confidence": proposal.confidence,
                 "evidence_ids": proposal.evidence_ids,
-                "why": [fact[1] for fact in facts],
+                "why": [fact[1] for fact in facts.values()],
                 "ask": proposal.ask,
                 # The model must acknowledge uncertainty in its schema, but its
                 # untrusted free text is replaced by a stable, role-specific caution.
                 "unverified": (
                     "Ownership of the new idea and subject expertise have not been established."
-                    if proposal.role == "routing_contact"
+                    if role == "routing_contact"
                     else "Ownership of the new initiative and applicability of prior work have not been established."
                 ),
             }

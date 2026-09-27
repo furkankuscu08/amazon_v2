@@ -18,7 +18,7 @@ a{color:#22549b}small{color:#555}ul{padding-left:1.4rem}
 {% elif session.state == 'processing' %}<article><p>Processing was interrupted. Start a new request; no partial card is shown.</p></article>
 {% elif card %}
 {% if card.shared_question %}<article><h2>Open question across areas</h2><p>{{ card.shared_question }}</p></article>{% endif %}
-{% for area in card.areas %}<article><h2>{{ area.label }}</h2><p>{{ area.rationale }}</p>
+{% for area in card.areas %}<article><h2>{{ area.label }}</h2><p>{{ area.rationale }}</p>{% if area.consultation_need %}<p><strong>Consultation need:</strong> {{ area.consultation_need }}</p>{% endif %}
 {% if area.mapping == 'mapped' %}<details><summary>Evaluation trace</summary><p>Accessible records: {{ area.retrieval.visible_records }} (BM25: {{ area.retrieval.bm25 }}, Qdrant: {{ area.retrieval.qdrant }}); candidates considered: {{ area.retrieval.candidates }}. These are search signals, not proof of ownership.</p></details>{% endif %}
 {% if area.status == 'mapping_unresolved' %}<div class="warning"><strong>Team mapping unresolved.</strong> {{ area.mapping_reason }} No person was evaluated for this area. Manual organization routing is needed.</div>
 {% elif area.status == 'review_incomplete' %}<div class="warning"><strong>Review incomplete.</strong> No partial person list or automatic manager fallback is shown.</div>
