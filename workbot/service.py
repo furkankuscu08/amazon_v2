@@ -358,15 +358,26 @@ DIRECT_KINDS = WORK_STRONG | {"responsibility"}
 ADVISOR_KINDS = WORK_STRONG | {"responsibility", "reporter"}
 
 
+def _grounded_ask(role: str, primary_kind: str) -> str:
+    """Ask about a verified link without asserting what the source contains."""
+    if role == "routing_contact":
+        return "Who on the team could clarify the consultation need shown above?"
+    if primary_kind == "responsibility":
+        return "What does your current responsibility cover, and could it inform the consultation need shown above?"
+    if primary_kind in WORK_STRONG:
+        return "What did your work on the cited source cover, and could it inform the consultation need shown above?"
+    return "What can you clarify about the cited record, and could it inform the consultation need shown above?"
+
+
 def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
     candidates = {p["person_id"]: p for p in pool["people"]}
     accepted = []
     rejected_direct = False
+    invalid_ask = False
     for proposal in evaluation.people:
         candidate = candidates.get(proposal.person_id)
         if (
             not candidate
-            or not _safe_question(proposal.ask)
             or len(set(proposal.evidence_ids)) != len(proposal.evidence_ids)
             or proposal.primary_evidence_id not in proposal.evidence_ids
         ):
@@ -406,21 +417,33 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
             continue
         elif role == "routing_contact" and not {"manager", "remit"} <= kinds:
             continue
+        if not _safe_question(proposal.ask):
+            # A malformed question is not evidence that the contact is irrelevant.
+            # Do not show the person or turn a failed review into not_found.
+            invalid_ask = True
+            rejected_direct |= role == "direct_contact"
+            continue
         accepted.append(
             {
                 "person_id": proposal.person_id,
                 "name": candidate["name"],
                 "role": role,
                 "confidence": proposal.confidence,
+                "primary_evidence_id": proposal.primary_evidence_id,
                 "evidence_ids": proposal.evidence_ids,
-                "why": [fact[1] for fact in facts.values()],
-                "ask": proposal.ask,
+                "why": [facts[proposal.primary_evidence_id][1]]
+                + [
+                    fact[1]
+                    for sid, fact in facts.items()
+                    if sid != proposal.primary_evidence_id
+                ],
+                "ask": _grounded_ask(role, primary_kind),
                 # The model must acknowledge uncertainty in its schema, but its
                 # untrusted free text is replaced by a stable, role-specific caution.
                 "unverified": (
                     "Ownership of the new idea and subject expertise have not been established."
                     if role == "routing_contact"
-                    else "Ownership of the new initiative and applicability of prior work have not been established."
+                    else "Whether the cited work addresses this area's specific consultation need and who owns the new initiative have not been established."
                 ),
             }
         )
@@ -438,5 +461,5 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
     item["status"] = (
         "people"
         if item["people"]
-        else ("review_incomplete" if rejected_direct else "not_found")
+        else ("review_incomplete" if rejected_direct or invalid_ask else "not_found")
     )

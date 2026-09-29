@@ -285,6 +285,94 @@ def test_indirect_relevance_keeps_a_useful_contact_as_advisor(db):
     ]
 
 
+def test_invalid_advisor_question_is_incomplete_not_model_abstention(db):
+    unsafe = proposal("nina", "advisor", ["jira:MKT-482"])
+    unsafe["ask"] = "Nina Ellis"
+    model = StubModel(
+        [impact(AREA)], [evaluation(unsafe)], [priority("campaign_review")]
+    )
+    _, card = card_for(db, model)
+    area = card["areas"][0]
+    assert area["status"] == "review_incomplete"
+    assert area["people"] == []
+    assert area["direct_review_incomplete"] is False
+    assert "Nina Ellis" not in json.dumps(area)
+    assert "invalid_ask" not in json.dumps(card)
+    assert model.calls[-1][0] == "priority"
+
+
+def test_invalid_question_does_not_rescue_an_unsupported_advisor(db):
+    unsafe = proposal("elena", "advisor", ["slack:mention-55"])
+    unsafe["ask"] = "Elena Park"
+    model = StubModel(
+        [impact(AREA)], [evaluation(unsafe)], [priority("campaign_review")]
+    )
+    _, card = card_for(db, model, StubSearcher(ids=("slack:mention-55",)))
+    assert card["areas"][0]["status"] == "not_found"
+    assert card["areas"][0]["people"] == []
+
+
+def test_invalid_question_on_downgraded_contact_does_not_fail_direct_review(db):
+    proposed = proposal("nina", "direct_contact", ["jira:MKT-482"])
+    proposed["relevance"] = "adjacent"
+    proposed["ask"] = "Nina Ellis"
+    _, card = card_for(
+        db,
+        StubModel(
+            [impact(AREA)], [evaluation(proposed)], [priority("campaign_review")]
+        ),
+    )
+    assert card["areas"][0]["status"] == "review_incomplete"
+    assert card["areas"][0]["direct_review_incomplete"] is False
+
+
+def test_empty_model_response_is_still_not_found(db):
+    _, card = card_for(
+        db,
+        StubModel([impact(AREA)], [evaluation()], [priority("campaign_review")]),
+    )
+    assert card["areas"][0]["status"] == "not_found"
+
+
+def test_primary_source_is_first_and_shown_question_has_no_model_premise(db):
+    proposed = proposal(
+        "nina",
+        "direct_contact",
+        ["jira:MKT-482", "slack:retail-814"],
+        primary="slack:retail-814",
+    )
+    proposed["ask"] = "Which consent rules does the checklist already require?"
+    _, card = card_for(
+        db,
+        StubModel(
+            [impact(AREA)], [evaluation(proposed)], [priority("campaign_review")]
+        ),
+    )
+    person = card["areas"][0]["people"][0]
+    assert person["primary_evidence_id"] == "slack:retail-814"
+    assert person["why"][0].startswith("Author of slack")
+    assert person["role"] == "direct_contact"
+    assert person["ask"] == (
+        "What did your work on the cited source cover, and could it inform the consultation need shown above?"
+    )
+    assert "consent rules" not in json.dumps(card)
+    assert "specific consultation need" in person["unverified"]
+
+
+def test_reporter_advisor_question_does_not_assume_work_on_the_record(db):
+    proposed = proposal("elena", "advisor", ["jira:MKT-482"])
+    proposed["ask"] = "Which security approvals did you lead?"
+    _, card = card_for(
+        db,
+        StubModel(
+            [impact(AREA)], [evaluation(proposed)], [priority("campaign_review")]
+        ),
+    )
+    assert card["areas"][0]["people"][0]["ask"] == (
+        "What can you clarify about the cited record, and could it inform the consultation need shown above?"
+    )
+
+
 def test_mention_only_contact_is_not_proposed(db):
     model = StubModel(
         [impact(AREA)],

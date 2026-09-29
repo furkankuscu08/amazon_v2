@@ -178,19 +178,75 @@ def test_web_card_reload_and_source_visibility(tmp_path, monkeypatch):
         )
         assert response.status_code == 303
         url = response.headers["location"]
+        sid = url.rsplit("/", 1)[-1]
         card = client.get(url)
         assert card.status_code == 200
         assert "Nina Ellis" in card.text
         assert "Eve Restricted" not in card.text
+        assert "Proposed direct contact" in card.text
+        assert "Primary cited source:" in card.text
+        assert f'href="{url}/sources/jira%3AMKT-482"' in card.text
+        assert "Ask to check the connection:" in card.text
         assert client.get(url).text == card.text
         assert client.get(url + "/sources/slack:restricted-plan").status_code == 404
         assert client.get(url + "/sources/jira:MKT-482").status_code == 200
+        db = connect(path)
+        saved = db.execute(
+            "SELECT card_json FROM sessions WHERE id=?", (sid,)
+        ).fetchone()
+        old_card = json.loads(saved["card_json"])
+        del old_card["areas"][0]["people"][0]["primary_evidence_id"]
+        db.execute(
+            "UPDATE sessions SET card_json=? WHERE id=?",
+            (json.dumps(old_card), sid),
+        )
+        db.commit()
+        db.close()
+        previous = client.get(url)
+        assert previous.status_code == 200
+        assert "Primary cited source:" not in previous.text
+        assert "Source IDs and dates" in previous.text
         db = connect(path)
         db.execute("UPDATE people SET active=0 WHERE id='nina'")
         db.commit()
         db.close()
         assert client.get(url).status_code == 410
         assert client.get(url + "/sources/jira:MKT-482").status_code == 410
+    finally:
+        del app.state.model
+        del app.state.searcher
+
+
+def test_not_found_does_not_expose_retrieved_but_uncited_source(tmp_path, monkeypatch):
+    path = str(tmp_path / "no_contact.sqlite3")
+    db = connect(path)
+    seed_db(db)
+    db.close()
+    monkeypatch.setenv("WORKBOT_DB_PATH", path)
+
+    class EmptyAreaModel(WebModel):
+        def complete(self, task, payload):
+            if task == "area":
+                return AreaEvaluation.model_validate({"people": []})
+            return super().complete(task, payload)
+
+    app.state.model = EmptyAreaModel()
+    app.state.searcher = WebSearch()
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/sessions",
+            data={"idea": "Help plan marketing campaigns", "idempotency_key": "empty"},
+            follow_redirects=False,
+        )
+        assert response.status_code == 303
+        url = response.headers["location"]
+        page = client.get(url)
+        assert page.status_code == 200
+        assert "No verified contact found" in page.text
+        assert "Accessible records: 1" in page.text
+        assert "jira:MKT-482" not in page.text
+        assert client.get(url + "/sources/jira:MKT-482").status_code == 404
     finally:
         del app.state.model
         del app.state.searcher

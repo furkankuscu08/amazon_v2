@@ -1,0 +1,2834 @@
+[
+  {
+    "scenario": "baseline",
+    "iteration": 1,
+    "idea": "We want to streamline how retail campaign audiences are signed off before launch.",
+    "model": "deepseek/deepseek-v4.1-flash:nitro",
+    "provider": "Together",
+    "access": {
+      "post_status": 303,
+      "view_status": 200,
+      "reload_identical": true,
+      "restricted_source_status": 404,
+      "restricted_directory_status": 404,
+      "uncited_visible_status": 404,
+      "visible_leak_marker": false,
+      "restricted_context_blocked": false,
+      "peak_parallel_areas": 2
+    },
+    "source_statuses": {
+      "directory:jules-approval": 200,
+      "docs:campaign-review-2023": 200,
+      "docs:wallet-loyalty": 200,
+      "github:campaign-scheduler-76": 200,
+      "jira:MKT-482": 200,
+      "slack:retail-814": 200
+    },
+    "calls": {
+      "impact": 1,
+      "area": 6,
+      "priority": 1
+    },
+    "transport": {
+      "finish_reasons": {
+        "stop": 8
+      },
+      "usage_totals": {
+        "prompt_tokens": 10567,
+        "completion_tokens": 37180,
+        "total_tokens": 47747
+      }
+    },
+    "areas": [
+      {
+        "id": "growth",
+        "label": "Growth Marketing",
+        "consultation_need": "What audience strategy, segmentation, or campaign targeting considerations would need to be understood in a streamlined sign-off?",
+        "search_intents": [
+          {
+            "keyword": "retail campaign audience segmentation criteria",
+            "semantic": "criteria and logic for defining retail campaign audiences"
+          },
+          {
+            "keyword": "audience targeting sign-off marketing review",
+            "semantic": "marketing review of audience targeting before campaign launch"
+          },
+          {
+            "keyword": "campaign audience strategy approval",
+            "semantic": "approval considerations for campaign audience strategy"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "growth",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "docs:campaign-review-2023",
+          "jira:MKT-483",
+          "slack:retail-814",
+          "docs:wallet-loyalty",
+          "github:campaign-scheduler-76",
+          "slack:mention-55"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya",
+          "jules",
+          "marcus"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "elena",
+            "role": "direct_contact",
+            "relevance": "direct",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "confidence": "medium",
+            "ask": "What audience criteria, segmentation inputs, or approval dependencies in the retail campaign audience approval checklist should be understood when streamlining the pre-launch sign-off?"
+          },
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "relevance": "direct",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "confidence": "high",
+            "ask": "As the assignee finalizing the retail campaign audience approval checklist, what checklist steps or audience considerations would you need to surface for a streamlined pre-launch sign-off?"
+          },
+          {
+            "person_id": "jules",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "directory:jules-approval",
+            "evidence_ids": [
+              "directory:jules-approval"
+            ],
+            "confidence": "medium",
+            "ask": "What does reviewing campaign launch approvals currently involve, and where do audience targeting or segmentation checks fit into that review?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "ask": "As the assignee finalizing the retail campaign audience approval checklist, what checklist steps or audience considerations would you need to surface for a streamlined pre-launch sign-off?"
+          },
+          {
+            "person_id": "jules",
+            "role": "advisor",
+            "evidence_ids": [
+              "directory:jules-approval"
+            ],
+            "ask": "What does reviewing campaign launch approvals currently involve, and where do audience targeting or segmentation checks fit into that review?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1498,
+          "completion_tokens": 4857,
+          "total_tokens": 6355
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 7,
+          "qdrant": 4,
+          "visible_records": 7,
+          "candidates": 7
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "commerce",
+        "label": "Commerce Operations",
+        "consultation_need": "What operational constraints or retail launch dependencies would matter if audience sign-off were streamlined?",
+        "search_intents": [
+          {
+            "keyword": "retail campaign launch operations audience readiness",
+            "semantic": "operational readiness for retail campaign audiences before launch"
+          },
+          {
+            "keyword": "commerce audience execution constraints",
+            "semantic": "commerce operations constraints related to audience activation"
+          },
+          {
+            "keyword": "retail campaign audience deployment dependencies",
+            "semantic": "dependencies for deploying retail campaign audiences"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "commerce",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "slack:retail-814",
+          "jira:MKT-483",
+          "docs:campaign-review-2023",
+          "docs:wallet-loyalty",
+          "github:campaign-scheduler-76",
+          "jira:old-employee",
+          "slack:mention-55"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "relevance": "direct",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "slack:retail-814"
+            ],
+            "confidence": "high",
+            "ask": "What operational constraints or retail launch dependencies should we account for when finalizing the retail campaign audience approval checklist before launch?"
+          },
+          {
+            "person_id": "elena",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "confidence": "medium",
+            "ask": "What operational constraints did you observe when reporting the retail campaign audience approval checklist before launch?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "slack:retail-814"
+            ],
+            "ask": "What operational constraints or retail launch dependencies should we account for when finalizing the retail campaign audience approval checklist before launch?"
+          },
+          {
+            "person_id": "elena",
+            "role": "advisor",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "ask": "What operational constraints did you observe when reporting the retail campaign audience approval checklist before launch?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1276,
+          "completion_tokens": 4213,
+          "total_tokens": 5489
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 8,
+          "qdrant": 4,
+          "visible_records": 8,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "brand",
+        "label": "Brand Review",
+        "consultation_need": "What brand suitability or audience representation considerations would need to be understood before retail campaign audiences are launched?",
+        "search_intents": [
+          {
+            "keyword": "brand suitability audience criteria review",
+            "semantic": "brand suitability criteria for campaign audiences"
+          },
+          {
+            "keyword": "campaign audience representation brand review",
+            "semantic": "brand review of audience representation and appropriateness"
+          },
+          {
+            "keyword": "retail campaign audience brand risk",
+            "semantic": "brand risk considerations for retail campaign audience targeting"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "brand",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "slack:retail-814",
+          "jira:MKT-483",
+          "docs:campaign-review-2023",
+          "docs:wallet-loyalty",
+          "github:campaign-scheduler-76"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "priya",
+            "role": "advisor",
+            "relevance": "weak",
+            "primary_evidence_id": "docs:campaign-review-2023",
+            "evidence_ids": [
+              "docs:campaign-review-2023"
+            ],
+            "confidence": "low",
+            "ask": "What audience suitability and representation considerations, if any, were covered in the retail campaign review and approval process you authored?"
+          },
+          {
+            "person_id": "nina",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "slack:retail-814"
+            ],
+            "confidence": "medium",
+            "ask": "What does the retail campaign audience approval checklist cover before launch, and does it include brand suitability or audience representation criteria?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "nina",
+            "role": "advisor",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "slack:retail-814"
+            ],
+            "ask": "What does the retail campaign audience approval checklist cover before launch, and does it include brand suitability or audience representation criteria?"
+          },
+          {
+            "person_id": "priya",
+            "role": "advisor",
+            "evidence_ids": [
+              "docs:campaign-review-2023"
+            ],
+            "ask": "What audience suitability and representation considerations, if any, were covered in the retail campaign review and approval process you authored?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1222,
+          "completion_tokens": 5722,
+          "total_tokens": 6944
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 3,
+          "visible_records": 6,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "platform",
+        "label": "Campaign Platform",
+        "consultation_need": "What platform constraints and workflow capabilities would matter if audience sign-off were implemented or streamlined in tooling?",
+        "search_intents": [
+          {
+            "keyword": "campaign audience sign-off workflow tooling",
+            "semantic": "tooling and workflow for campaign audience sign-off"
+          },
+          {
+            "keyword": "audience segmentation platform approval constraints",
+            "semantic": "platform constraints for approving audience segmentation"
+          },
+          {
+            "keyword": "retail campaign launch audience configuration",
+            "semantic": "platform configuration for retail campaign audience launch"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "platform",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "github:campaign-scheduler-76",
+          "jira:MKT-483",
+          "slack:retail-814",
+          "docs:campaign-review-2023",
+          "docs:wallet-loyalty",
+          "slack:mention-55",
+          "jira:old-employee"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "owen",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "github:campaign-scheduler-76",
+            "evidence_ids": [
+              "github:campaign-scheduler-76"
+            ],
+            "confidence": "medium",
+            "ask": "What platform API or integration constraints did you need to account for when updating the integration between the campaign scheduler and the platform API?"
+          },
+          {
+            "person_id": "nina",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "confidence": "medium",
+            "ask": "As assignee for finalizing the retail campaign audience approval checklist, what steps, roles, and tooling gaps does the checklist reveal before launch?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "nina",
+            "role": "advisor",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "ask": "As assignee for finalizing the retail campaign audience approval checklist, what steps, roles, and tooling gaps does the checklist reveal before launch?"
+          },
+          {
+            "person_id": "owen",
+            "role": "advisor",
+            "evidence_ids": [
+              "github:campaign-scheduler-76"
+            ],
+            "ask": "What platform API or integration constraints did you need to account for when updating the integration between the campaign scheduler and the platform API?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1281,
+          "completion_tokens": 5774,
+          "total_tokens": 7055
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 8,
+          "qdrant": 4,
+          "visible_records": 8,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "security",
+        "label": "Security Review",
+        "consultation_need": "What security and privacy considerations would matter if audience data and sign-off details were handled in a streamlined workflow?",
+        "search_intents": [
+          {
+            "keyword": "audience data privacy review campaign sign-off",
+            "semantic": "privacy review for audience data in campaign sign-off"
+          },
+          {
+            "keyword": "customer segmentation data access controls",
+            "semantic": "access controls for customer segmentation data"
+          },
+          {
+            "keyword": "retail campaign audience security considerations",
+            "semantic": "security considerations for retail campaign audience data"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "security",
+        "status": "not_found",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "jira:MKT-483",
+          "slack:retail-814",
+          "docs:campaign-review-2023",
+          "docs:wallet-loyalty",
+          "github:campaign-scheduler-76"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "nina",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "slack:retail-814"
+            ],
+            "confidence": "medium",
+            "ask": "Nina Ellis"
+          },
+          {
+            "person_id": "elena",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "confidence": "medium",
+            "ask": "Elena Park"
+          }
+        ],
+        "accepted_people": [],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1227,
+          "completion_tokens": 4816,
+          "total_tokens": 6043
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 3,
+          "visible_records": 6,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "finance",
+        "label": "Finance",
+        "consultation_need": "What financial considerations, if any, would a retail campaign audience sign-off need to account for regarding promotional spend or offer eligibility?",
+        "search_intents": [
+          {
+            "keyword": "audience criteria promotional spend impact",
+            "semantic": "financial impact of audience criteria on promotional spend"
+          },
+          {
+            "keyword": "retail campaign audience cost exposure review",
+            "semantic": "cost exposure review for retail campaign audiences"
+          },
+          {
+            "keyword": "offer eligibility audience finance considerations",
+            "semantic": "finance considerations for audience-based offer eligibility"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "finance",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "jira:MKT-483",
+          "docs:campaign-review-2023",
+          "slack:retail-814",
+          "docs:wallet-loyalty",
+          "github:campaign-scheduler-76"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "tara",
+            "role": "advisor",
+            "relevance": "weak",
+            "primary_evidence_id": "docs:wallet-loyalty",
+            "evidence_ids": [
+              "docs:wallet-loyalty"
+            ],
+            "confidence": "low",
+            "ask": "What financial considerations did the wallet loyalty points campaign promotion need to account for regarding offer eligibility?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "tara",
+            "role": "advisor",
+            "evidence_ids": [
+              "docs:wallet-loyalty"
+            ],
+            "ask": "What financial considerations did the wallet loyalty points campaign promotion need to account for regarding offer eligibility?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1230,
+          "completion_tokens": 5582,
+          "total_tokens": 6812
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 4,
+          "visible_records": 6,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      }
+    ]
+  },
+  {
+    "scenario": "integration",
+    "iteration": 1,
+    "idea": "We want to update the integration between the campaign scheduler and the platform API.",
+    "model": "deepseek/deepseek-v4.1-flash:nitro",
+    "provider": "Together",
+    "access": {
+      "post_status": 303,
+      "view_status": 200,
+      "reload_identical": true,
+      "restricted_source_status": 404,
+      "restricted_directory_status": 404,
+      "uncited_visible_status": 404,
+      "visible_leak_marker": false,
+      "restricted_context_blocked": false,
+      "peak_parallel_areas": 2
+    },
+    "source_statuses": {
+      "github:campaign-scheduler-76": 200
+    },
+    "calls": {
+      "impact": 1,
+      "area": 3,
+      "priority": 1
+    },
+    "transport": {
+      "finish_reasons": {
+        "stop": 4,
+        "length": 1
+      },
+      "usage_totals": {
+        "prompt_tokens": 5618,
+        "completion_tokens": 17941,
+        "total_tokens": 23559
+      }
+    },
+    "areas": [
+      {
+        "id": "platform-integration",
+        "label": "Campaign Platform integration and API behavior",
+        "consultation_need": "What constraints and expectations would matter if the campaign scheduler integration with the platform API were updated, especially around API contracts, scheduling behavior, and compatibility?",
+        "search_intents": [
+          {
+            "keyword": "campaign scheduler platform API integration",
+            "semantic": "how scheduler integration with campaign platform APIs is designed and maintained"
+          },
+          {
+            "keyword": "scheduler API contract changes",
+            "semantic": "what API contract, versioning, or compatibility considerations arise when updating a campaign scheduler integration"
+          },
+          {
+            "keyword": "campaign platform integration constraints",
+            "semantic": "platform-side limitations, dependencies, or constraints that could affect scheduler integration updates"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "platform",
+        "status": "people",
+        "retrieved_ids": [
+          "github:campaign-scheduler-76",
+          "jira:MKT-483",
+          "jira:MKT-482",
+          "docs:campaign-review-2023",
+          "docs:wallet-loyalty",
+          "slack:retail-814"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "owen",
+            "role": "direct_contact",
+            "relevance": "direct",
+            "primary_evidence_id": "github:campaign-scheduler-76",
+            "evidence_ids": [
+              "github:campaign-scheduler-76"
+            ],
+            "confidence": "high",
+            "ask": "What API contract, scheduling behavior, and compatibility constraints did you account for when updating the integration between the campaign scheduler and the platform API?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "owen",
+            "role": "direct_contact",
+            "evidence_ids": [
+              "github:campaign-scheduler-76"
+            ],
+            "ask": "What API contract, scheduling behavior, and compatibility constraints did you account for when updating the integration between the campaign scheduler and the platform API?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1270,
+          "completion_tokens": 1081,
+          "total_tokens": 2351
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 2,
+          "visible_records": 6,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "security-review",
+        "label": "Security and access controls for API integration",
+        "consultation_need": "What security considerations would matter if the campaign scheduler and platform API integration changed, such as authentication, authorization, data handling, or exposure?",
+        "search_intents": [
+          {
+            "keyword": "platform API authentication security",
+            "semantic": "security expectations for API authentication and authorization in campaign integrations"
+          },
+          {
+            "keyword": "campaign scheduler data access controls",
+            "semantic": "how scheduler data access and permissions may need to be reviewed when integrating with a platform API"
+          },
+          {
+            "keyword": "API integration security review",
+            "semantic": "security review considerations for updated API integrations between systems"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "security",
+        "status": "people",
+        "retrieved_ids": [
+          "github:campaign-scheduler-76",
+          "jira:MKT-483",
+          "jira:MKT-482",
+          "docs:campaign-review-2023",
+          "docs:wallet-loyalty",
+          "slack:retail-814"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "owen",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "github:campaign-scheduler-76",
+            "evidence_ids": [
+              "github:campaign-scheduler-76"
+            ],
+            "confidence": "medium",
+            "ask": "Can you walk through what is changing in the campaign scheduler and platform API integration, and identify any authentication, authorization, or data-handling points that should be reviewed?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "owen",
+            "role": "advisor",
+            "evidence_ids": [
+              "github:campaign-scheduler-76"
+            ],
+            "ask": "Can you walk through what is changing in the campaign scheduler and platform API integration, and identify any authentication, authorization, or data-handling points that should be reviewed?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1255,
+          "completion_tokens": 1977,
+          "total_tokens": 3232
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 2,
+          "visible_records": 6,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "growth-marketing",
+        "label": "Growth Marketing campaign scheduling needs",
+        "consultation_need": "What campaign scheduling needs or workflow impacts would Growth Marketing want understood if the scheduler-to-platform API integration were updated?",
+        "search_intents": [
+          {
+            "keyword": "campaign scheduler marketing requirements",
+            "semantic": "marketing team requirements for campaign scheduling and calendar workflows"
+          },
+          {
+            "keyword": "campaign scheduling workflow impact",
+            "semantic": "how changes to scheduler-platform integration could affect campaign planning and execution workflows"
+          },
+          {
+            "keyword": "marketing campaign API integration",
+            "semantic": "how marketing campaign tools depend on API integrations for scheduling and activation"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "growth",
+        "status": "review_incomplete",
+        "retrieved_ids": [
+          "github:campaign-scheduler-76",
+          "jira:MKT-483",
+          "jira:MKT-482",
+          "docs:campaign-review-2023",
+          "docs:wallet-loyalty",
+          "slack:retail-814"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya",
+          "jules",
+          "marcus"
+        ],
+        "model_proposals": [],
+        "accepted_people": [],
+        "finish_reason": "length",
+        "usage": {
+          "prompt_tokens": 1457,
+          "completion_tokens": 8192,
+          "total_tokens": 9649
+        },
+        "error_type": "ModelError",
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 4,
+          "visible_records": 6,
+          "candidates": 7
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "scheduler-requirements",
+        "label": "Campaign scheduler requirements and dependencies",
+        "consultation_need": "What scheduler requirements and constraints would need to be understood if its integration with the platform API were updated?",
+        "search_intents": [
+          {
+            "keyword": "campaign scheduler integration requirements",
+            "semantic": "requirements and constraints for integrating a campaign scheduler with an external or internal platform API"
+          },
+          {
+            "keyword": "scheduler API dependencies",
+            "semantic": "dependencies and compatibility issues between a campaign scheduler and platform API endpoints"
+          },
+          {
+            "keyword": "campaign scheduling workflow",
+            "semantic": "how campaign scheduling workflows depend on API integration behavior"
+          }
+        ],
+        "mapping": "mapping_unresolved",
+        "org_unit_id": null,
+        "status": "mapping_unresolved",
+        "retrieved_ids": [],
+        "candidate_ids": [],
+        "model_proposals": [],
+        "accepted_people": [],
+        "finish_reason": null,
+        "usage": null,
+        "error_type": null,
+        "retrieval": {
+          "bm25": 0,
+          "qdrant": 0,
+          "visible_records": 0,
+          "candidates": 0
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      }
+    ]
+  },
+  {
+    "scenario": "historical",
+    "iteration": 1,
+    "idea": "We want to assess whether the previous retail campaign review process still applies to today's launches.",
+    "model": "deepseek/deepseek-v4.1-flash:nitro",
+    "provider": "Together",
+    "access": {
+      "post_status": 303,
+      "view_status": 200,
+      "reload_identical": true,
+      "restricted_source_status": 404,
+      "restricted_directory_status": 404,
+      "uncited_visible_status": 404,
+      "visible_leak_marker": false,
+      "restricted_context_blocked": false,
+      "peak_parallel_areas": 2
+    },
+    "source_statuses": {
+      "directory:jules-approval": 200,
+      "docs:campaign-review-2023": 200,
+      "jira:MKT-482": 200,
+      "slack:retail-814": 200
+    },
+    "calls": {
+      "impact": 1,
+      "area": 6,
+      "priority": 1
+    },
+    "transport": {
+      "finish_reasons": {
+        "stop": 7,
+        "length": 1
+      },
+      "usage_totals": {
+        "prompt_tokens": 10217,
+        "completion_tokens": 40749,
+        "total_tokens": 50966
+      }
+    },
+    "areas": [
+      {
+        "id": "brand",
+        "label": "Brand Review",
+        "consultation_need": "What brand and creative considerations would need to be reassessed if current retail launches are compared against a prior campaign review approach?",
+        "search_intents": [
+          {
+            "keyword": "retail campaign brand review criteria",
+            "semantic": "how brand reviews apply to retail launches"
+          },
+          {
+            "keyword": "launch creative brand compliance",
+            "semantic": "brand compliance for current campaign launches"
+          },
+          {
+            "keyword": "brand review process applicability",
+            "semantic": "whether prior brand review practices fit today"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "brand",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "docs:campaign-review-2023",
+          "slack:retail-814",
+          "jira:MKT-483",
+          "jira:old-employee",
+          "slack:mention-55",
+          "docs:wallet-loyalty",
+          "github:campaign-scheduler-76"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "priya",
+            "role": "direct_contact",
+            "relevance": "direct",
+            "primary_evidence_id": "docs:campaign-review-2023",
+            "evidence_ids": [
+              "docs:campaign-review-2023"
+            ],
+            "confidence": "medium",
+            "ask": "You authored the retail campaign review and approval process for the previous team. How would you reassess the brand and creative considerations in that process if it were compared with current retail launches?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "priya",
+            "role": "direct_contact",
+            "evidence_ids": [
+              "docs:campaign-review-2023"
+            ],
+            "ask": "You authored the retail campaign review and approval process for the previous team. How would you reassess the brand and creative considerations in that process if it were compared with current retail launches?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1280,
+          "completion_tokens": 5289,
+          "total_tokens": 6569
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 8,
+          "qdrant": 4,
+          "visible_records": 8,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "commerce",
+        "label": "Commerce Operations",
+        "consultation_need": "What operational launch readiness or retail execution factors would determine whether a prior campaign review approach remains suitable for current launches?",
+        "search_intents": [
+          {
+            "keyword": "retail launch campaign operations review",
+            "semantic": "commerce operations review for retail launches"
+          },
+          {
+            "keyword": "campaign review workflow commerce",
+            "semantic": "operational workflow for campaign reviews"
+          },
+          {
+            "keyword": "launch readiness retail campaigns",
+            "semantic": "retail campaign launch readiness criteria"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "commerce",
+        "status": "review_incomplete",
+        "retrieved_ids": [
+          "docs:campaign-review-2023",
+          "jira:MKT-482",
+          "slack:retail-814",
+          "jira:MKT-483",
+          "github:campaign-scheduler-76",
+          "docs:wallet-loyalty",
+          "jira:old-employee",
+          "slack:mention-55"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "relevance": "direct",
+            "primary_evidence_id": "slack:retail-814",
+            "evidence_ids": [
+              "slack:retail-814",
+              "jira:MKT-482"
+            ],
+            "confidence": "high",
+            "ask": "Interview question"
+          }
+        ],
+        "accepted_people": [],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1277,
+          "completion_tokens": 5890,
+          "total_tokens": 7167
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 8,
+          "qdrant": 5,
+          "visible_records": 8,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "finance",
+        "label": "Finance",
+        "consultation_need": "What financial or promotional review considerations would need to be clarified if current retail launches are checked against a prior campaign review approach?",
+        "search_intents": [
+          {
+            "keyword": "retail campaign budget approval criteria",
+            "semantic": "financial review criteria for retail campaigns"
+          },
+          {
+            "keyword": "promotion spend review launches",
+            "semantic": "promotional spend review for launches"
+          },
+          {
+            "keyword": "campaign financial review applicability",
+            "semantic": "whether prior financial reviews fit current campaigns"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "finance",
+        "status": "not_found",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "jira:MKT-483",
+          "slack:retail-814",
+          "docs:campaign-review-2023",
+          "docs:wallet-loyalty",
+          "slack:mention-55",
+          "github:campaign-scheduler-76",
+          "jira:old-employee"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [],
+        "accepted_people": [],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1282,
+          "completion_tokens": 5031,
+          "total_tokens": 6313
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 8,
+          "qdrant": 5,
+          "visible_records": 8,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "growth",
+        "label": "Growth Marketing",
+        "consultation_need": "What growth, targeting, or performance considerations would need to be evaluated when testing whether a prior retail campaign review approach still applies?",
+        "search_intents": [
+          {
+            "keyword": "growth campaign review criteria",
+            "semantic": "growth marketing review for campaigns"
+          },
+          {
+            "keyword": "launch audience targeting review",
+            "semantic": "targeting review for current launches"
+          },
+          {
+            "keyword": "retail campaign performance review",
+            "semantic": "performance review for retail campaigns"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "growth",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "jira:MKT-483",
+          "slack:retail-814",
+          "docs:campaign-review-2023",
+          "docs:wallet-loyalty",
+          "github:campaign-scheduler-76",
+          "jira:old-employee",
+          "slack:mention-55"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya",
+          "jules",
+          "marcus"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "elena",
+            "role": "direct_contact",
+            "relevance": "direct",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "jira:MKT-483"
+            ],
+            "confidence": "high",
+            "ask": "When finalizing the retail campaign audience approval checklist before launch, which targeting or audience-review criteria would you reassess if testing whether the prior campaign review approach still applies?"
+          },
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "relevance": "direct",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "slack:retail-814"
+            ],
+            "confidence": "high",
+            "ask": "As assignee for the retail campaign audience approval checklist, what steps in that checklist or launch review would need to be re-evaluated to see if the previous review approach still applies?"
+          },
+          {
+            "person_id": "priya",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "docs:campaign-review-2023",
+            "evidence_ids": [
+              "docs:campaign-review-2023"
+            ],
+            "confidence": "medium",
+            "ask": "What did the previous retail campaign review and approval process cover, and which parts were specific to that earlier team or campaign context?"
+          },
+          {
+            "person_id": "jules",
+            "role": "advisor",
+            "relevance": "weak",
+            "primary_evidence_id": "directory:jules-approval",
+            "evidence_ids": [
+              "directory:jules-approval"
+            ],
+            "confidence": "low",
+            "ask": "In your current review of campaign launch approvals, what does the approval check actually include before a launch can proceed?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "slack:retail-814"
+            ],
+            "ask": "As assignee for the retail campaign audience approval checklist, what steps in that checklist or launch review would need to be re-evaluated to see if the previous review approach still applies?"
+          },
+          {
+            "person_id": "jules",
+            "role": "advisor",
+            "evidence_ids": [
+              "directory:jules-approval"
+            ],
+            "ask": "In your current review of campaign launch approvals, what does the approval check actually include before a launch can proceed?"
+          },
+          {
+            "person_id": "priya",
+            "role": "advisor",
+            "evidence_ids": [
+              "docs:campaign-review-2023"
+            ],
+            "ask": "What did the previous retail campaign review and approval process cover, and which parts were specific to that earlier team or campaign context?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1487,
+          "completion_tokens": 7763,
+          "total_tokens": 9250
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 8,
+          "qdrant": 4,
+          "visible_records": 8,
+          "candidates": 7
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "platform",
+        "label": "Campaign Platform",
+        "consultation_need": "What platform constraints or workflow implications would matter if the applicability of a prior campaign review approach were assessed for current launches?",
+        "search_intents": [
+          {
+            "keyword": "campaign review tooling configuration",
+            "semantic": "platform tooling for campaign review workflows"
+          },
+          {
+            "keyword": "launch workflow platform support",
+            "semantic": "platform support for launch review workflows"
+          },
+          {
+            "keyword": "review process automation constraints",
+            "semantic": "automation limits for campaign reviews"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "platform",
+        "status": "review_incomplete",
+        "retrieved_ids": [
+          "jira:MKT-483",
+          "github:campaign-scheduler-76",
+          "docs:campaign-review-2023",
+          "jira:MKT-482",
+          "slack:retail-814",
+          "jira:old-employee",
+          "docs:wallet-loyalty",
+          "slack:mention-55"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [],
+        "accepted_people": [],
+        "finish_reason": "length",
+        "usage": {
+          "prompt_tokens": 1286,
+          "completion_tokens": 8192,
+          "total_tokens": 9478
+        },
+        "error_type": "ModelError",
+        "retrieval": {
+          "bm25": 8,
+          "qdrant": 5,
+          "visible_records": 8,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "security",
+        "label": "Security Review",
+        "consultation_need": "What security or privacy review considerations would need to be understood if current retail campaigns are compared with a prior review approach?",
+        "search_intents": [
+          {
+            "keyword": "campaign data security review",
+            "semantic": "security review for campaign data"
+          },
+          {
+            "keyword": "retail launch privacy security checks",
+            "semantic": "privacy and security checks for retail launches"
+          },
+          {
+            "keyword": "security review applicability campaigns",
+            "semantic": "whether prior security reviews fit current campaigns"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "security",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "slack:retail-814",
+          "jira:MKT-483",
+          "docs:campaign-review-2023",
+          "github:campaign-scheduler-76",
+          "docs:wallet-loyalty",
+          "jira:old-employee",
+          "slack:mention-55"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "priya",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "docs:campaign-review-2023",
+            "evidence_ids": [
+              "docs:campaign-review-2023"
+            ],
+            "confidence": "medium",
+            "ask": "Can you walk through the previous retail campaign review and approval process you authored and clarify which security or privacy checks, if any, were part of it?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "priya",
+            "role": "advisor",
+            "evidence_ids": [
+              "docs:campaign-review-2023"
+            ],
+            "ask": "Can you walk through the previous retail campaign review and approval process you authored and clarify which security or privacy checks, if any, were part of it?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1278,
+          "completion_tokens": 3501,
+          "total_tokens": 4779
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 8,
+          "qdrant": 5,
+          "visible_records": 8,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      }
+    ]
+  },
+  {
+    "scenario": "privacy",
+    "iteration": 1,
+    "idea": "We want to identify privacy review requirements for retail campaign audiences.",
+    "model": "deepseek/deepseek-v4.1-flash:nitro",
+    "provider": "Together",
+    "access": {
+      "post_status": 303,
+      "view_status": 200,
+      "reload_identical": true,
+      "restricted_source_status": 404,
+      "restricted_directory_status": 404,
+      "uncited_visible_status": 404,
+      "visible_leak_marker": false,
+      "restricted_context_blocked": false,
+      "peak_parallel_areas": 2
+    },
+    "source_statuses": {
+      "github:campaign-scheduler-76": 200,
+      "jira:MKT-482": 200
+    },
+    "calls": {
+      "impact": 1,
+      "area": 4,
+      "priority": 1
+    },
+    "transport": {
+      "finish_reasons": {
+        "stop": 6
+      },
+      "usage_totals": {
+        "prompt_tokens": 7301,
+        "completion_tokens": 25797,
+        "total_tokens": 33098
+      }
+    },
+    "areas": [
+      {
+        "id": "privacy_legal_review",
+        "label": "Privacy and legal review",
+        "consultation_need": "What privacy and legal considerations should shape requirements for retail campaign audience data, including consent, purpose limitation, retention, and cross-context use?",
+        "search_intents": [
+          {
+            "keyword": "privacy review requirements retail campaign audiences",
+            "semantic": "What legal and privacy criteria apply when using retail campaign audience data?"
+          },
+          {
+            "keyword": "consent purpose limitation audience data",
+            "semantic": "How do consent and purpose limitation affect retail audience segmentation?"
+          },
+          {
+            "keyword": "privacy impact assessment campaign targeting",
+            "semantic": "When might a privacy impact assessment be relevant for campaign targeting?"
+          }
+        ],
+        "mapping": "mapping_unresolved",
+        "org_unit_id": null,
+        "status": "mapping_unresolved",
+        "retrieved_ids": [],
+        "candidate_ids": [],
+        "model_proposals": [],
+        "accepted_people": [],
+        "finish_reason": null,
+        "usage": null,
+        "error_type": null,
+        "retrieval": {
+          "bm25": 0,
+          "qdrant": 0,
+          "visible_records": 0,
+          "candidates": 0
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "security_review",
+        "label": "Security review",
+        "consultation_need": "What security constraints and risk considerations would matter if retail campaign audience data were made available for privacy review or downstream activation?",
+        "search_intents": [
+          {
+            "keyword": "security review campaign audience data",
+            "semantic": "What security concerns arise from retail campaign audience data handling?"
+          },
+          {
+            "keyword": "access controls audience segmentation",
+            "semantic": "How do access controls affect campaign audience segmentation and review?"
+          },
+          {
+            "keyword": "data protection retail campaign platforms",
+            "semantic": "What data protection expectations matter for retail campaign platforms?"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "security",
+        "status": "not_found",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "jira:MKT-483",
+          "slack:retail-814",
+          "github:campaign-scheduler-76",
+          "docs:campaign-review-2023",
+          "docs:wallet-loyalty"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "elena",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "jira:MKT-483"
+            ],
+            "confidence": "medium",
+            "ask": "Elena owns the retail campaign audience approval checklist, so she may clarify what reviews and sign-offs are expected before launch, even though the source does not establish security review ownership."
+          },
+          {
+            "person_id": "nina",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "slack:retail-814",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "slack:retail-814"
+            ],
+            "confidence": "medium",
+            "ask": "Nina is coordinating the retail campaign launch review with channel owners, so she can describe which teams and approvals are involved in the launch review process."
+          },
+          {
+            "person_id": "owen",
+            "role": "advisor",
+            "relevance": "weak",
+            "primary_evidence_id": "github:campaign-scheduler-76",
+            "evidence_ids": [
+              "github:campaign-scheduler-76"
+            ],
+            "confidence": "low",
+            "ask": "Owen updated the integration between the campaign scheduler and the platform API, so he may clarify the data flows and access boundaries involved in that integration."
+          }
+        ],
+        "accepted_people": [],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1237,
+          "completion_tokens": 5097,
+          "total_tokens": 6334
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 3,
+          "visible_records": 6,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "campaign_platform",
+        "label": "Campaign platform",
+        "consultation_need": "What platform constraints and data-handling realities would matter if privacy requirements for retail campaign audiences were implemented or checked in tooling?",
+        "search_intents": [
+          {
+            "keyword": "campaign audience data model privacy",
+            "semantic": "How is retail campaign audience data modeled and what privacy constraints does that create?"
+          },
+          {
+            "keyword": "platform consent signal audience segmentation",
+            "semantic": "What platform constraints would matter if consent signals were used in audience segmentation?"
+          },
+          {
+            "keyword": "retail campaign audience activation constraints",
+            "semantic": "What platform limits affect activation of retail campaign audiences?"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "platform",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "jira:MKT-483",
+          "slack:retail-814",
+          "github:campaign-scheduler-76",
+          "docs:campaign-review-2023",
+          "docs:wallet-loyalty"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "owen",
+            "role": "advisor",
+            "relevance": "weak",
+            "primary_evidence_id": "github:campaign-scheduler-76",
+            "evidence_ids": [
+              "github:campaign-scheduler-76"
+            ],
+            "confidence": "low",
+            "ask": "What platform API constraints did you encounter when updating the campaign scheduler integration?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "owen",
+            "role": "advisor",
+            "evidence_ids": [
+              "github:campaign-scheduler-76"
+            ],
+            "ask": "What platform API constraints did you encounter when updating the campaign scheduler integration?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1255,
+          "completion_tokens": 5951,
+          "total_tokens": 7206
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 3,
+          "visible_records": 6,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "growth_marketing",
+        "label": "Growth marketing",
+        "consultation_need": "What do campaign teams need to understand or decide about audience selection, consent signals, and permissible use for retail campaign audiences?",
+        "search_intents": [
+          {
+            "keyword": "retail campaign audience definition consent",
+            "semantic": "How are retail campaign audiences defined in relation to consent?"
+          },
+          {
+            "keyword": "growth marketing audience segmentation privacy",
+            "semantic": "What privacy considerations affect growth marketing audience segmentation?"
+          },
+          {
+            "keyword": "campaign targeting data sources retail",
+            "semantic": "Which retail data sources feed campaign targeting and what privacy questions arise?"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "growth",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "slack:retail-814",
+          "docs:campaign-review-2023",
+          "jira:MKT-483",
+          "docs:wallet-loyalty",
+          "github:campaign-scheduler-76"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya",
+          "jules",
+          "marcus"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "relevance": "direct",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "confidence": "medium",
+            "ask": "How does the retail campaign audience approval checklist define which audience selection and consent signals are required before launch?"
+          },
+          {
+            "person_id": "elena",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "confidence": "medium",
+            "ask": "What did you identify as needing finalization in the retail campaign audience approval checklist before launch?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "ask": "How does the retail campaign audience approval checklist define which audience selection and consent signals are required before launch?"
+          },
+          {
+            "person_id": "elena",
+            "role": "advisor",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "ask": "What did you identify as needing finalization in the retail campaign audience approval checklist before launch?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1453,
+          "completion_tokens": 5064,
+          "total_tokens": 6517
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 3,
+          "visible_records": 6,
+          "candidates": 7
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "commerce_operations",
+        "label": "Commerce operations",
+        "consultation_need": "What operational data sources, customer records, or retail audience definitions would need privacy review clarity before campaign use?",
+        "search_intents": [
+          {
+            "keyword": "retail transaction audience data privacy",
+            "semantic": "How do retail transaction data affect campaign audience privacy review?"
+          },
+          {
+            "keyword": "commerce operations customer segments consent",
+            "semantic": "What consent questions arise from commerce operations customer segments?"
+          },
+          {
+            "keyword": "retail campaign audience source systems",
+            "semantic": "Which source systems create retail campaign audiences and what privacy constraints apply?"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "commerce",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "slack:retail-814",
+          "docs:campaign-review-2023",
+          "jira:MKT-483",
+          "docs:wallet-loyalty",
+          "github:campaign-scheduler-76"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "relevance": "direct",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "confidence": "high",
+            "ask": "Which items in the retail campaign audience approval checklist require privacy review sign-off before launch?"
+          },
+          {
+            "person_id": "elena",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "confidence": "medium",
+            "ask": "What retail campaign audience approval items did you report for the checklist before launch?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "ask": "Which items in the retail campaign audience approval checklist require privacy review sign-off before launch?"
+          },
+          {
+            "person_id": "elena",
+            "role": "advisor",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "ask": "What retail campaign audience approval items did you report for the checklist before launch?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1238,
+          "completion_tokens": 5480,
+          "total_tokens": 6718
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 4,
+          "visible_records": 6,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      }
+    ]
+  },
+  {
+    "scenario": "baseline",
+    "iteration": 2,
+    "idea": "We want to streamline how retail campaign audiences are signed off before launch.",
+    "model": "deepseek/deepseek-v4.1-flash:nitro",
+    "provider": "Together",
+    "access": {
+      "post_status": 303,
+      "view_status": 200,
+      "reload_identical": true,
+      "restricted_source_status": 404,
+      "restricted_directory_status": 404,
+      "uncited_visible_status": null,
+      "visible_leak_marker": false,
+      "restricted_context_blocked": false,
+      "peak_parallel_areas": 2
+    },
+    "source_statuses": {
+      "directory:jules-approval": 200,
+      "docs:campaign-review-2023": 200,
+      "github:campaign-scheduler-76": 200,
+      "jira:MKT-482": 200,
+      "jira:MKT-483": 200,
+      "slack:mention-55": 200,
+      "slack:retail-814": 200
+    },
+    "calls": {
+      "impact": 1,
+      "area": 5,
+      "priority": 1
+    },
+    "transport": {
+      "finish_reasons": {
+        "stop": 7
+      },
+      "usage_totals": {
+        "prompt_tokens": 9342,
+        "completion_tokens": 31923,
+        "total_tokens": 41265
+      }
+    },
+    "areas": [
+      {
+        "id": "growth",
+        "label": "Growth Marketing",
+        "consultation_need": "What audience segmentation choices and campaign goals should be understood when deciding whether a retail campaign audience is ready for launch?",
+        "search_intents": [
+          {
+            "keyword": "retail campaign audience segmentation",
+            "semantic": "How retail campaign audiences are defined and segmented for launch review"
+          },
+          {
+            "keyword": "marketing campaign sign-off criteria",
+            "semantic": "Criteria used to review campaign audiences before launch"
+          },
+          {
+            "keyword": "audience targeting strategy review",
+            "semantic": "Strategic considerations for approving retail campaign targeting"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "growth",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "docs:campaign-review-2023",
+          "jira:MKT-483",
+          "slack:retail-814",
+          "docs:wallet-loyalty",
+          "github:campaign-scheduler-76"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya",
+          "jules",
+          "marcus"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "elena",
+            "role": "direct_contact",
+            "relevance": "direct",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "confidence": "high",
+            "ask": "What audience segmentation choices and campaign goals does the retail campaign audience approval checklist require before a launch can be signed off?"
+          },
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "relevance": "direct",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "slack:retail-814"
+            ],
+            "confidence": "high",
+            "ask": "When finalizing the retail campaign audience approval checklist, which audience segmentation or campaign-goal checks most often determine launch readiness?"
+          },
+          {
+            "person_id": "jules",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "directory:jules-approval",
+            "evidence_ids": [
+              "directory:jules-approval"
+            ],
+            "confidence": "medium",
+            "ask": "What does reviewing campaign launch approvals cover when determining whether a retail campaign is ready for launch?"
+          },
+          {
+            "person_id": "marcus",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "directory:growth-remit",
+            "evidence_ids": [
+              "directory:growth-remit"
+            ],
+            "confidence": "medium",
+            "ask": "How does the growth team’s campaign planning and launch approval review shape the campaign goals used to judge whether a retail campaign is ready to proceed?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "slack:retail-814"
+            ],
+            "ask": "When finalizing the retail campaign audience approval checklist, which audience segmentation or campaign-goal checks most often determine launch readiness?"
+          },
+          {
+            "person_id": "jules",
+            "role": "advisor",
+            "evidence_ids": [
+              "directory:jules-approval"
+            ],
+            "ask": "What does reviewing campaign launch approvals cover when determining whether a retail campaign is ready for launch?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1437,
+          "completion_tokens": 4392,
+          "total_tokens": 5829
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 5,
+          "visible_records": 6,
+          "candidates": 7
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "commerce",
+        "label": "Commerce Operations",
+        "consultation_need": "What operational dependencies or launch-readiness considerations would affect how retail campaign audiences are prepared and activated?",
+        "search_intents": [
+          {
+            "keyword": "retail campaign launch operations",
+            "semantic": "Operational steps involved in launching retail campaigns with defined audiences"
+          },
+          {
+            "keyword": "audience activation workflow",
+            "semantic": "How campaign audiences are activated in retail operations"
+          },
+          {
+            "keyword": "campaign readiness checklist",
+            "semantic": "Readiness checks that may be relevant before a retail campaign launch"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "commerce",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "docs:campaign-review-2023",
+          "jira:MKT-483",
+          "slack:retail-814",
+          "docs:wallet-loyalty",
+          "github:campaign-scheduler-76",
+          "jira:old-employee",
+          "slack:mention-55"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "relevance": "direct",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "slack:retail-814"
+            ],
+            "confidence": "high",
+            "ask": "As assignee for the retail campaign audience approval checklist, what operational dependencies or launch-readiness considerations affected how the audience was prepared and activated before launch?"
+          },
+          {
+            "person_id": "elena",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "jira:MKT-483",
+              "slack:mention-55"
+            ],
+            "confidence": "medium",
+            "ask": "You reported the retail campaign audience approval checklist before launch—what operational dependencies or readiness checks did it need to cover for audience preparation and activation?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "slack:retail-814"
+            ],
+            "ask": "As assignee for the retail campaign audience approval checklist, what operational dependencies or launch-readiness considerations affected how the audience was prepared and activated before launch?"
+          },
+          {
+            "person_id": "elena",
+            "role": "advisor",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "jira:MKT-483",
+              "slack:mention-55"
+            ],
+            "ask": "You reported the retail campaign audience approval checklist before launch—what operational dependencies or readiness checks did it need to cover for audience preparation and activation?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1272,
+          "completion_tokens": 5485,
+          "total_tokens": 6757
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 8,
+          "qdrant": 5,
+          "visible_records": 8,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "brand",
+        "label": "Brand Review",
+        "consultation_need": "What brand alignment or reputational concerns should be considered when reviewing retail campaign audiences before launch?",
+        "search_intents": [
+          {
+            "keyword": "brand suitability audience targeting",
+            "semantic": "How audience choices affect brand suitability in retail campaigns"
+          },
+          {
+            "keyword": "campaign audience brand risk",
+            "semantic": "Brand risks associated with campaign audience selection"
+          },
+          {
+            "keyword": "retail brand review criteria",
+            "semantic": "Brand review considerations for retail campaign materials and audiences"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "brand",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "slack:retail-814",
+          "jira:MKT-483",
+          "docs:campaign-review-2023",
+          "docs:wallet-loyalty",
+          "github:campaign-scheduler-76"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "nina",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "confidence": "medium",
+            "ask": "What does the retail campaign audience approval checklist require before launch, and which audience criteria are escalated for further review?"
+          },
+          {
+            "person_id": "elena",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "confidence": "medium",
+            "ask": "What prompted the need to finalize the retail campaign audience approval checklist, and how is that checklist used in the pre-launch sign-off?"
+          },
+          {
+            "person_id": "priya",
+            "role": "advisor",
+            "relevance": "weak",
+            "primary_evidence_id": "docs:campaign-review-2023",
+            "evidence_ids": [
+              "docs:campaign-review-2023"
+            ],
+            "confidence": "low",
+            "ask": "What did the prior retail campaign review and approval process cover, and what approval steps were used?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "elena",
+            "role": "advisor",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "ask": "What prompted the need to finalize the retail campaign audience approval checklist, and how is that checklist used in the pre-launch sign-off?"
+          },
+          {
+            "person_id": "nina",
+            "role": "advisor",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "ask": "What does the retail campaign audience approval checklist require before launch, and which audience criteria are escalated for further review?"
+          },
+          {
+            "person_id": "priya",
+            "role": "advisor",
+            "evidence_ids": [
+              "docs:campaign-review-2023"
+            ],
+            "ask": "What did the prior retail campaign review and approval process cover, and what approval steps were used?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1214,
+          "completion_tokens": 5785,
+          "total_tokens": 6999
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 4,
+          "visible_records": 6,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "platform",
+        "label": "Campaign Platform",
+        "consultation_need": "What platform constraints would matter if retail campaign audience sign-off were implemented in campaign tooling?",
+        "search_intents": [
+          {
+            "keyword": "campaign audience management platform",
+            "semantic": "Platform capabilities for managing retail campaign audiences"
+          },
+          {
+            "keyword": "approval workflow tooling constraints",
+            "semantic": "Tooling constraints that could affect audience review workflows"
+          },
+          {
+            "keyword": "audience versioning and permissions",
+            "semantic": "How audience versions and platform permissions could affect sign-off"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "platform",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "docs:campaign-review-2023",
+          "jira:MKT-483",
+          "slack:retail-814",
+          "github:campaign-scheduler-76",
+          "slack:mention-55",
+          "docs:wallet-loyalty"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "owen",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "github:campaign-scheduler-76",
+            "evidence_ids": [
+              "github:campaign-scheduler-76"
+            ],
+            "confidence": "medium",
+            "ask": "What platform API integration constraints did you encounter when updating the campaign scheduler integration?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "owen",
+            "role": "advisor",
+            "evidence_ids": [
+              "github:campaign-scheduler-76"
+            ],
+            "ask": "What platform API integration constraints did you encounter when updating the campaign scheduler integration?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1279,
+          "completion_tokens": 7652,
+          "total_tokens": 8931
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 7,
+          "qdrant": 4,
+          "visible_records": 7,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "security",
+        "label": "Security Review",
+        "consultation_need": "What data protection or access-control considerations would apply to sharing, reviewing, and approving retail campaign audience segments?",
+        "search_intents": [
+          {
+            "keyword": "audience data access control",
+            "semantic": "Security controls around campaign audience data access"
+          },
+          {
+            "keyword": "customer segment privacy review",
+            "semantic": "Privacy considerations for customer segments used in campaigns"
+          },
+          {
+            "keyword": "campaign audience data security",
+            "semantic": "Security review topics related to campaign audience data"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "security",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "jira:MKT-483",
+          "slack:retail-814",
+          "github:campaign-scheduler-76",
+          "docs:campaign-review-2023",
+          "docs:wallet-loyalty"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "nina",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "confidence": "medium",
+            "ask": "In finalizing the retail campaign audience approval checklist, what access-control or data-protection considerations are currently included before launch?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "nina",
+            "role": "advisor",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "ask": "In finalizing the retail campaign audience approval checklist, what access-control or data-protection considerations are currently included before launch?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1217,
+          "completion_tokens": 3201,
+          "total_tokens": 4418
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 4,
+          "visible_records": 6,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "legal_privacy_compliance",
+        "label": "Legal, Privacy, and Compliance",
+        "consultation_need": "What legal, privacy, or consent requirements should be understood when retail campaign audiences are reviewed before launch?",
+        "search_intents": [
+          {
+            "keyword": "marketing audience consent compliance",
+            "semantic": "Consent and compliance requirements for using retail campaign audiences"
+          },
+          {
+            "keyword": "retail campaign privacy review",
+            "semantic": "Privacy review considerations for retail campaign audience data"
+          },
+          {
+            "keyword": "audience data legal requirements",
+            "semantic": "Legal requirements affecting campaign audience use and review"
+          }
+        ],
+        "mapping": "mapping_unresolved",
+        "org_unit_id": null,
+        "status": "mapping_unresolved",
+        "retrieved_ids": [],
+        "candidate_ids": [],
+        "model_proposals": [],
+        "accepted_people": [],
+        "finish_reason": null,
+        "usage": null,
+        "error_type": null,
+        "retrieval": {
+          "bm25": 0,
+          "qdrant": 0,
+          "visible_records": 0,
+          "candidates": 0
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      }
+    ]
+  },
+  {
+    "scenario": "privacy",
+    "iteration": 2,
+    "idea": "We want to identify privacy review requirements for retail campaign audiences.",
+    "model": "deepseek/deepseek-v4.1-flash:nitro",
+    "provider": "Together",
+    "access": {
+      "post_status": 303,
+      "view_status": 200,
+      "reload_identical": true,
+      "restricted_source_status": 404,
+      "restricted_directory_status": 404,
+      "uncited_visible_status": 404,
+      "visible_leak_marker": false,
+      "restricted_context_blocked": false,
+      "peak_parallel_areas": 2
+    },
+    "source_statuses": {
+      "github:campaign-scheduler-76": 200,
+      "jira:MKT-482": 200,
+      "slack:retail-814": 200
+    },
+    "calls": {
+      "impact": 1,
+      "area": 4,
+      "priority": 1
+    },
+    "transport": {
+      "finish_reasons": {
+        "stop": 6
+      },
+      "usage_totals": {
+        "prompt_tokens": 7245,
+        "completion_tokens": 21612,
+        "total_tokens": 28857
+      }
+    },
+    "areas": [
+      {
+        "id": "privacy_legal_review",
+        "label": "Privacy/Legal/Compliance Review",
+        "consultation_need": "What legal or privacy review criteria, consent bases, and jurisdictional restrictions would determine whether retail campaign audiences can be used?",
+        "search_intents": [
+          {
+            "keyword": "privacy review retail campaign audiences",
+            "semantic": "legal criteria for using retail customer audiences in campaigns"
+          },
+          {
+            "keyword": "consent purpose limitation retail marketing",
+            "semantic": "consent and purpose limitation requirements for retail campaign data"
+          },
+          {
+            "keyword": "privacy jurisdiction retail audience data",
+            "semantic": "jurisdiction-specific restrictions on retail audience segmentation"
+          }
+        ],
+        "mapping": "mapping_unresolved",
+        "org_unit_id": null,
+        "status": "mapping_unresolved",
+        "retrieved_ids": [],
+        "candidate_ids": [],
+        "model_proposals": [],
+        "accepted_people": [],
+        "finish_reason": null,
+        "usage": null,
+        "error_type": null,
+        "retrieval": {
+          "bm25": 0,
+          "qdrant": 0,
+          "visible_records": 0,
+          "candidates": 0
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "security_review",
+        "label": "Security Review",
+        "consultation_need": "What privacy-related security controls, access limits, or re-identification safeguards would matter for retail campaign audience data?",
+        "search_intents": [
+          {
+            "keyword": "campaign audience data access controls",
+            "semantic": "security controls for retail campaign audience data"
+          },
+          {
+            "keyword": "re-identification risk retail segments",
+            "semantic": "re-identification and de-anonymization risks in retail audience segmentation"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "security",
+        "status": "not_found",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "slack:retail-814",
+          "docs:campaign-review-2023",
+          "jira:MKT-483",
+          "docs:wallet-loyalty",
+          "github:campaign-scheduler-76"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [],
+        "accepted_people": [],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1208,
+          "completion_tokens": 2314,
+          "total_tokens": 3522
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 3,
+          "visible_records": 6,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "campaign_platform",
+        "label": "Campaign Platform",
+        "consultation_need": "What platform constraints would affect consent, suppression, retention, or audience segmentation if privacy requirements were applied in campaign tooling?",
+        "search_intents": [
+          {
+            "keyword": "campaign platform consent suppression",
+            "semantic": "platform support for consent and suppression in campaign audiences"
+          },
+          {
+            "keyword": "audience retention campaign tooling",
+            "semantic": "data retention and deletion constraints for campaign audience data"
+          },
+          {
+            "keyword": "retail audience segmentation platform",
+            "semantic": "platform limitations for privacy-aware retail audience segmentation"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "platform",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "jira:MKT-483",
+          "github:campaign-scheduler-76",
+          "docs:campaign-review-2023",
+          "slack:retail-814",
+          "docs:wallet-loyalty"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "owen",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "github:campaign-scheduler-76",
+            "evidence_ids": [
+              "github:campaign-scheduler-76"
+            ],
+            "confidence": "medium",
+            "ask": "What platform API integration constraints did you encounter when updating the campaign scheduler, and how do they affect how campaign audiences are configured or updated?"
+          },
+          {
+            "person_id": "nina",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "slack:retail-814"
+            ],
+            "confidence": "medium",
+            "ask": "What does the retail campaign audience approval checklist require for audience data handling before launch?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "nina",
+            "role": "advisor",
+            "evidence_ids": [
+              "jira:MKT-482",
+              "slack:retail-814"
+            ],
+            "ask": "What does the retail campaign audience approval checklist require for audience data handling before launch?"
+          },
+          {
+            "person_id": "owen",
+            "role": "advisor",
+            "evidence_ids": [
+              "github:campaign-scheduler-76"
+            ],
+            "ask": "What platform API integration constraints did you encounter when updating the campaign scheduler, and how do they affect how campaign audiences are configured or updated?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1235,
+          "completion_tokens": 5257,
+          "total_tokens": 6492
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 2,
+          "visible_records": 6,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "growth_marketing",
+        "label": "Growth Marketing",
+        "consultation_need": "What targeting and consent considerations would campaign teams need to account for when defining retail audience segments?",
+        "search_intents": [
+          {
+            "keyword": "retail campaign targeting consent",
+            "semantic": "consent considerations for retail campaign audience targeting"
+          },
+          {
+            "keyword": "audience segmentation marketing privacy",
+            "semantic": "privacy implications of marketing audience segmentation"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "growth",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "docs:campaign-review-2023",
+          "slack:retail-814",
+          "jira:MKT-483",
+          "docs:wallet-loyalty",
+          "github:campaign-scheduler-76"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya",
+          "jules",
+          "marcus"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "relevance": "direct",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "confidence": "high",
+            "ask": "When finalizing the retail campaign audience approval checklist before launch, what targeting and consent considerations should campaign teams account for when defining retail audience segments?"
+          },
+          {
+            "person_id": "elena",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "confidence": "medium",
+            "ask": "As reporter on the retail campaign audience approval checklist, what targeting or consent inputs did you surface for reviewing the retail audience segment before launch?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "nina",
+            "role": "direct_contact",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "ask": "When finalizing the retail campaign audience approval checklist before launch, what targeting and consent considerations should campaign teams account for when defining retail audience segments?"
+          },
+          {
+            "person_id": "elena",
+            "role": "advisor",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "ask": "As reporter on the retail campaign audience approval checklist, what targeting or consent inputs did you surface for reviewing the retail audience segment before launch?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1410,
+          "completion_tokens": 5307,
+          "total_tokens": 6717
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 3,
+          "visible_records": 6,
+          "candidates": 7
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      },
+      {
+        "id": "commerce_operations",
+        "label": "Commerce Operations",
+        "consultation_need": "What retail customer data sources, transaction or loyalty attributes, or segmentation practices would need privacy review before campaign use?",
+        "search_intents": [
+          {
+            "keyword": "retail customer data campaign use",
+            "semantic": "privacy review of retail customer data used for campaigns"
+          },
+          {
+            "keyword": "loyalty transaction audience privacy",
+            "semantic": "privacy considerations for loyalty and transaction-derived audiences"
+          }
+        ],
+        "mapping": "mapped",
+        "org_unit_id": "commerce",
+        "status": "people",
+        "retrieved_ids": [
+          "jira:MKT-482",
+          "docs:wallet-loyalty",
+          "docs:campaign-review-2023",
+          "slack:retail-814",
+          "jira:MKT-483",
+          "github:campaign-scheduler-76"
+        ],
+        "candidate_ids": [
+          "owen",
+          "elena",
+          "nina",
+          "tara",
+          "priya"
+        ],
+        "model_proposals": [
+          {
+            "person_id": "nina",
+            "role": "advisor",
+            "relevance": "adjacent",
+            "primary_evidence_id": "jira:MKT-482",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "confidence": "medium",
+            "ask": "What does the retail campaign audience approval checklist before launch cover?"
+          }
+        ],
+        "accepted_people": [
+          {
+            "person_id": "nina",
+            "role": "advisor",
+            "evidence_ids": [
+              "jira:MKT-482"
+            ],
+            "ask": "What does the retail campaign audience approval checklist before launch cover?"
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1211,
+          "completion_tokens": 4758,
+          "total_tokens": 5969
+        },
+        "error_type": null,
+        "retrieval": {
+          "bm25": 6,
+          "qdrant": 5,
+          "visible_records": 6,
+          "candidates": 5
+        },
+        "adjudication": {
+          "area_need_supported": null,
+          "cases": []
+        }
+      }
+    ]
+  }
+]

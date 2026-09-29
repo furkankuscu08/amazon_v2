@@ -26,9 +26,10 @@ a{color:#22549b}small{color:#555}ul{padding-left:1.4rem}
 {% endif %}
 {% if area.direct_review_incomplete %}<p class="warning">The direct-contact review could not be completed; remaining verified people are shown without a manager fallback.</p>{% endif %}
 {% if area.no_visible_work_trace and area.mapping == 'mapped' %}<p><small>No relevant accessible work trace was found in this search; other evidence may still exist.</small></p>{% endif %}
-{% for person in area.people %}<section class="person"><h3>{{ person.name }} <span class="badge">{{ person.role.replace('_', ' ') }}</span></h3>
-<strong>Why this person?</strong><ul>{% for fact in person.why %}<li>{{ fact }}</li>{% endfor %}</ul>
-<p><strong>Ask them:</strong> {{ person.ask }}</p><p><strong>Not established:</strong> {{ person.unverified }}</p>
+{% for person in area.people %}<section class="person"><h3>{{ person.name }} <span class="badge">Proposed {{ person.role.replace('_', ' ') }}</span></h3>
+{% if person.primary_evidence_id %}<p><strong>Primary cited source:</strong> <a href="/sessions/{{ session.id }}/sources/{{ person.primary_evidence_id | urlencode }}">{{ person.primary_evidence_id }}</a></p>{% endif %}
+<strong>Visible source and connection:</strong><ul>{% for fact in person.why %}<li>{{ fact }}</li>{% endfor %}</ul>
+<p><strong>Ask to check the connection:</strong> {{ person.ask }}</p><p><strong>Not established:</strong> {{ person.unverified }}</p>
 <details><summary>Source IDs and dates</summary><ul>{% for source_id in person.evidence_ids %}<li><a href="/sessions/{{ session.id }}/sources/{{ source_id | urlencode }}">{{ source_id }}</a></li>{% endfor %}</ul></details></section>{% endfor %}
 </article>{% endfor %}
 <p><small>All shown people were proposed by the model and checked against this synthetic directory. Workbot sends no messages or invitations. Reloading does not call the model again.</small></p>

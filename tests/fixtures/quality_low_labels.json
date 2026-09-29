@@ -1,0 +1,104 @@
+{
+  "provenance": {
+    "reviewer": "assistant",
+    "reviewed_on": "2026-09-30",
+    "previous_reviewed_on": "2026-09-27",
+    "status": "assistant re-review of the low-reasoning runs under the user-approved advisor rubric; not per-case user adjudication or ground truth",
+    "review_method": "A read-only subagent reviewed this partition from source facts and captured observations without seeing prior labels; the main assistant reconciled the recommendations with the sources. A separate subagent reviewed the historical high-reasoning partition. Subagent participation is not independent human validation.",
+    "rubric": "Judge each generated consultation need independently; do not transfer roles or question labels from the high-reasoning runs. Direct requires personal work or current responsibility on this specific need. An advisor may explain a related real process/work item to help understand the need or approach the appropriate practitioner; area expertise is not required, but an explainable source-to-need bridge is. Titles, mentions, and manager/remit-only ties do not establish advisor expertise; routing retains its separate evidence requirements. Judge contact usefulness, direct support, and question premises independently of question format. Open conditional inquiries do not assert that a control or requirement exists; questions assuming undocumented contents, duties, or findings are unsupported. Impact hypotheses are not false merely because they are absent from the idea or work sources. Card questions are the captured neutral replacements, scored independently of the model-generated asks. Null leaves uncertain dimensions unscored."
+  },
+  "areas": {
+    "integration#1/downstream-reporting-and-analytics": {
+      "area_need_supported": true,
+      "need_note": "A conditional inquiry about reporting effects of scheduler/API data or timing changes is plausible; it does not assert that a reporting integration exists.",
+      "cases": {}
+    },
+    "integration#1/growth-campaign-operations": {"area_need_supported": true, "cases": {}},
+    "integration#1/brand-review-dependencies": {
+      "area_need_supported": null,
+      "need_note": "A conditional brand-review timing inquiry is plausible, but naming campaign launch signals from the platform API may presuppose an undocumented mechanism. Reviewers differ on hypothesis versus assertion, so leave this need undecided.",
+      "cases": {
+        "owen": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["github:campaign-scheduler-76"], "model_ask_premise_supported": false, "card_ask_premise_supported": true, "why": "Author of the exact integration being changed can explain that work's scope to help assess possible review timing effects; no brand expertise or launch-signal mechanism is established. The original ask nevertheless asserts that the API currently passes launch signals."},
+        "priya": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["docs:campaign-review-2023"], "model_ask_premise_supported": null, "card_ask_premise_supported": true, "why": "Prior review-process author can explain its scope and whether it had review dependencies, providing context for the timing inquiry. The original ask's generic checks are plausible, but its assumed timing dependencies and launch-signal sensitivity remain debatable; do not force the premise label."}
+      }
+    },
+    "integration#1/security-and-access-control": {
+      "area_need_supported": true,
+      "cases": {
+        "owen": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["github:campaign-scheduler-76"], "model_ask_premise_supported": false, "card_ask_premise_supported": true, "why": "Integration author can clarify API work, but the record documents no authentication or secret-handling work already performed."}
+      }
+    },
+    "integration#1/campaign-platform-api-integration": {
+      "area_need_supported": true,
+      "cases": {
+        "owen": {"expected_visible": true, "expected_direct": true, "expected_role": "direct_contact", "expected_primary_evidence_ids": ["github:campaign-scheduler-76"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Authored an update to this exact integration; forward-looking question does not assert the listed constraints already exist."},
+        "nina": {"expected_visible": false, "expected_direct": false, "why": "Audience approval checklist task is unrelated to the platform API integration."}
+      }
+    },
+    "historical#1/legal_compliance": {
+      "area_need_supported": true,
+      "need_note": "The need explicitly conditions legal/compliance re-evaluation on possible differences in promotions, claims, or markets; absence from work sources does not falsify this impact hypothesis.",
+      "cases": {}
+    },
+    "historical#1/growth": {"area_need_supported": true, "cases": {}},
+    "historical#1/brand": {
+      "area_need_supported": null,
+      "need_note": "Brand revalidation is plausible, but the wording presupposes prior brand criteria that are not documented. Leave hypothesis versus existing-criteria assertion undecided rather than equating missing source detail with a false area.",
+      "cases": {
+        "priya": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["docs:campaign-review-2023"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Author can explain the historical process and help scope revalidation; the primary record does not establish brand-specific work. Unlike the area need, the original ask is a forward-looking generic process-criteria question, not a claim that particular brand checks existed."},
+        "tara": {"expected_visible": false, "expected_direct": false, "why": "Wallet loyalty promotion is not the former retail review process."}
+      }
+    },
+    "historical#1/finance": {
+      "area_need_supported": true,
+      "need_note": "Financial review considerations that might differ across launches are a plausible conditional consultation hypothesis, not a claim that the prior process had budget approval.",
+      "cases": {
+        "priya": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["docs:campaign-review-2023"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "The prior-process author can explain whether financial review was within that process's scope, helping approach the relevant reviewer without claiming finance expertise. The original 'if at all' question does not assert budget approval existed."}
+      }
+    },
+    "historical#1/platform": {
+      "area_need_supported": true,
+      "need_note": "The need explicitly conditions platform questions on possible reuse/adaptation; it does not assert that the old process was implemented in tooling.",
+      "cases": {
+        "owen": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["github:campaign-scheduler-76"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "The scheduler/platform API integration author can explain that actual integration as background for possible workflow adaptation; no old-process tooling ownership is claimed. The original ask explores API/configuration constraints without naming a specific existing control."}
+      }
+    },
+    "historical#1/commerce": {
+      "area_need_supported": true,
+      "cases": {
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["slack:retail-814"], "model_ask_premise_supported": false, "card_ask_premise_supported": true, "why": "Current launch-review coordinator can discuss present workflow, not identify proven former operational assumptions or already-discovered differences."},
+        "priya": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["docs:campaign-review-2023"], "model_ask_premise_supported": null, "card_ask_premise_supported": true, "why": "The historical author can explain the former process to help scope operational comparison, without proving direct retail-execution work. Reviewers differ on whether the original 'do you think may' inquiry is an open assessment of that process or presupposes undocumented operational assumptions; leave the premise undecided."}
+      }
+    },
+    "privacy#1/privacy_legal_compliance": {"area_need_supported": true, "cases": {}},
+    "privacy#1/security_review": {
+      "area_need_supported": true,
+      "cases": {
+        "elena": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "The checklist reporter can clarify the reported task's scope and whether privacy/security review enters audience approval, helping scope the review without claiming specialist duty. The original 'does it include' question is open."},
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482", "slack:retail-814"], "model_ask_premise_supported": false, "card_ask_premise_supported": true, "why": "Checklist assignee and launch-review coordinator can explain the real approval process to help locate privacy/security review touchpoints. This usefulness does not support the original ask's assertion that data-protection checks are already part of the review."},
+        "owen": {"expected_visible": null, "expected_direct": false, "why": "Reviewers differ on whether explaining the scheduler/API integration can help scope audience-data security; the source does not connect it to audience data. Leave usefulness undecided, without claiming specialist work or a known data-flow bridge."}
+      }
+    },
+    "privacy#1/campaign_platform": {
+      "area_need_supported": true,
+      "cases": {
+        "owen": {"expected_visible": null, "expected_direct": false, "model_ask_premise_supported": false, "card_ask_premise_supported": true, "why": "API integration work is real, but the record does not connect it to audience segmentation, activation, or audit; usefulness here is uncertain."}
+      }
+    },
+    "privacy#1/commerce_operations": {
+      "area_need_supported": true,
+      "cases": {
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "card_ask_premise_supported": true, "why": "The audience-checklist assignee can explain that approval work's scope to help understand where privacy questions arise. The primary source does not evidence Commerce data-source work, so the model/card direct claim remains unsupported; the original ask also assumes data sources or audience definitions are in the checklist."},
+        "elena": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "card_ask_premise_supported": true, "why": "The checklist reporter can clarify the audience-approval task and why it was raised, helping scope operational privacy questions without claiming expertise. The original ask assumes undocumented operational constraints or audience definitions the checklist needed to cover."}
+      }
+    },
+    "privacy#1/growth_marketing": {
+      "area_need_supported": true,
+      "cases": {
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "card_ask_premise_supported": true, "why": "Audience checklist assignee can clarify the work, not undocumented selection, targeting, or measurement criteria."},
+        "elena": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-483"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Assignee of a campaign performance report and metrics task can describe that report; no particular metrics are asserted."},
+        "marcus": {"expected_visible": true, "expected_direct": false, "expected_role": "routing_contact", "expected_primary_evidence_ids": ["directory:growth-remit"], "model_ask_premise_supported": null, "card_ask_premise_supported": true, "why": "Current manager plus visible remit can route to a practitioner, without establishing privacy expertise or a known owner. Reviewers differ on whether the original 'who owns' inquiry asserts a Growth privacy owner or asks to find one; leave the premise undecided."}
+      }
+    }
+  }
+}

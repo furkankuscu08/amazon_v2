@@ -1,0 +1,198 @@
+{
+  "provenance": {
+    "reviewer": "assistant",
+    "reviewed_on": "2026-09-30",
+    "previous_reviewed_on": "2026-09-27",
+    "status": "assistant re-review under the user-approved advisor rubric; not per-case user adjudication or ground truth",
+    "review_method": "A read-only subagent reviewed this partition from source facts and captured observations without seeing prior labels; the main assistant reconciled the recommendations with the sources. A separate subagent reviewed the low-reasoning partition. Subagent participation is not independent human validation.",
+    "rubric": "Direct requires personal work or current responsibility on this run's generated consultation need. An advisor may explain a related real process/work item to help understand the need or approach the appropriate practitioner; area expertise is not required, but an explainable source-to-need bridge is. Titles, mentions, and manager/remit-only ties do not establish advisor expertise; routing retains its separate evidence requirements. Judge contact usefulness, direct support, and original question premises independently of question format. Open conditional inquiries do not assert that a control or requirement exists; questions assuming undocumented contents, duties, or findings are unsupported. Impact hypotheses are not false merely because they are absent from the idea or work sources. Null preserves uncertainty; false means reviewed and rejected. Card-ask labels describe the original captured cards, not today's neutral questions."
+  },
+  "areas": {
+    "baseline#1/growth": {
+      "area_need_supported": true,
+      "cases": {
+        "elena": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "why": "Reporter can clarify the checklist task, not its undocumented segmentation or approval contents."},
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Checklist assignee can explain audience-approval work to help scope the sign-off discussion, but the primary source does not evidence segmentation or targeting decisions. The original 'would you need to surface' inquiry is forward-looking, not an assertion of particular checklist criteria."},
+        "jules": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["directory:jules-approval"], "model_ask_premise_supported": false, "card_ask_premise_supported": false, "why": "Current launch approval reviewer, but the duty does not establish audience-targeting checks."}
+      }
+    },
+    "baseline#1/commerce": {
+      "area_need_supported": true,
+      "cases": {
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Checklist assignee can clarify that work; no demonstrated Commerce operational dependency."},
+        "elena": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "card_ask_premise_supported": false, "why": "Reporter can clarify the task, but the record states no operational constraints she observed."}
+      }
+    },
+    "baseline#1/brand": {
+      "area_need_supported": true,
+      "cases": {
+        "priya": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["docs:campaign-review-2023"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Author of a former team's review process; whether it covered brand suitability is an open question."},
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "The audience-checklist assignee can explain its approval scope and whether Brand review enters it, helping approach the relevant reviewer without claiming brand expertise. The original 'does it include' question does not assert brand criteria exist."}
+      }
+    },
+    "baseline#1/platform": {
+      "area_need_supported": true,
+      "cases": {
+        "owen": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["github:campaign-scheduler-76"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Platform integration author can discuss that integration, not ownership of hypothetical sign-off tooling."},
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "card_ask_premise_supported": false, "why": "Checklist assignee could describe existing work, but the record does not reveal tooling gaps."}
+      }
+    },
+    "baseline#1/security": {
+      "area_need_supported": true,
+      "cases": {
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "why": "Checklist assignee can explain the real audience-approval work to help scope possible security/privacy review touchpoints; specialist duty is not required for this advisor contribution. The malformed name-only ask still prevents display and has no premise to score."},
+        "elena": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "why": "The checklist reporter can clarify the reported audience-approval task and help identify whether further review is needed, without claiming ownership or privacy expertise. The malformed name-only ask still prevents display and has no premise to score."}
+      }
+    },
+    "baseline#1/finance": {
+      "area_need_supported": null,
+      "need_note": "The financial inquiry is conditional ('if any'), not proof of an existing finance gate. Promotions, spend, and eligibility are outside the submitted idea, so this extra area's usefulness remains uncertain rather than automatically false.",
+      "cases": {
+        "tara": {"expected_visible": false, "expected_direct": false, "model_ask_premise_supported": false, "card_ask_premise_supported": false, "why": "Wallet loyalty promotion does not establish finance work, offer eligibility rules, or audience sign-off."}
+      }
+    },
+    "integration#1/platform-integration": {
+      "area_need_supported": true,
+      "cases": {
+        "owen": {"expected_visible": true, "expected_direct": true, "expected_role": "direct_contact", "expected_primary_evidence_ids": ["github:campaign-scheduler-76"], "model_ask_premise_supported": null, "card_ask_premise_supported": null, "why": "Authored the exact integration update, supporting direct consultation. Reviewers differ on whether asking which contract/scheduling/compatibility constraints he accounted for is an open explanation of his work or assumes those specific considerations occurred; leave the original premise undecided."},
+        "nina": {"expected_visible": false, "expected_direct": false, "why": "Audience checklist task is not scheduler-to-platform API integration work."}
+      }
+    },
+    "integration#1/security-review": {
+      "area_need_supported": true,
+      "cases": {
+        "owen": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["github:campaign-scheduler-76"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Integration author can explain the change so security can identify possible review points; no security duty is established."}
+      }
+    },
+    "integration#1/growth-marketing": {"area_need_supported": true, "cases": {}},
+    "integration#1/scheduler-requirements": {"area_need_supported": true, "cases": {}},
+    "historical#1/brand": {
+      "area_need_supported": true,
+      "cases": {
+        "priya": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["docs:campaign-review-2023"], "model_ask_premise_supported": false, "card_ask_premise_supported": false, "why": "Author of the former team's generic process; brand/creative checks and present-day authority are not established."},
+        "tara": {"expected_visible": false, "expected_direct": false, "why": "Wallet loyalty promotion is not the prior campaign review process."}
+      }
+    },
+    "historical#1/commerce": {
+      "area_need_supported": true,
+      "cases": {
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["slack:retail-814"], "why": "Current retail launch coordinator can clarify the current review, not Commerce operational suitability of the old process; model ask has no question premise to score."}
+      }
+    },
+    "historical#1/finance": {
+      "area_need_supported": true,
+      "need_note": "The need is a conditional inquiry about possible financial/promotional review considerations when comparing the old and current launch approaches; it does not assert a prior budget gate existed.",
+      "cases": {}
+    },
+    "historical#1/growth": {
+      "area_need_supported": true,
+      "cases": {
+        "elena": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "why": "Reporter can explain the current audience-approval task as context for the old/current comparison, not claim targeting work or checklist ownership. Her expired directory duty is not this proposal's primary and is not evidence of the prior team's 2023 process."},
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Current checklist assignee can describe that work, but not the previous team's process or growth/performance criteria."},
+        "priya": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["docs:campaign-review-2023"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Prior-process author can explain the process; source does not establish targeting or performance criteria."},
+        "jules": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["directory:jules-approval"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Current launch reviewer can explain the current duty, not prior-team growth decisions."}
+      }
+    },
+    "historical#1/platform": {"area_need_supported": true, "cases": {}},
+    "historical#1/security": {
+      "area_need_supported": true,
+      "cases": {
+        "priya": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["docs:campaign-review-2023"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Former process author can say whether it included any security checks, without implying such checks existed."}
+      }
+    },
+    "privacy#1/privacy_legal_review": {"area_need_supported": true, "cases": {}},
+    "privacy#1/security_review": {
+      "area_need_supported": true,
+      "cases": {
+        "elena": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "why": "The checklist reporter can clarify the real audience-approval task to help scope further privacy review. The original malformed ask falsely states she owns the checklist; advisor usefulness does not erase that premise or repair its format."},
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["slack:retail-814"], "model_ask_premise_supported": true, "why": "The primary Slack source establishes launch-review coordination with channel owners, useful for explaining the actual review process and approaching its participants. The original statement describes that coordination without claiming security duty; it is still malformed as an interview question."},
+        "owen": {"expected_visible": null, "expected_direct": false, "model_ask_premise_supported": false, "why": "Reviewers differ on whether explaining this integration helps scope audience-data security; no audience-data link is documented. Leave usefulness undecided. The original malformed ask's data-flow/access-boundary explanation is not established by the source."}
+      }
+    },
+    "privacy#1/campaign_platform": {
+      "area_need_supported": true,
+      "cases": {
+        "owen": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["github:campaign-scheduler-76"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Platform integration author can explain API constraints, not privacy controls or consent implementation."}
+      }
+    },
+    "privacy#1/growth_marketing": {
+      "area_need_supported": true,
+      "cases": {
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "card_ask_premise_supported": false, "why": "Checklist assignee can clarify the task; checklist contents and consent signals are not documented."},
+        "elena": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Reporter can explain why the audience checklist task was raised; not a consent reviewer."}
+      }
+    },
+    "privacy#1/commerce_operations": {
+      "area_need_supported": true,
+      "cases": {
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "card_ask_premise_supported": false, "why": "The audience-checklist assignee can explain the approval task's actual scope as a starting point for operational privacy consultation. Neither that contribution nor the strong assignee link establishes Commerce data-source work; the original ask also assumes privacy sign-off items exist."},
+        "elena": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "The reporter can explain why the audience-approval task was raised, helping scope the operational privacy discussion without claiming data-source expertise. Asking about reported approval items stays within that task rather than asserting privacy controls."}
+      }
+    },
+    "baseline#2/growth": {
+      "area_need_supported": true,
+      "cases": {
+        "elena": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "why": "Reporter link supports a narrow checklist question, not segmentation or goal criteria in it."},
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "card_ask_premise_supported": false, "why": "Checklist assignee is relevant to audience sign-off but no specific segmentation or campaign-goal checks are documented."},
+        "jules": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["directory:jules-approval"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Current campaign launch approval reviewer can explain the actual approval duty."},
+        "marcus": {"expected_visible": true, "expected_direct": false, "expected_role": "routing_contact", "expected_primary_evidence_ids": ["directory:growth-remit"], "model_ask_premise_supported": false, "why": "Current manager plus visible campaign-planning/approval remit can route to a practitioner because no area-specific direct contact is established in this pool. The original advisor proposal and campaign-goal premise are not justified by manager/remit alone; routing eligibility does not rescue that proposal."}
+      }
+    },
+    "baseline#2/commerce": {
+      "area_need_supported": true,
+      "cases": {
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "card_ask_premise_supported": false, "why": "Checklist assignee lacks demonstrated Commerce activation or operational dependency work."},
+        "elena": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "card_ask_premise_supported": false, "why": "The reporter can explain the audience-approval task and its intended pre-launch scope, providing process context for launch-readiness consultation. This usefulness does not establish the specific operational dependencies/readiness checks assumed in the original ask."}
+      }
+    },
+    "baseline#2/brand": {
+      "area_need_supported": true,
+      "cases": {
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "card_ask_premise_supported": false, "why": "The checklist assignee can explain the real audience-approval process to help scope Brand consultation, without claiming brand expertise. The original ask nevertheless assumes audience escalation criteria absent from the source."},
+        "elena": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": null, "card_ask_premise_supported": null, "why": "The reporter can explain why the pre-launch audience-approval task was raised, providing useful process context. The original ask's current-use wording is debatable because the source describes a task to finalize a checklist; leave that premise undecided."},
+        "priya": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["docs:campaign-review-2023"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "The former review-process author can explain that document's scope as context for current Brand review, without claiming current authority or specific brand criteria. The original generic prior-process question stays within that work."}
+      }
+    },
+    "baseline#2/platform": {
+      "area_need_supported": true,
+      "cases": {
+        "owen": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["github:campaign-scheduler-76"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Platform API integration author can advise on a real integration without claiming sign-off tooling ownership."}
+      }
+    },
+    "baseline#2/security": {
+      "area_need_supported": true,
+      "cases": {
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "card_ask_premise_supported": false, "why": "The audience-checklist assignee can clarify the real approval process to help scope possible security review. Specialist duty is not necessary for that advisor role, but the original ask still asserts access-control/data-protection considerations are currently included."}
+      }
+    },
+    "baseline#2/legal_privacy_compliance": {"area_need_supported": true, "cases": {}},
+    "privacy#2/privacy_legal_review": {"area_need_supported": true, "cases": {}},
+    "privacy#2/security_review": {
+      "area_need_supported": true,
+      "cases": {
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "why": "The audience-checklist assignee can explain the approval task's actual scope to help approach further privacy/security review. This is process context, not evidence of security controls or specialist duty; the model actually abstained in this area."},
+        "owen": {"expected_visible": null, "expected_direct": false, "why": "Reviewers differ on whether this scheduler/API work helps explain audience-data security safeguards; the source contains no audience-data link. Leave usefulness undecided rather than inferring expertise or a known access-control bridge."}
+      }
+    },
+    "privacy#2/campaign_platform": {
+      "area_need_supported": true,
+      "cases": {
+        "owen": {"expected_visible": null, "expected_direct": false, "model_ask_premise_supported": false, "card_ask_premise_supported": false, "why": "Explaining platform integration may be useful background, but its connection to the specific consent/suppression/retention/segmentation need is not documented; leave usefulness undecided. The original ask's effect on audience configuration is an unsupported premise independently of that uncertainty."},
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "card_ask_premise_supported": false, "why": "The audience-checklist assignee can explain the approval work's scope to help understand what might need implementation in tooling, without claiming technical or consent expertise. The original ask still assumes undocumented audience-data-handling requirements in the checklist."}
+      }
+    },
+    "privacy#2/growth_marketing": {
+      "area_need_supported": true,
+      "cases": {
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "Checklist assignee can be asked what considerations would matter, without asserting that consent criteria already exist."},
+        "elena": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": false, "card_ask_premise_supported": false, "why": "Reporter can clarify the checklist task, but no targeting or consent inputs she surfaced are recorded."}
+      }
+    },
+    "privacy#2/commerce_operations": {
+      "area_need_supported": true,
+      "cases": {
+        "nina": {"expected_visible": true, "expected_direct": false, "expected_role": "advisor", "expected_primary_evidence_ids": ["jira:MKT-482"], "model_ask_premise_supported": true, "card_ask_premise_supported": true, "why": "The checklist assignee can explain the audience-approval work's scope as a starting point for identifying further operational privacy consultation, without claiming transaction/loyalty-data expertise. The original generic coverage question names no existing privacy control or specific data source."}
+      }
+    }
+  }
+}
