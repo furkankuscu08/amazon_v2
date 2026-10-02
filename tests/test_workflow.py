@@ -1,11 +1,13 @@
 import json
+import logging
 from threading import Event, Lock
 
+import httpx
 import pytest
 from pydantic import ValidationError
 
 from workbot import service
-from workbot.llm import ModelError
+from workbot.llm import ModelError, OpenRouter
 from workbot.models import AreaEvaluation, Impact, Priority
 from workbot.search import candidate_pool
 from workbot.seed import seed_db
@@ -619,6 +621,117 @@ def test_area_model_error_is_incomplete_not_not_found(db):
     _, card = card_for(db, model)
     assert card["areas"][0]["status"] == "review_incomplete"
     assert card["areas"][0]["people"] == []
+
+
+@pytest.mark.parametrize("failed_task", [None, "impact", "area", "priority"])
+@pytest.mark.parametrize("failure_mode", ["truncated", "schema"])
+def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
+    db, monkeypatch, caplog, failed_task, failure_mode
+):
+    caplog.set_level(logging.INFO, logger="workbot.llm")
+    requests = []
+    priority_payloads = []
+
+    def handle(request):
+        body = json.loads(request.content)
+        task = body["response_format"]["json_schema"]["name"].removesuffix("_response")
+        payload = json.loads(body["messages"][1]["content"])
+        requests.append(task)
+        fails = task == failed_task
+        if task == "impact":
+            reply = impact(AREA, BRAND)
+        elif task == "area":
+            fails = fails and payload["area"]["id"] == "brand_review"
+            # A completed empty Brand review must remain not_found, unlike truncation.
+            reply = (
+                evaluation(proposal("nina", "direct_contact", ["jira:MKT-482"]))
+                if payload["area"]["id"] == "campaign_review"
+                else evaluation()
+            )
+        else:
+            priority_payloads.append(payload)
+            reply = priority("brand_review", "campaign_review")
+        return httpx.Response(
+            200,
+            json={
+                "usage": {
+                    "prompt_tokens": 12,
+                    "completion_tokens": 8192 if fails else 20,
+                    "completion_tokens_details": {"reasoning_tokens": 5},
+                },
+                "choices": [
+                    {
+                        "finish_reason": "length"
+                        if fails and failure_mode == "truncated"
+                        else "stop",
+                        "message": {
+                            "content": "{}"
+                            if fails and failure_mode == "schema"
+                            else reply.model_dump_json()
+                        },
+                    }
+                ],
+            },
+        )
+
+    client_class = httpx.Client
+    monkeypatch.setattr(
+        httpx,
+        "Client",
+        lambda **kwargs: client_class(transport=httpx.MockTransport(handle)),
+    )
+    sid, card = card_for(db, OpenRouter("test-only-key"))
+    summaries = [
+        json.loads(record.getMessage().removeprefix("model_call_summary "))
+        for record in caplog.records
+        if record.name == "workbot.llm"
+    ]
+    assert len(summaries) == len(requests)
+    category = "schema_invalid" if failure_mode == "schema" else "output_truncated"
+    assert sum(s["failure_category"] == category for s in summaries) == int(
+        failed_task is not None
+    )
+    for summary in summaries:
+        assert summary["validation_error_types"] == (
+            ["missing"] if summary["failure_category"] == "schema_invalid" else None
+        )
+    if failed_task == "impact":
+        assert load_session(db, sid)["state"] == "refusal"
+        assert card is None
+        assert requests == ["impact"]
+        return
+    assert card["calls"] == {"impact": 1, "area": 2, "priority": 1}
+    by_area = {area["id"]: area for area in card["areas"]}
+    assert by_area["campaign_review"]["status"] == "people"
+    assert by_area["campaign_review"]["people"][0]["person_id"] == "nina"
+    assert by_area["brand_review"]["status"] == (
+        "review_incomplete" if failed_task == "area" else "not_found"
+    )
+    assert card["priority_applied"] is (failed_task != "priority")
+    assert [area["id"] for area in card["areas"]] == (
+        ["campaign_review", "brand_review"]
+        if failed_task == "priority"
+        else ["brand_review", "campaign_review"]
+    )
+    assert valid_card(db, load_session(db, sid)) == card
+    for value in (
+        card,
+        priority_payloads,
+        json.loads(load_session(db, sid)["card_json"]),
+    ):
+        serialized = json.dumps(value)
+        for field in (
+            "failure_category",
+            "validation_error_types",
+            "http_status",
+            "finish_reason",
+            "prompt_tokens",
+            "completion_tokens",
+            "total_tokens",
+            "reasoning_tokens",
+            "model_call_summary",
+        ):
+            assert f'"{field}"' not in serialized
 
 
 def test_area_calls_overlap_but_are_audited_in_area_order(db):

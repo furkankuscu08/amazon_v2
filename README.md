@@ -84,7 +84,73 @@ docker compose --profile app run --rm app python -m workbot.seed
 
 Later opt-in tests of the same synthetic sentence found that the default provider routing sometimes returned malformed JSON or JSON that violated the local area-mapping rules despite a strict schema request. WorkBot now requires parameter-compatible routing to the tested `open-inference/fp4` endpoint, sets an explicit output token cap, and states the mapping null rules in the prompt; local validation still rejects invalid results. If that endpoint is unavailable, WorkBot fails closed rather than silently switching to an untested provider. After bounded parallel area calls, two live cards completed in ~107 s (five areas) and ~123 s (six areas); both used two concurrent area calls at peak, preserved restricted-source access checks, and reloaded without a new model call. Different area counts, providers, and model responses make these runs **illustrative, not a controlled speed or quality benchmark**. Area-specific semantic relevance and safe model-generated questions still need evaluation. Do not use confidential inputs; live calls consume your own API budget.
 
+### Model call diagnostics
+
+`workbot.llm` emits one best-effort `model_call_summary` JSON log event per supported model invocation: `INFO` for a locally validated response, `WARNING` for a failure. The event contains only task, outcome, failure category, allowlisted validation error types, monotonic duration, HTTP status, an allowlisted finish reason, and provider-reported prompt/completion/total/reasoning token counts. It does not contain prompts, answers, names, area/session/source IDs, model text, headers, API keys, exception messages, or tracebacks. Service logs still report separate workflow outcomes. No diagnostic metadata is stored in cards or passed to priority.
+
+To see successful events, enable `INFO` for the `workbot.llm` logger and allow it through your logging handlers. For example, in a Python launcher before starting the server:
+
+```python
+import logging
+import uvicorn
+
+logging.basicConfig(level=logging.WARNING)
+logging.getLogger("workbot.llm").setLevel(logging.INFO)
+uvicorn.run("workbot.main:app", host="127.0.0.1", port=8000)
+```
+
+If logging is already configured, adjust its handlers as well; Uvicorn's `--log-level` alone does not guarantee that the WorkBot logger emits `INFO`. Duration covers request preparation, HTTP, and local validation, not retrieval or the whole workflow. Logging/serialization failures are suppressed without changing the model result or error, so these events are not a guaranteed complete or persistent trace.
+
+Failures distinguish configuration, timeout, transport, HTTP, invalid provider response, token truncation, other incomplete responses, non-text responses, invalid model JSON, and schema violations. A schema-valid empty review is a successful model response, not a transport failure. Missing or invalid usage is `null`, not zero; genuine zero is retained. Only non-negative signed-64-bit integer counts are accepted, without coercion or recomputing totals. Reasoning usage comes only from `usage.completion_tokens_details.reasoning_tokens` when supplied; it is not proof of the requested reasoning setting's effect. Counts are independent provider observations, not an assumed decomposition of the completion budget. Error HTTP bodies are not parsed for usage.
+
+`validation_error_types` is a sorted, deduplicated list of fixed Pydantic codes on local validation failure: `json_invalid`, `missing`, `extra_forbidden`, `literal_error`, `string_type`, `string_too_short`, `string_too_long`, `string_pattern_mismatch`, `list_type`, `too_short`, `too_long`, `model_type`, and `value_error`. Unknown types become `other`; field paths, indices, messages, inputs, and validator context are never emitted. Its length is bounded by this vocabulary plus `other`, not by the number of errors. The field is `null` on success, other failure stages, or diagnostic extraction failure; if extraction fails, validation still raises the same safe `ModelError` with the generic `schema_invalid` category. These are error families, not exact field diagnoses: custom rules such as primary-citation consistency and unique people share `value_error`. The extension is offline-tested and does not recover the violated constraint from an earlier discarded response.
+
+This diagnostic change does not alter prompts, schemas, audit, retrieval, provider/model/reasoning/token/timeout settings, retries, or card states. It does not establish a fix for experimental token-cap failures or improved semantic quality. Old captures remain unchanged and do not gain missing reasoning details; a new live observation requires separate approval.
+
+A separately approved four-invocation synthetic area probe on 30 September recorded two schema-valid replies and one schema failure with reasoning-token details; the fourth result was lost when the test command reached its execution limit. The recorded replies did not end with `length`, but the fourth provider outcome and usage are unknown. This motivated the offline validation-type extension, not reasoning/token tuning. `httpx.Client(timeout=90)` sets network-operation timeouts, not a hard whole-call deadline. See [`docs/quality-evaluation.md`](docs/quality-evaluation.md) for the observation boundary and semantic limitations.
+
+### Single-area observation harness
+
+`scripts/area_probe.py` is a separate, opt-in synthetic test runner, not part of the web workflow. Each `run` command can make **at most one area invocation** with the unchanged shipped `OpenRouter` settings. It does not run impact, retrieval, or priority, start Qdrant, read the demo database, retry, resume, or choose a fallback provider. Implementation/tests do not authorize a live test: obtain separate approval for the context and call budget before using `--approve-live`. The flag is an operator confirmation, not identity/permission enforcement or a global cost cap.
+
+Prepare a single-context manifest **offline** using `prepare_manifest(payload, retrieved_ids)`. `payload` must have exactly `idea`, `answers`, the full current `Area` fields, and `candidates`; `retrieved_ids` must be the ordered captured visible work-record IDs. The helper uses a freshly seeded in-memory synthetic database and requires the supplied candidates, their order, and all evidence/name/title fields to exactly match the visible reconstructed pool. It pins hashes of the area prompt, LLM implementation, and requested area schema; stale manifests are refused, not silently refreshed. `synthetic: true` is a declaration, not automatic detection of real confidential text: keep ideas/answers synthetic and English. It supports the shipped seed fixtures only, not arbitrary real work records.
+
+For example, with an already prepared synthetic context file containing `payload` and `retrieved_ids`, run this in the configured Python environment; it makes no model call:
+
+```python
+import json
+from pathlib import Path
+from scripts.area_probe import prepare_manifest
+
+context = json.loads(Path("/tmp/opencode/probe-context.json").read_text())
+manifest = prepare_manifest(context["payload"], context["retrieved_ids"])
+with Path("/tmp/opencode/probe-manifest.json").open("x") as file:
+    json.dump(manifest, file, indent=2)
+```
+
+Only after separate live-call approval:
+
+```bash
+uv run --python 3.12 --no-project --with-requirements requirements.txt python -m scripts.area_probe run --manifest /tmp/opencode/probe-manifest.json --output /tmp/opencode/probe-observation-001 --approve-live
+```
+
+Use one standalone process per observation. In OpenCode, launch long approved observations with the shell tool's `background: true`; elsewhere use a job runner with an adequate lifetime. Do not place several calls under the earlier shared 420-second foreground deadline. This runner adds no hard total-call deadline and does not change HTTPX's network-operation timeout. Terminating the local process does not establish that provider work or billing stopped.
+
+The output directory must not already exist: an exclusive directory claim prevents concurrent duplicate starts, and an existing directory is never reused, even after a write/preflight failure. `manifest.json` is saved first, then `attempt.json` before invoking the model; `summary.json` is persisted directly from the allowlisted diagnostic event, before the model call returns. Schema-valid, visibility-checked outputs go into `response.json` **before** audit; `audit.json` is separate and `execution.json` marks normal completion, a caught `ModelError`, or best-effort keyboard interruption. JSON files use same-directory atomic replacement, file/directory flushes, and private file permissions. Persistence errors before invocation prevent a call; errors after invocation never cause a retry. A missing diagnostic cannot invalidate the model's return/error, but makes the observation incomplete; an available safe response is still saved before stopping. Abrupt termination or disk failure can still leave incomplete observations, so this is not a guaranteed complete provider trace.
+
+Only the fixed diagnostic contract is copied into `summary.json`; raw bodies, headers, secrets, exception messages/tracebacks, validation inputs/context, and error locations are not captured. Input manifests and validated response/audit files are separate visible **synthetic** observations and can contain synthetic people/source IDs; they are not production diagnostic logs or stored web sessions. Restricted/unknown candidate or citation IDs and known restricted synthetic text prevent response persistence. The runner temporarily isolates the WorkBot summary logger and restores its configuration; do not embed it in a running app or run multiple observations concurrently in the same process.
+
+Inspect artifacts **offline**, including while an observation is pending:
+
+```bash
+uv run --python 3.12 --no-project --with-requirements requirements.txt python -m scripts.area_probe inspect --output /tmp/opencode/probe-observation-001
+```
+
+`stage` reports the furthest artifact present, not process liveness or semantic quality; `execution_status` reports a separately saved terminal marker or `unknown`. A started invocation without a summary has unknown call/provider outcome, not timeout, truncation, or abstention, and conservatively consumes one approved invocation. The production logger may emit a failure summary from `finally` during interruption, so a failure event alone is not proof that the call returned `ModelError`: `inspect` confirms failure/category only with the caught-`ModelError` execution marker. An unconfirmed failure event remains unchanged in `summary.json`, but reported call outcome is `unknown`; any observed HTTP status/usage remains available. A success summary establishes local schema validation, not that response persistence or audit finished. Recorded transport/timeouts may also leave provider outcome unknown; an HTTP response is reported only when observed. `usage_available` means at least one provider count is present, not complete usage or cost. Exit code zero can include a properly recorded model failure; inspect `call_outcome`/`failure_category`. Do not rerun an interrupted context in a new directory without fresh approval, and count started invocations across directories against the approved experiment limit yourself. The runner neither reconstructs the lost fourth GLM result nor authorizes its replacement.
+
 ### Offline quality replay
+
+The dated [problem/root-cause analysis](docs/problem-analysis-20260930.md) separates contact/role/question semantics from schema, token-cap, and observation failures. A later three-invocation fixed-context GLM diagnostic retained two schema-valid outputs and one `length` failure with provider-reported 8,192 completion/8,192 reasoning tokens; the previous schema failure did not recur and its exact constraint is still unknown. These are narrow area-call/audit observations, not a full UI run, prompt comparison, proven fix, or general failure-rate estimate. App settings and historical captures remain unchanged; any proposed reasoning/prompt experiment needs new approval.
 
 Run `uv run --python 3.12 --no-project --with-requirements requirements.txt python -m scripts.quality_eval` to replay the sanitized 27 September synthetic card against a freshly seeded temporary SQLite database. This replay makes **no OpenRouter or Qdrant request** and does not change the running demo data. It compares captured retrieval IDs, candidates, model role proposals, and the deterministic audit against 17 curated area/person examples, including five user-adjudicated borderline cases. Three further user-approved synthetic ideas were each run live once and have separately recorded **target-area-only observations**; the offline tool validates those observations but cannot replay their missing full model/search context. See [`docs/quality-evaluation.md`](docs/quality-evaluation.md) for the rubric, results, and limitations. A handful of live cards does not establish general model reliability or stakeholder-discovery quality.
 

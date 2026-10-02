@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
+import time
 
 import httpx
 from pydantic import ValidationError
@@ -81,6 +83,77 @@ characters ending in '?' without URLs, email addresses, or source IDs. Do not
 invent new org mappings or facts.""",
 }
 SCHEMAS = {"impact": Impact, "area": AreaEvaluation, "priority": Priority}
+log = logging.getLogger(__name__)
+_FINISH_REASONS = {
+    "stop",
+    "length",
+    "content_filter",
+    "tool_calls",
+    "function_call",
+    "error",
+}
+_VALIDATION_ERROR_TYPES = {
+    "json_invalid",
+    "missing",
+    "extra_forbidden",
+    "literal_error",
+    "string_type",
+    "string_too_short",
+    "string_too_long",
+    "string_pattern_mismatch",
+    "list_type",
+    "too_short",
+    "too_long",
+    "model_type",
+    "value_error",
+}
+
+
+def _validation_error_types(exc: ValidationError) -> list[str] | None:
+    try:
+        types = set()
+        for error in exc.errors(
+            include_url=False, include_context=False, include_input=False
+        ):
+            error_type = error.get("type")
+            types.add(
+                error_type
+                if isinstance(error_type, str) and error_type in _VALIDATION_ERROR_TYPES
+                else "other"
+            )
+        # Only fixed codes, never locations, messages, inputs, or validator context.
+        return sorted(types) or ["other"]
+    except Exception:  # noqa: BLE001 — diagnostics must preserve the safe ModelError.
+        return None
+
+
+def _token_count(value: object) -> int | None:
+    # Provider metadata is untrusted; reject bools, coercions, and oversized values.
+    return value if type(value) is int and 0 <= value <= 2**63 - 1 else None
+
+
+def _usage_fields(usage: object) -> dict[str, int | None]:
+    if not isinstance(usage, dict):
+        usage = {}
+    details = usage.get("completion_tokens_details")
+    if not isinstance(details, dict):
+        details = {}
+    return {
+        **{
+            name: _token_count(usage.get(name))
+            for name in ("prompt_tokens", "completion_tokens", "total_tokens")
+        },
+        "reasoning_tokens": _token_count(details.get("reasoning_tokens")),
+    }
+
+
+def _log_call_summary(summary: dict, started: float) -> None:
+    try:
+        summary["duration_seconds"] = round(max(0, time.monotonic() - started), 3)
+        level = logging.INFO if summary["outcome"] == "success" else logging.WARNING
+        log.log(level, "model_call_summary %s", json.dumps(summary, allow_nan=False))
+    except Exception:  # noqa: BLE001, S110 — logging its failure could leak or fail again.
+        pass
 
 
 class OpenRouter:
@@ -90,54 +163,115 @@ class OpenRouter:
         )
 
     def complete(self, task: str, payload: dict):
-        if not self.api_key:
-            raise ModelError("OPENROUTER_API_KEY is not configured")
-        schema = SCHEMAS[task]
-        request = {
-            "model": "z-ai/glm-5.3-flash",
-            "reasoning": {"effort": "high"},
-            "max_tokens": 8192,
-            # Structured-output support varies by provider endpoint. Route only
-            # to the endpoint validated with our strict local schemas.
-            "provider": {
-                "only": ["open-inference/fp4"],
-                "require_parameters": True,
-            },
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": task + "_response",
-                    "strict": True,
-                    "schema": schema.model_json_schema(),
-                },
-            },
-            "messages": [
-                {"role": "system", "content": PROMPTS[task]},
-                {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
-            ],
+        started = time.monotonic()
+        summary = {
+            "task": task if isinstance(task, str) and task in SCHEMAS else "other",
+            "outcome": "failure",
+            "failure_category": None,
+            "validation_error_types": None,
+            "http_status": None,
+            "finish_reason": None,
+            **_usage_fields(None),
         }
         try:
-            with httpx.Client(timeout=90) as client:
-                response = client.post(
-                    "https://openrouter.ai/api/v1/chat/completions",
-                    headers={"Authorization": "Bearer " + self.api_key},
-                    json=request,
+            if not self.api_key:
+                summary["failure_category"] = "configuration_error"
+                raise ModelError("OPENROUTER_API_KEY is not configured")
+            schema = SCHEMAS[task]
+            request = {
+                "model": "z-ai/glm-5.3-flash",
+                "reasoning": {"effort": "high"},
+                "max_tokens": 8192,
+                # Structured-output support varies by provider endpoint. Route only
+                # to the endpoint validated with our strict local schemas.
+                "provider": {
+                    "only": ["open-inference/fp4"],
+                    "require_parameters": True,
+                },
+                "response_format": {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": task + "_response",
+                        "strict": True,
+                        "schema": schema.model_json_schema(),
+                    },
+                },
+                "messages": [
+                    {"role": "system", "content": PROMPTS[task]},
+                    {
+                        "role": "user",
+                        "content": json.dumps(payload, ensure_ascii=False),
+                    },
+                ],
+            }
+            summary["failure_category"] = "provider_response_invalid"
+            try:
+                with httpx.Client(timeout=90) as client:
+                    response = client.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        headers={"Authorization": "Bearer " + self.api_key},
+                        json=request,
+                    )
+                    summary["http_status"] = response.status_code
+                    response.raise_for_status()
+                    body = response.json()
+                    if not isinstance(body, dict):
+                        raise TypeError("Invalid provider response")
+                    summary.update(_usage_fields(body.get("usage")))
+                    choices = body["choices"]
+                    if not isinstance(choices, list) or not choices:
+                        raise ValueError("Invalid provider choices")
+                    choice = choices[0]
+                    if not isinstance(choice, dict):
+                        raise TypeError("Invalid provider choice")
+                finish_reason = choice.get("finish_reason")
+                summary["finish_reason"] = (
+                    None
+                    if finish_reason is None
+                    else (
+                        finish_reason
+                        if isinstance(finish_reason, str)
+                        and finish_reason in _FINISH_REASONS
+                        else "other"
+                    )
                 )
-                response.raise_for_status()
-                choice = response.json()["choices"][0]
-            if choice.get("finish_reason") != "stop":
-                raise ModelError("Model response incomplete")
-            content = choice["message"]["content"]
-            if not isinstance(content, str):
-                raise ModelError("Non-text model response")
-            return schema.model_validate_json(content)
-        except (
-            httpx.HTTPError,
-            KeyError,
-            IndexError,
-            TypeError,
-            ValueError,
-            ValidationError,
-        ) as exc:
-            # In particular, do not expose model/server bodies that could contain private text.
-            raise ModelError("Structured model call failed") from exc
+                if finish_reason != "stop":
+                    summary["failure_category"] = (
+                        "output_truncated"
+                        if finish_reason == "length"
+                        else "response_incomplete"
+                    )
+                    raise ModelError("Model response incomplete")
+                message = choice["message"]
+                if not isinstance(message, dict):
+                    raise TypeError("Invalid provider message")
+                content = message["content"]
+                if not isinstance(content, str):
+                    summary["failure_category"] = "non_text_response"
+                    raise ModelError("Non-text model response")
+                result = schema.model_validate_json(content)
+                summary.update(outcome="success", failure_category=None)
+                return result
+            except httpx.TimeoutException as exc:
+                summary["failure_category"] = "timeout"
+                raise ModelError("Structured model call failed") from exc
+            except httpx.HTTPStatusError as exc:
+                summary["failure_category"] = "http_error"
+                raise ModelError("Structured model call failed") from exc
+            except httpx.HTTPError as exc:
+                summary["failure_category"] = "transport_error"
+                raise ModelError("Structured model call failed") from exc
+            except ValidationError as exc:
+                types = _validation_error_types(exc)
+                summary["validation_error_types"] = types
+                summary["failure_category"] = (
+                    "invalid_model_json"
+                    if types is not None and "json_invalid" in types
+                    else "schema_invalid"
+                )
+                raise ModelError("Structured model call failed") from exc
+            except (KeyError, IndexError, TypeError, ValueError) as exc:
+                # Never expose raw response or validation details in logs/UI.
+                raise ModelError("Structured model call failed") from exc
+        finally:
+            _log_call_summary(summary, started)
