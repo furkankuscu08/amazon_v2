@@ -5,7 +5,7 @@ import re
 from datetime import date
 from pathlib import Path
 
-from workbot.search import candidate_pool
+from workbot.search import Searcher, candidate_pool, index_visible_records
 from workbot.seed import load_fixture, seed_db
 from workbot.storage import connect, visible_record
 
@@ -163,3 +163,32 @@ def test_candidate_cap_follows_retrieval_rank_not_recency(tmp_path):
     assert "ben" not in people
     assert "rank" not in json.dumps(pool)
     db.close()
+
+
+def test_keyword_tail_is_dropped_unless_the_vector_channel_agrees(tmp_path):
+    from qdrant_client import QdrantClient
+
+    def toy_embedding(text: str) -> list[float]:
+        return [1.0, 0.0] if "refund" in text.lower() else [0.0, 1.0]
+
+    db = connect(str(tmp_path / "tail.sqlite3"))
+    seed_db(db)
+    client = QdrantClient(location=":memory:")
+    try:
+        index_visible_records(db, "unused", client=client, embed_fn=toy_embedding)
+        intents = [{"keyword": "refund customers checklist", "semantic": "refund"}]
+        keyword_hits = db.execute(
+            """SELECT COUNT(*) FROM visible_fts
+            WHERE visible_fts MATCH '"refund" OR "customers" OR "checklist"'"""
+        ).fetchone()[0]
+        found = Searcher("unused", client=client, embed_fn=toy_embedding).records(
+            db, intents
+        )
+        assert keyword_hits >= 12
+        assert 0 < len(found) <= 8
+        # Only the three best keyword-only hits may lack vector agreement.
+        assert sum("refund" not in r["text"].lower() for r in found) <= 3
+        assert any(r["retrieval_channels"] == ["bm25", "qdrant"] for r in found)
+    finally:
+        client.close()
+        db.close()
