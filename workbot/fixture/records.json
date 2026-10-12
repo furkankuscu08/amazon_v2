@@ -1,0 +1,2564 @@
+[
+ {
+  "id": "jira:MKT-482",
+  "kind": "jira",
+  "occurred_at": "2026-08-10",
+  "text": "Finalize the retail campaign audience approval checklist before launch. Nina is working through who signs off each audience list and in what order, and the checklist should show that sequence clearly. Elena raised this ticket so the checklist is tracked before the next launch.",
+  "visibility": "maya",
+  "links": [
+   [
+    "nina",
+    "assignee"
+   ],
+   [
+    "elena",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "slack:retail-814",
+  "kind": "slack",
+  "occurred_at": "2026-08-11",
+  "text": "I will coordinate the retail campaign launch review with the channel owners this week. I plan to collect their sign-offs in one thread so the launch review has a single place to check. Please reply in the thread with your sign-off or any open question.",
+  "visibility": "maya",
+  "links": [
+   [
+    "nina",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:MKT-483",
+  "kind": "jira",
+  "occurred_at": "2026-08-12",
+  "text": "Build the post-launch campaign performance report covering reach, conversion and return on spend per channel. This is reporting after a campaign has launched, not approval of launches. Elena is building the report and will update it once the post-launch figures are in.",
+  "visibility": "maya",
+  "links": [
+   [
+    "elena",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "docs:campaign-review-2023",
+  "kind": "document",
+  "occurred_at": "2023-05-10",
+  "text": "Retail campaign review and approval process, written in 2023 for the previous Growth Marketing team. It records the steps, the reviewers and the timing that applied at that time. Priya wrote it before moving to Brand Review, so the details describe an earlier arrangement.",
+  "visibility": "maya",
+  "links": [
+   [
+    "priya",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "slack:mention-55",
+  "kind": "slack",
+  "occurred_at": "2026-07-04",
+  "text": "I wanted to note that Elena used to handle launch approvals, and I am not sure whether anyone has taken that over. I am not assigning anything in this message, just asking who has launch approvals now. Elena, you may know who picked it up.",
+  "visibility": "maya",
+  "links": [
+   [
+    "jules",
+    "author"
+   ],
+   [
+    "elena",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "jira:MKT-310",
+  "kind": "jira",
+  "occurred_at": "2025-02-01",
+  "text": "Documentation of the former retail campaign launch flow, including the manual approval emails that were sent at each step. The flow was documented and run by hand before the process was changed. It is kept for reference only.",
+  "visibility": "maya",
+  "links": [
+   [
+    "dana",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:MKT-455",
+  "kind": "jira",
+  "occurred_at": "2026-06-18",
+  "text": "Launch-day runbook for retail campaigns: the ordered checks to run on the morning of a launch and who is called if a check fails. Nina owns this task, and Jules added the escalation contacts. Run the checks in the order listed.",
+  "visibility": "maya",
+  "links": [
+   [
+    "nina",
+    "assignee"
+   ],
+   [
+    "jules",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "slack:growth-301",
+  "kind": "slack",
+  "occurred_at": "2026-09-02",
+  "text": "After the September reshuffle I am now keeping the launch-day runbook up to date. Please send any changes for the runbook to me, and I will update it as they come in. Thanks for flagging anything that has changed in the launch checks.",
+  "visibility": "maya",
+  "links": [
+   [
+    "jules",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "docs:campaign-calendar-q4",
+  "kind": "document",
+  "occurred_at": "2026-09-15",
+  "text": "Q4 retail campaign calendar showing the planned launch slots for each week, the blackout dates around peak season and the cut-off for submitting a campaign for approval. Jules wrote this version of the calendar for the quarter.",
+  "visibility": "maya",
+  "links": [
+   [
+    "jules",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:MKT-501",
+  "kind": "jira",
+  "occurred_at": "2026-08-25",
+  "text": "Set up an automated re-engagement email series for lapsed loyalty members, covering the triggers, the sending cadence and how unsubscribe requests are handled. This is lifecycle email work, not retail campaign launches. Leo is building the series.",
+  "visibility": "maya",
+  "links": [
+   [
+    "leo",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "docs:brand-guidelines-2026",
+  "kind": "document",
+  "occurred_at": "2026-03-20",
+  "text": "Brand voice and advertising claims guidelines for campaign copy. They set out which claims need evidence, the banned phrases and the tone rules for campaign copy. Priya wrote the guidelines and Mei contributed the copy examples.",
+  "visibility": "maya",
+  "links": [
+   [
+    "priya",
+    "author"
+   ],
+   [
+    "mei",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "jira:BRD-91",
+  "kind": "jira",
+  "occurred_at": "2026-09-05",
+  "text": "Review and correct the creative assets for the autumn retail campaign against the brand guidelines. Check logo spacing, colours and image rights for each asset. Hannah is doing the review and Priya raised the ticket.",
+  "visibility": "maya",
+  "links": [
+   [
+    "hannah",
+    "assignee"
+   ],
+   [
+    "priya",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "slack:brand-220",
+  "kind": "slack",
+  "occurred_at": "2026-09-09",
+  "text": "I want to remind teams that brand review needs three business days, so please send requests early. Requests that arrive after the calendar cut-off are not guaranteed a slot. Thank you for planning ahead.",
+  "visibility": "maya",
+  "links": [
+   [
+    "victor",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "slack:restricted-plan",
+  "kind": "slack",
+  "occurred_at": "2026-08-11",
+  "text": "Between us in this private leadership channel, I am quietly responsible for the new AI campaign proposal and its budget. Please keep this within leadership for now, and thank you for keeping it quiet while the details are still being worked out.",
+  "visibility": "restricted",
+  "links": [
+   [
+    "eve",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "docs:restricted-budget",
+  "kind": "document",
+  "occurred_at": "2026-07-01",
+  "text": "Confidential note. It names Eve as the campaign budget owner and records the approved ceiling for the second half of the year. Eve wrote this note, and the ceiling it records applies to the campaign budget only.",
+  "visibility": "restricted",
+  "links": [
+   [
+    "eve",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "github:app-checkout-212",
+  "kind": "github",
+  "occurred_at": "2026-07-22",
+  "text": "Adds a saved-card payment option to the Android checkout flow in the Northgate app. The change includes a new payment method picker and the error states for the saved-card flow. Review focused on parity with the iOS checkout.",
+  "visibility": "maya",
+  "links": [
+   [
+    "diego",
+    "author"
+   ],
+   [
+    "yuki",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "jira:PAY-140",
+  "kind": "jira",
+  "occurred_at": "2026-06-30",
+  "text": "Integrate the new payment provider SDK for app checkout. The scope covers card tokenization, provider callbacks and refund calls. Ibrahim is taking this on. Tom raised the request for the app roadmap.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ibrahim",
+    "assignee"
+   ],
+   [
+    "tom",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "docs:payment-methods-runbook",
+  "kind": "document",
+  "occurred_at": "2026-05-14",
+  "text": "Operating runbook for adding or retiring a payment method. It sets out provider onboarding steps, settlement account setup and reconciliation checks. It also names who must be told before a payment method goes live.",
+  "visibility": "maya",
+  "links": [
+   [
+    "grace",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:PAY-166",
+  "kind": "jira",
+  "occurred_at": "2026-08-19",
+  "text": "Commercial negotiation with a provider for a pay-later option. The terms under discussion are fees, chargeback liability and the launch markets. Carla is negotiating these terms this week.",
+  "visibility": "maya",
+  "links": [
+   [
+    "carla",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "slack:pay-ops-431",
+  "kind": "slack",
+  "occurred_at": "2026-09-03",
+  "text": "Here is the weekly failed-payment review, with decline rates for each payment method this week. There is one spike on Android that stands out. I will ask Diego whether a release caused it.",
+  "visibility": "maya",
+  "links": [
+   [
+    "grace",
+    "author"
+   ],
+   [
+    "diego",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "github:payments-gateway-88",
+  "kind": "github",
+  "occurred_at": "2025-04-08",
+  "text": "Pull request for the payments gateway retry logic. A timed-out authorization is now retried once. The retry is written so that a payment is never double-charged, which is the aim of this change.",
+  "visibility": "maya",
+  "links": [
+   [
+    "stefan",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "docs:wallet-loyalty",
+  "kind": "document",
+  "occurred_at": "2026-06-01",
+  "text": "Finance costing of the wallet loyalty points promotion. It sets out how many points are issued, the liability on the books and the promotion budget. This note covers loyalty points only and has nothing to do with checkout payment processing.",
+  "visibility": "maya",
+  "links": [
+   [
+    "tara",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:MOB-77",
+  "kind": "jira",
+  "occurred_at": "2026-07-02",
+  "text": "Redesign of the checkout screen layout in the app. The work covers order summary placement, button hierarchy and accessibility contrast. It is visual and interaction design only, with no change to payment processing.",
+  "visibility": "maya",
+  "links": [
+   [
+    "nadia",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:PAY-171",
+  "kind": "jira",
+  "occurred_at": "2026-09-11",
+  "text": "Reconciliation of app-store payout reports against card settlement reports. The ticket lists the unexplained differences for August. Settlement reconciliation is the focus of this work.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ben",
+    "assignee"
+   ],
+   [
+    "grace",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:MOB-90",
+  "kind": "jira",
+  "occurred_at": "2026-09-01",
+  "text": "Draft of the Q4 roadmap for the app purchase funnel. It sets out which checkout improvements ship in which release and which ones are deferred. Checkout is one part of the purchase funnel that this draft covers.",
+  "visibility": "maya",
+  "links": [
+   [
+    "tom",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "slack:mob-eng-19",
+  "kind": "slack",
+  "occurred_at": "2026-08-27",
+  "text": "I want to explain how the iOS app store rules affect the payment methods we can offer in the app. The rules restrict which payment methods can be offered for digital goods. Physical goods are treated differently, so these restrictions do not apply in the same way to them.",
+  "visibility": "maya",
+  "links": [
+   [
+    "yuki",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:FIN-95",
+  "kind": "jira",
+  "occurred_at": "2026-08-05",
+  "text": "Supplier payment run moves from weekly to twice weekly. The bank file schedule is updated to match the new run dates. This ticket is about paying suppliers, not customer payments, so it does not change checkout.",
+  "visibility": "maya",
+  "links": [
+   [
+    "paul",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "docs:restricted-digital-assets",
+  "kind": "document",
+  "occurred_at": "2026-09-18",
+  "text": "Privileged legal memo on the regulatory position of accepting digital-asset payments from customers. It is a written legal analysis of that question. The memo covers only that question, not card or app-store payments.",
+  "visibility": "restricted",
+  "links": [
+   [
+    "ruth",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "docs:provider-contract-checklist",
+  "kind": "document",
+  "occurred_at": "2026-04-22",
+  "text": "Checklist for reviewing payment provider contracts. It covers liability caps, data processing terms and termination rights. Ines maintains the checklist, and Ruth reviewed the liability section.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ines",
+    "author"
+   ],
+   [
+    "ruth",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "docs:data-retention-policy",
+  "kind": "document",
+  "occurred_at": "2026-02-10",
+  "text": "This policy sets out how long customer data is kept and when it is deleted. Order history, contact details and support transcripts each have their own retention period in the schedule below. Records are deleted once the relevant period has ended.",
+  "visibility": "maya",
+  "links": [
+   [
+    "anders",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:SEC-58",
+  "kind": "jira",
+  "occurred_at": "2026-08-14",
+  "text": "Fatima is reviewing who holds read access to the customer database. Any role that is no longer justified will be removed as part of this review. Hugo raised the ticket, and Fatima will work through the access list this week.",
+  "visibility": "maya",
+  "links": [
+   [
+    "fatima",
+    "assignee"
+   ],
+   [
+    "hugo",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:SEC-61",
+  "kind": "jira",
+  "occurred_at": "2026-09-04",
+  "text": "Update the consent screen in the Northgate app so that tracking for personalised offers is opt-in only. The customer's choice needs to be stored with a timestamp. Mark is assigned to this ticket and the change is due this week.",
+  "visibility": "maya",
+  "links": [
+   [
+    "mark",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:DATA-33",
+  "kind": "jira",
+  "occurred_at": "2026-07-15",
+  "text": "Build the customer purchase-history table in the warehouse using pseudonymised customer IDs. Document the refresh schedule for the table alongside the build. Noah is assigned to this ticket.",
+  "visibility": "maya",
+  "links": [
+   [
+    "noah",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:DATA-41",
+  "kind": "jira",
+  "occurred_at": "2026-08-20",
+  "text": "Export audience segments for marketing from the purchase-history table. For each export, document which fields are included. Elena requested these segments, and Sara is handling the export this week.",
+  "visibility": "maya",
+  "links": [
+   [
+    "sara",
+    "assignee"
+   ],
+   [
+    "elena",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "slack:sec-203",
+  "kind": "slack",
+  "occurred_at": "2026-09-08",
+  "text": "I am reminding teams that a security review request needs two weeks' notice. Please include a short description of what customer data the feature touches. Thank you for planning ahead with this in mind.",
+  "visibility": "maya",
+  "links": [
+   [
+    "hugo",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:SEC-49",
+  "kind": "jira",
+  "occurred_at": "2026-07-01",
+  "text": "Run the quarterly recertification of employee laptop and VPN access. This concerns staff IT accounts only, not customer data. The recertification is a routine check that current access is still appropriate. Lucy is assigned to this ticket.",
+  "visibility": "maya",
+  "links": [
+   [
+    "lucy",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "docs:restricted-scoring-dpia",
+  "kind": "document",
+  "occurred_at": "2026-08-30",
+  "text": "Confidential. This privacy impact assessment covers a proposed customer scoring model. The model would be used to offer store credit to customers, and the assessment sets out the privacy considerations for that proposal.",
+  "visibility": "restricted",
+  "links": [
+   [
+    "zoe",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "slack:restricted-scoring-7",
+  "kind": "slack",
+  "occurred_at": "2026-09-01",
+  "text": "I want to tell leadership privately that the customer scoring proposal cannot proceed yet. It stays on hold until my privacy assessment is complete. I know this may be unwelcome news, but the proposal has to wait for the assessment to be finished.",
+  "visibility": "restricted",
+  "links": [
+   [
+    "zoe",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "github:campaign-scheduler-76",
+  "kind": "github",
+  "occurred_at": "2026-08-13",
+  "text": "This pull request updates the integration between the campaign scheduler and the platform API. It introduces the new endpoint version, changes the authentication header, and updates the fields sent when a campaign is scheduled. The change set is focused on the scheduler integration only.",
+  "visibility": "maya",
+  "links": [
+   [
+    "owen",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "github:campaign-scheduler-81",
+  "kind": "github",
+  "occurred_at": "2026-09-06",
+  "text": "This pull request adds rate limiting to the scheduling API so that bulk scheduling cannot overload it. The limit means the platform rejects requests that go beyond the allowed rate. Owen reviewed the limits as part of this change.",
+  "visibility": "maya",
+  "links": [
+   [
+    "raj",
+    "author"
+   ],
+   [
+    "owen",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "jira:PLT-204",
+  "kind": "jira",
+  "occurred_at": "2026-07-28",
+  "text": "Write the incident review for the scheduler outage during the summer sale launch. The review should cover the timeline, the cause and the follow-up actions. Kofi is assigned to this ticket and the review is needed soon.",
+  "visibility": "maya",
+  "links": [
+   [
+    "kofi",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "docs:platform-api-guide",
+  "kind": "document",
+  "occurred_at": "2026-04-02",
+  "text": "This guide is for internal teams who call the campaign platform API. It explains how to request credentials and lists the available endpoints. It also sets out the change notice period that applies before an endpoint changes.",
+  "visibility": "maya",
+  "links": [
+   [
+    "raj",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:PLT-219",
+  "kind": "jira",
+  "occurred_at": "2026-08-29",
+  "text": "Build the regression test suite that must pass before each scheduler release. It is a standing requirement for every scheduler release. Lin is assigned to this ticket, and Owen raised it to get the suite in place.",
+  "visibility": "maya",
+  "links": [
+   [
+    "lin",
+    "assignee"
+   ],
+   [
+    "owen",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "slack:plt-88",
+  "kind": "slack",
+  "occurred_at": "2026-09-16",
+  "text": "I am announcing the platform change freeze dates around peak season. I will also cover how to request an exception to the freeze. Thank you for reading the dates carefully and planning your releases around them.",
+  "visibility": "maya",
+  "links": [
+   [
+    "sofia",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "github:audience-sync-14",
+  "kind": "github",
+  "occurred_at": "2026-08-22",
+  "text": "This pull request adds a nightly job that syncs audience segments from the warehouse into the campaign platform. The job runs once a night and copies the segments across for campaign use. Raj reviewed the platform-side import.",
+  "visibility": "maya",
+  "links": [
+   [
+    "noah",
+    "author"
+   ],
+   [
+    "raj",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "jira:PLT-150",
+  "kind": "jira",
+  "occurred_at": "2024-03-11",
+  "text": "Migrate campaigns from the legacy campaign tool to the current scheduler. Once the campaigns have moved across, retire the old tool. The migration is a planned clean-up of the legacy setup. Owen is assigned to this migration.",
+  "visibility": "maya",
+  "links": [
+   [
+    "owen",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:SUP-30",
+  "kind": "jira",
+  "occurred_at": "2026-08-18",
+  "text": "Cut first-response time on delivery complaints by adding new triage tags and changing staffing at peak hours. Sam leads this work. The aim is to answer delivery complaints faster at the busiest times. Aisha tested the tags on live tickets.",
+  "visibility": "maya",
+  "links": [
+   [
+    "sam",
+    "assignee"
+   ],
+   [
+    "aisha",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "slack:sup-77",
+  "kind": "slack",
+  "occurred_at": "2026-09-10",
+  "text": "I am seeing a rise in customers asking where their refund is. I suggest we raise this with Sam this week. Refund questions are coming in more often now, and I wanted to flag it early.",
+  "visibility": "maya",
+  "links": [
+   [
+    "aisha",
+    "author"
+   ],
+   [
+    "sam",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "jira:SUP-12",
+  "kind": "jira",
+  "occurred_at": "2026-05-06",
+  "text": "Migrate the helpdesk ticket macros and canned replies into the new support tool. Retire any duplicates as part of the move. The ticket is a routine clean-up of the helpdesk setup. Kim is assigned to this migration.",
+  "visibility": "maya",
+  "links": [
+   [
+    "kim",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "docs:kb-style-guide",
+  "kind": "document",
+  "occurred_at": "2026-03-03",
+  "text": "This style guide covers how customer help-centre articles are written. It sets out the structure, the reading level and how to keep refund and delivery articles current. It is meant for anyone who edits help-centre content.",
+  "visibility": "maya",
+  "links": [
+   [
+    "pedro",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "docs:returns-policy-2026",
+  "kind": "document",
+  "occurred_at": "2026-01-20",
+  "text": "This policy sets out the returns and refund rules for online orders. It covers the return window, the condition rules for items sent back, refund timing and the exceptions for sale items. The policy was written by Commerce Operations.",
+  "visibility": "maya",
+  "links": [
+   [
+    "chloe",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:SUP-41",
+  "kind": "jira",
+  "occurred_at": "2026-09-14",
+  "text": "Prepare the support staffing plan for peak season. The plan covers hiring temporary agents and extending opening hours. Rosa is assigned to this ticket and the plan is due this month.",
+  "visibility": "maya",
+  "links": [
+   [
+    "rosa",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:COM-21",
+  "kind": "jira",
+  "occurred_at": "2026-09-02",
+  "text": "Plan the warehouse and courier capacity for holiday online orders. Set the last guaranteed delivery dates as part of the same plan. Ivan is assigned to this ticket, and the plan should be ready this month.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ivan",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:COM-34",
+  "kind": "jira",
+  "occurred_at": "2026-06-11",
+  "text": "Restructure the product category taxonomy on the web shop. Remap the existing products so they sit under the new categories. The new taxonomy should make the web shop easier for customers to browse. Chloe is assigned to this ticket.",
+  "visibility": "maya",
+  "links": [
+   [
+    "chloe",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "slack:com-5",
+  "kind": "slack",
+  "occurred_at": "2026-09-12",
+  "text": "I am sharing notes from the weekly commerce operations sync. Two product categories had stock issues this week, and a courier delay also came up. Both points matter for the coming delivery schedule.",
+  "visibility": "maya",
+  "links": [
+   [
+    "daniel",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:FIN-88",
+  "kind": "jira",
+  "occurred_at": "2026-09-07",
+  "text": "Prepare the Q4 marketing budget reforecast with updated spend per channel. List the requests that exceed the approval threshold. Marcus asked for this reforecast, and Tara is assigned to prepare it.",
+  "visibility": "maya",
+  "links": [
+   [
+    "tara",
+    "assignee"
+   ],
+   [
+    "marcus",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "docs:budget-approval-policy",
+  "kind": "document",
+  "occurred_at": "2024-02-15",
+  "text": "This budget approval policy was written in 2024 and describes the spend thresholds in force at that time. It lists who approved budget changes at each level and the paperwork required then. Readers should treat it as a record of the arrangements in place when it was issued.",
+  "visibility": "maya",
+  "links": [
+   [
+    "omar",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:FIN-71",
+  "kind": "jira",
+  "occurred_at": "2025-03-19",
+  "text": "Ben ran a pilot to automate matching supplier invoices to purchase orders while he was in Finance. The pilot tested whether the automated match could handle the invoices in scope. It was a small trial of the matching step.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ben",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "slack:fin-140",
+  "kind": "slack",
+  "occurred_at": "2026-09-15",
+  "text": "I am reminding budget holders that every budget change request needs a named cost-centre owner. Tara will send the form for these requests. Please make sure each request names its cost-centre owner before it is sent in.",
+  "visibility": "maya",
+  "links": [
+   [
+    "helen",
+    "author"
+   ],
+   [
+    "tara",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "jira:FIN-102",
+  "kind": "jira",
+  "occurred_at": "2026-08-28",
+  "text": "Prepare the annual store rent and utilities forecast for next year's budget. The forecast covers store rent and utilities costs only. Omar is assigned to this ticket, and the forecast is needed this month.",
+  "visibility": "maya",
+  "links": [
+   [
+    "omar",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:MKT-601",
+  "kind": "jira",
+  "occurred_at": "2025-11-03",
+  "text": "Standardise the tracking parameters on every paid social link so the web analytics report can group traffic by channel. Each agency currently uses its own naming, so the same channel shows up under four labels. I will publish a one-page naming sheet and update the three link templates the agencies copy from.",
+  "visibility": "maya",
+  "links": [
+   [
+    "nina",
+    "assignee"
+   ],
+   [
+    "elena",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:MKT-602",
+  "kind": "jira",
+  "occurred_at": "2026-01-14",
+  "text": "Build a weekly dashboard of organic search rankings for the top 200 category pages, pulled from the search console export. Flag any page that moves more than ten places in either direction and group the movers by category. The category owners should get the list every Monday morning.",
+  "visibility": "maya",
+  "links": [
+   [
+    "elena",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:MKT-603",
+  "kind": "jira",
+  "occurred_at": "2026-03-09",
+  "text": "Shortlist three social listening tools after the vendor walkthroughs and write a short recommendation for the growth team. Each option needs to cover app store ratings, mentions of the web shop and the main social networks. Note the contract length and the export options in the write-up.",
+  "visibility": "maya",
+  "links": [
+   [
+    "marcus",
+    "assignee"
+   ],
+   [
+    "jules",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:MKT-604",
+  "kind": "jira",
+  "occurred_at": "2026-05-21",
+  "text": "The annual term for the email design tool ends in late May, so the seat count has to be updated first. Two seats belong to people who have moved to other teams and should be released, with the rest kept. Confirm the new count with the vendor before the renewal date.",
+  "visibility": "maya",
+  "links": [
+   [
+    "jules",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "slack:growth-601",
+  "kind": "slack",
+  "occurred_at": "2026-02-17",
+  "text": "Hi all, we have two interview slots left for the paid search opening next week, Tuesday and Thursday afternoon. If you know someone who has run keyword research on a large retail site, send me their name by Friday. I would like one person from the web team on the panel.",
+  "visibility": "maya",
+  "links": [
+   [
+    "marcus",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "slack:growth-602",
+  "kind": "slack",
+  "occurred_at": "2025-12-08",
+  "text": "Elena, could you send me the list of referral links that were live in June and the landing page each one points to? I am matching them against the sign-up numbers for the lifecycle report. A short list with the link names is enough, I do not need the full export.",
+  "visibility": "maya",
+  "links": [
+   [
+    "leo",
+    "author"
+   ],
+   [
+    "elena",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "slack:growth-603",
+  "kind": "slack",
+  "occurred_at": "2026-07-06",
+  "text": "Reminder that the spreadsheet add-in training is on Thursday at 10 in the small room on the second floor. Bring a laptop with the add-in already installed, because the setup takes about twenty minutes. If you cannot make it, tell me and I will send the recording.",
+  "visibility": "maya",
+  "links": [
+   [
+    "nina",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "slack:growth-604",
+  "kind": "slack",
+  "occurred_at": "2026-09-22",
+  "text": "Notes from this morning's stand-up: the referral wording is finished, the mobile banner copy is with the web team, and the email tool seat count is being confirmed. The next stand-up moves to Wednesday because of the desk move. Shout if anything is blocking you before then.",
+  "visibility": "maya",
+  "links": [
+   [
+    "leo",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "docs:growth-interview-question-bank",
+  "kind": "document",
+  "occurred_at": "2026-04-30",
+  "text": "This bank holds interview questions for growth roles, grouped by skill: measurement, search, email, and working with other teams. Each question has a short note on what a strong answer covers and one sample follow-up. Interviewers should use at least four questions from the bank and write up their notes in the shared template within a day.",
+  "visibility": "maya",
+  "links": [
+   [
+    "elena",
+    "author"
+   ],
+   [
+    "jules",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "docs:growth-quarterly-themes",
+  "kind": "document",
+  "occurred_at": "2026-09-29",
+  "text": "Quarterly themes for growth: first, make referral and search work easier to report on; second, invest more time with the mobile team on the app home screen; third, stop the manual weekly reports that the dashboards already cover. Items we are dropping are listed at the end with the reason for each. Open questions for the next planning round go in the comments on this page.",
+  "visibility": "maya",
+  "links": [
+   [
+    "marcus",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:BRD-601",
+  "kind": "jira",
+  "occurred_at": "2025-10-20",
+  "text": "Replace the old wordmark file in the store signage template library with the current master artwork, and update the clear-space rules printed on the fascia template. Move the old files into an archive subfolder rather than deleting them, so older print jobs can still be traced. Include the three sizes used for the window vinyl.",
+  "visibility": "maya",
+  "links": [
+   [
+    "hannah",
+    "assignee"
+   ],
+   [
+    "priya",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:BRD-602",
+  "kind": "jira",
+  "occurred_at": "2026-02-03",
+  "text": "Build a colour-name glossary for apparel product listings so the web shop and the app use the same name for every shade. The list should cover about forty core colours, each with its agreed hex value and two example product names. Flag any shade that currently appears under two names so the team can pick one.",
+  "visibility": "maya",
+  "links": [
+   [
+    "mei",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:BRD-603",
+  "kind": "jira",
+  "occurred_at": "2026-04-17",
+  "text": "Plan the refurbishment of the spring stand kit for the regional home show: which of the six modular panels need new vinyl, which hinges need replacing and how many spare lights go in the case. Estimate the workshop days needed and list every part we have to order before the end of the month.",
+  "visibility": "maya",
+  "links": [
+   [
+    "victor",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:BRD-604",
+  "kind": "jira",
+  "occurred_at": "2025-12-15",
+  "text": "Set up a buddy arrangement for new starters on the brand team, pairing each person with someone who has been on the team for at least a year. The buddy meets the starter for the first two weeks, walks them through the shared drive and the photo library, and checks in after each week. Put the pairing guidance on the team wiki page.",
+  "visibility": "maya",
+  "links": [
+   [
+    "priya",
+    "assignee"
+   ],
+   [
+    "victor",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "slack:brand-601",
+  "kind": "slack",
+  "occurred_at": "2026-03-26",
+  "text": "Packaging proofs for the new gift box came back from the printer this morning. The navy looks a shade too dark on the screen, so I have asked for a press check on Thursday before they run the full order. If you have a Pantone chip from the old box, bring it along.",
+  "visibility": "maya",
+  "links": [
+   [
+    "hannah",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "slack:brand-602",
+  "kind": "slack",
+  "occurred_at": "2026-06-30",
+  "text": "The brand floor moves to the second floor next Monday, so please clear your desks by the Friday before. The moving company will label each desk with the name and the zone number. Printers and plotters stay on the first floor until the new room is ready.",
+  "visibility": "maya",
+  "links": [
+   [
+    "victor",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "slack:brand-603",
+  "kind": "slack",
+  "occurred_at": "2026-08-04",
+  "text": "Hannah, could you send the transparent-background logo file for the sticker run, the one with the thinner outline? The printer has asked twice and I want to get the proof back to them today. Please use the PNG in the new template folder, not the one in the old archive.",
+  "visibility": "maya",
+  "links": [
+   [
+    "mei",
+    "author"
+   ],
+   [
+    "hannah",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "docs:brand-alt-text-guide",
+  "kind": "document",
+  "occurred_at": "2026-01-27",
+  "text": "Alt text for product images should name the item, give its colour using the agreed glossary name, and mention one detail a shopper cannot see from the thumbnail. Keep it under 125 characters and skip the words photo or image, since screen readers already announce them. For lifestyle shots, describe the action in the picture rather than the mood.",
+  "visibility": "maya",
+  "links": [
+   [
+    "mei",
+    "author"
+   ],
+   [
+    "priya",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "docs:brand-lunch-learn-contrast",
+  "kind": "document",
+  "occurred_at": "2026-09-10",
+  "text": "Notes from the lunch session on colour contrast: the minimum ratio for body text, how to check a pairing with a free online tool, and why a passing ratio can still look weak on a phone in direct sunlight. The session also covered when bold weight helps legibility without changing the colour. Slides are in the training folder for anyone who missed it.",
+  "visibility": "maya",
+  "links": [
+   [
+    "priya",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "github:store-sales-loader-604",
+  "kind": "github",
+  "occurred_at": "2026-02-11",
+  "text": "Adds a retry with backoff to the nightly store sales loader, so a dropped connection to the source extract no longer fails the whole run. The loader also compares the row count against the extract manifest before swapping the table, and stops if the two differ. I tested it against last month's extract, which loaded cleanly with no duplicated rows.",
+  "visibility": "maya",
+  "links": [
+   [
+    "noah",
+    "author"
+   ],
+   [
+    "sara",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "github:category-revenue-model-612",
+  "kind": "github",
+  "occurred_at": "2026-05-05",
+  "text": "Fixes currency rounding in the weekly category revenue model. Values were rounded per row before aggregation, which made category totals drift by small amounts. Rounding now happens once, at the final aggregation step, and the reconciliation check confirms the totals match the source extract.",
+  "visibility": "maya",
+  "links": [
+   [
+    "sara",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "github:transform-tooling-619",
+  "kind": "github",
+  "occurred_at": "2026-08-18",
+  "text": "Upgrades the transformation tool to the current minor version and replaces two macros that the new version marks as deprecated. No model output should change, and the CI run compares the rebuilt tables against the previous build to confirm that. Upgrade notes are in the docs folder for anyone building locally.",
+  "visibility": "maya",
+  "links": [
+   [
+    "noah",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:DATA-601",
+  "kind": "jira",
+  "occurred_at": "2025-11-12",
+  "text": "Build a dashboard of app crash rates broken down by Android version and app release, refreshed every hour from the crash feed. Add an alert that fires when the crash rate for a release doubles against the previous day. Keep the dashboard read-only for the mobile team and link each alert to the matching release notes.",
+  "visibility": "maya",
+  "links": [
+   [
+    "wei",
+    "assignee"
+   ],
+   [
+    "sara",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:DATA-602",
+  "kind": "jira",
+  "occurred_at": "2026-04-08",
+  "text": "Define the active store flag used in the weekly stores report: a store counts as active once it has been open for thirty days and has traded on at least twenty of the last twenty-eight days. Document the rule in the metric dictionary, add a check against the store opening table, and tell the store operations team when the rule goes live.",
+  "visibility": "maya",
+  "links": [
+   [
+    "sara",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:DATA-603",
+  "kind": "jira",
+  "occurred_at": "2026-07-14",
+  "text": "Move the staging database to smaller instances outside working hours so that idle time stops being billed at the full size. Check that the nightly jobs still finish inside their window on the smaller instance, and raise a ticket if any job runs over. The change is reversible and takes about an hour per environment.",
+  "visibility": "maya",
+  "links": [
+   [
+    "noah",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:DATA-604",
+  "kind": "jira",
+  "occurred_at": "2025-10-27",
+  "text": "Write the onboarding page for new data starters: the first-week reading list, how to request a login for the warehouse tools, and who to ask about each dataset. Link the metric dictionary and the team's query style notes so people do not have to hunt for them. Ask two recent joiners to read it before it goes live.",
+  "visibility": "maya",
+  "links": [
+   [
+    "wei",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "slack:data-601",
+  "kind": "slack",
+  "occurred_at": "2026-06-09",
+  "text": "Interviews for the open role on our team are on Wednesday and Thursday, and I still need two more people for the panels. Please send me a free slot by Monday and I will send the candidate pack. If you have not sat on a panel before, join the first interview as an observer.",
+  "visibility": "maya",
+  "links": [
+   [
+    "wei",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "slack:data-602",
+  "kind": "slack",
+  "occurred_at": "2026-10-02",
+  "text": "The window functions session for SQL is on Friday afternoon, roughly one hour, with a worked example from the weekly stores report. Bring a query you already use so we can rewrite it together. If you are new to the warehouse, this is a good place to start.",
+  "visibility": "maya",
+  "links": [
+   [
+    "sara",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "docs:store-metric-dictionary",
+  "kind": "document",
+  "occurred_at": "2026-03-12",
+  "text": "Shared dictionary of store metric names: the agreed meaning of each name, the source table it comes from, and the owner who answers questions about it. Each entry also records the date the definition last changed and a link to the query that produces it. Please add new metrics here before they appear in any dashboard.",
+  "visibility": "maya",
+  "links": [
+   [
+    "noah",
+    "author"
+   ],
+   [
+    "wei",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "jira:COM-601",
+  "kind": "jira",
+  "occurred_at": "2026-01-06",
+  "text": "Work out the new pallet labelling layout for inbound supplier deliveries so receiving can scan the carrier code on the first pass. Trial the layout with two suppliers that send mixed pallets, then compare scan rates over one week. If the first-pass rate beats the current labels, roll the layout out to the other suppliers by the end of next month.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ivan",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:COM-602",
+  "kind": "jira",
+  "occurred_at": "2026-05-27",
+  "text": "Build the seasonal range plan for winter outerwear: the colour split for each style, the size curve for the top ten styles and the styles to drop after the first six weeks. Use last winter's sell-through by colour as the starting point and flag any colour where stock is already low. Share the draft with the store teams before the next weekly commercial meeting.",
+  "visibility": "maya",
+  "links": [
+   [
+    "chloe",
+    "assignee"
+   ],
+   [
+    "daniel",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:COM-603",
+  "kind": "jira",
+  "occurred_at": "2026-08-25",
+  "text": "Recruit a replacement for the open post on the replenishment side: write the job description, agree the interview panel and set a closing date two weeks from now. The post sits in the north warehouse team, so the panel needs someone from operations on site. Send the draft advert to the people team by Friday.",
+  "visibility": "maya",
+  "links": [
+   [
+    "daniel",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:COM-604",
+  "kind": "jira",
+  "occurred_at": "2025-11-19",
+  "text": "Vendor walkthrough for a route planning tool that assigns delivery windows by postcode and sequences multi-stop van routes. Compare how each shortlisted option handles late orders, driver breaks and the fixed time windows we offer on the web shop. Write up the two options worth a pilot, with a list of questions the vendor could not answer.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ivan",
+    "assignee"
+   ],
+   [
+    "chloe",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "slack:commerce-601",
+  "kind": "slack",
+  "occurred_at": "2026-09-14",
+  "text": "Shift handover notes for the north warehouse: dock door 4 is closed until Friday for resurfacing, so inbound trailers are going to doors 2 and 6. Please make sure the overnight team knows before the first trailer arrives at six. Let me know if the forklift on door 6 is needed for anything else.",
+  "visibility": "maya",
+  "links": [
+   [
+    "daniel",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "slack:commerce-602",
+  "kind": "slack",
+  "occurred_at": "2026-07-29",
+  "text": "Ivan, the sample shirts for the knit range arrived this morning, so I can measure them against the size chart before the fitting on Monday. Two of the sleeve lengths look off compared with the spec sheet. Can you check whether the supplier sent the revised spec with the sample order?",
+  "visibility": "maya",
+  "links": [
+   [
+    "chloe",
+    "author"
+   ],
+   [
+    "ivan",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "slack:commerce-603",
+  "kind": "slack",
+  "occurred_at": "2026-04-02",
+  "text": "Forklift refresher training for the north warehouse is on Thursday at 7am, and it runs for about ninety minutes. People on the rota for that shift should swap with someone else if they cannot make it, and let whoever runs the shift know. Certificates will be issued after the practical test.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ivan",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "docs:product-image-standards",
+  "kind": "document",
+  "occurred_at": "2026-06-17",
+  "text": "Product image standards for the web shop: the required pixel dimensions for the main image and the zoom image, the background colour for each category and the file naming order. Images must be saved in the agreed colour profile before upload, and any image with a visible crease or dust mark goes back to the studio. Keep a copy of this standard in each category folder.",
+  "visibility": "maya",
+  "links": [
+   [
+    "chloe",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "docs:pick-face-slotting-rules",
+  "kind": "document",
+  "occurred_at": "2026-09-03",
+  "text": "Pick-face slotting rules for the north warehouse: fast movers go in the golden zone between knee and shoulder height, slow movers go higher or lower, and bulky items stay at floor level near the dispatch doors. Items are re-slotted every six weeks based on pick counts, and any move has to be recorded in the location system the same day.",
+  "visibility": "maya",
+  "links": [
+   [
+    "daniel",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:PLT-710",
+  "kind": "jira",
+  "occurred_at": "2025-10-14",
+  "text": "Upgrade the shared build server from the current Ubuntu image to the newer LTS release. Keep the toolchain versions pinned so that nightly builds produce the same output before and after the cutover. The old image stays available for two weeks, and anyone with custom cache paths should tell me before the change window.",
+  "visibility": "maya",
+  "links": [
+   [
+    "kofi",
+    "assignee"
+   ],
+   [
+    "sofia",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "github:image-resizer-742",
+  "kind": "github",
+  "occurred_at": "2025-11-06",
+  "text": "Fix the flaky unit test that compares resized JPEG output byte for byte, which fails on a small share of CI runs. The test now compares decoded pixel values with a small tolerance instead. Lin reran the suite on three runner types and it passed every time.",
+  "visibility": "maya",
+  "links": [
+   [
+    "owen",
+    "author"
+   ],
+   [
+    "lin",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "slack:platform-712",
+  "kind": "slack",
+  "occurred_at": "2025-12-03",
+  "text": "Quarterly planning for the platform team is next Tuesday, and I would like each of us to bring two items we can finish before the quarter closes. Please keep them small, since on-call weeks always take more time than we expect. I will post the agenda in this channel tomorrow morning.",
+  "visibility": "maya",
+  "links": [
+   [
+    "sofia",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:PLT-724",
+  "kind": "jira",
+  "occurred_at": "2026-01-19",
+  "text": "Log storage for the build and service hosts grew by about forty percent over the last quarter, mostly from verbose debug lines left on by default. Change the default level to info for the three noisiest services and add a sampled debug option for when someone needs more detail. Measure the monthly storage bill before and after so we can report the saving.",
+  "visibility": "maya",
+  "links": [
+   [
+    "raj",
+    "assignee"
+   ],
+   [
+    "sofia",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "docs:postmortem-template-refresh",
+  "kind": "document",
+  "occurred_at": "2026-02-09",
+  "text": "This template replaces the old incident write-up form with four short sections: summary, timeline, contributing factors and follow-up actions. The timeline uses UTC times and names the systems involved rather than the people who responded. Owen suggested dropping the severity table, since the team already tracks severity in the ticket.",
+  "visibility": "maya",
+  "links": [
+   [
+    "kofi",
+    "author"
+   ],
+   [
+    "owen",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "github:log-shipper-749",
+  "kind": "github",
+  "occurred_at": "2026-03-02",
+  "text": "Multiline stack traces were being split into separate log entries, which made them hard to search and inflated the line counts. This change joins continuation lines that start with whitespace onto the preceding entry, up to a fixed maximum size. Tests cover Java, Python and Node traces taken from the sample set.",
+  "visibility": "maya",
+  "links": [
+   [
+    "kofi",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:PLT-736",
+  "kind": "jira",
+  "occurred_at": "2026-04-14",
+  "text": "The second disk shelf in the test storage rack has logged read errors on three drives since last week. Replace the failing shelf with the spare unit from the stock cupboard and update the asset list with the new serial numbers. Check that the test volumes rebuild cleanly before anyone runs the long integration suite on that rack.",
+  "visibility": "maya",
+  "links": [
+   [
+    "lin",
+    "assignee"
+   ],
+   [
+    "kofi",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "slack:platform-739",
+  "kind": "slack",
+  "occurred_at": "2026-05-07",
+  "text": "The engineering book club picks its next book on Friday, and I am proposing a short one on debugging distributed systems. Lin, could you check whether the office library has a copy we can borrow for the second chapter? We meet in the small room after lunch, and the sandwiches are on me this time.",
+  "visibility": "maya",
+  "links": [
+   [
+    "owen",
+    "author"
+   ],
+   [
+    "lin",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "github:ci-config-760",
+  "kind": "github",
+  "occurred_at": "2026-06-11",
+  "text": "The nightly pipeline has been picking up new test runner releases automatically, and two of them changed how parallel workers are counted. This change pins the runner to the version we tested last month and adds a note explaining how to bump it. Raj confirmed the pinned build still passes the full suite on both agent pools.",
+  "visibility": "maya",
+  "links": [
+   [
+    "lin",
+    "author"
+   ],
+   [
+    "raj",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "docs:status-page-tool-evaluation",
+  "kind": "document",
+  "occurred_at": "2026-07-20",
+  "text": "The vendor walked us through a hosted status page tool with automatic component updates and subscriber notifications. We compared it with the current hand-edited page on setup effort, editor access rules and export options for post-incident notes. Kofi tested the webhook on a sandbox site, and the notes list three open questions for the vendor.",
+  "visibility": "maya",
+  "links": [
+   [
+    "sofia",
+    "author"
+   ],
+   [
+    "kofi",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "jira:MOB-705",
+  "kind": "jira",
+  "occurred_at": "2025-10-22",
+  "text": "Push notification icons in the Northgate app look blurred on some Android devices because the small icon is supplied at a single density. Supply the monochrome icon at the full set of density buckets and check that the transparent background is preserved. iOS needs a separate check of the attachment image size limits before the icon change goes out.",
+  "visibility": "maya",
+  "links": [
+   [
+    "diego",
+    "assignee"
+   ],
+   [
+    "tom",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "github:store-locator-ui-718",
+  "kind": "github",
+  "occurred_at": "2025-12-10",
+  "text": "Dark mode colours on the store locator screen were pulling the light theme's map pin colours, so the pins disappeared against the dark map tiles. This change moves the pin and label colours into the shared theme tokens and sets contrast values that pass the accessibility checks in both themes. Opening-hour text now uses the secondary colour token as well.",
+  "visibility": "maya",
+  "links": [
+   [
+    "yuki",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "slack:mobile-726",
+  "kind": "slack",
+  "occurred_at": "2026-01-28",
+  "text": "Team offsite is confirmed for the second week of February at the venue outside the city, with a half day for the retrospective and the afternoon free for walks. Tom, could you send the dietary form to everyone who has not answered yet? I will share the agenda draft by Friday so people can add anything they want us to discuss.",
+  "visibility": "maya",
+  "links": [
+   [
+    "amara",
+    "author"
+   ],
+   [
+    "tom",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "jira:MOB-733",
+  "kind": "jira",
+  "occurred_at": "2026-02-24",
+  "text": "Older tablets crash when the product gallery is rotated while a large image is still loading, with a native out-of-memory stack in the crash reports. Cancel pending image requests when the configuration changes and cap the decoded bitmap size on devices with less than three gigabytes of memory. Test on the two oldest tablets in the device lab before closing the ticket.",
+  "visibility": "maya",
+  "links": [
+   [
+    "diego",
+    "assignee"
+   ],
+   [
+    "amara",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "docs:polish-translation-review",
+  "kind": "document",
+  "occurred_at": "2026-03-30",
+  "text": "This passage covers the spelling and grammar review of the Polish strings in the app, including onboarding, product listings and store-locator messages. Several strings followed English word order, and two button labels were too long for the phone layout. Nadia flagged the labels that need a shorter Polish equivalent, and the reviewed file replaces the previous draft.",
+  "visibility": "maya",
+  "links": [
+   [
+    "tom",
+    "author"
+   ],
+   [
+    "nadia",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "slack:mobile-741",
+  "kind": "slack",
+  "occurred_at": "2026-04-22",
+  "text": "Today is my first full week on the team, and I have been working through the design system docs and the open mobile designs. Amara suggested I shadow the sprint review on Thursday before taking on my own tickets. If anyone has a favourite lunch spot near the office, please point me to it.",
+  "visibility": "maya",
+  "links": [
+   [
+    "nadia",
+    "author"
+   ],
+   [
+    "amara",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "github:android-lint-config-762",
+  "kind": "github",
+  "occurred_at": "2026-05-19",
+  "text": "This change turns on the lint checks for unused resources and missing content descriptions across the Android modules, and disables two rules that produced noise on generated code. Warnings fail the build only in the release variant so local builds stay quick. Yuki checked that the matching iOS accessibility checks cover the same screens.",
+  "visibility": "maya",
+  "links": [
+   [
+    "diego",
+    "author"
+   ],
+   [
+    "yuki",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "jira:MOB-770",
+  "kind": "jira",
+  "occurred_at": "2026-06-30",
+  "text": "The lease on the shared test phone cabinet ends next month and the vendor wants a renewal decision by the end of the week. Review which tablets the team still uses and drop any device that has no owner or has been replaced by a newer model. Confirm that the cabinet keys are handed back to the lab desk once the paperwork is signed.",
+  "visibility": "maya",
+  "links": [
+   [
+    "amara",
+    "assignee"
+   ],
+   [
+    "tom",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "slack:mobile-735",
+  "kind": "slack",
+  "occurred_at": "2026-08-04",
+  "text": "We have shortlisted six candidates for the junior engineer role, and the panel will be Diego and I plus one person from the platform team. Diego, please send your two preferred slots for the coding exercise review by Wednesday. I will share the scoring sheet in the team folder so we can compare notes afterwards.",
+  "visibility": "maya",
+  "links": [
+   [
+    "amara",
+    "author"
+   ],
+   [
+    "diego",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "jira:MOB-779",
+  "kind": "jira",
+  "occurred_at": "2026-09-15",
+  "text": "The iOS app still shows a visible white flash on cold start on some phones because it uses an older startup screen setup. Move to the native startup screen configuration with the brand colour in both light and dark appearance. Measure cold start on three phones before and after the change and attach the timings to this ticket.",
+  "visibility": "maya",
+  "links": [
+   [
+    "yuki",
+    "assignee"
+   ],
+   [
+    "tom",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:PAY-708",
+  "kind": "jira",
+  "occurred_at": "2025-10-29",
+  "text": "Stores are running low on paper rolls for the card terminals, and the order sheet still lists the old roll width. Update the order sheet for each store with the current terminal model and add a reorder point of two weeks of stock. Please confirm the new roll width with the store managers before the next order goes in.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ben",
+    "assignee"
+   ],
+   [
+    "grace",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:PAY-716",
+  "kind": "jira",
+  "occurred_at": "2025-12-17",
+  "text": "The standard letter we send to banks when we contest a disputed card transaction reads too formally, and some template variants leave out the order number. Rewrite the three variants in plain English, keeping the required fields and the deadline wording. Please also check that the sign-off block matches the current team names before the letters are reissued.",
+  "visibility": "maya",
+  "links": [
+   [
+    "grace",
+    "assignee"
+   ],
+   [
+    "ben",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "github:receipt-renderer-727",
+  "kind": "github",
+  "occurred_at": "2026-01-08",
+  "text": "Printed receipts were showing the rounded total one penny off when a basket had more than six lines at different tax rates. This change sums the unrounded line amounts first and rounds once at the end, which matches what the terminal shows. Added fixtures for the mixed-rate baskets and the zero-value line case.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ibrahim",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "slack:payments-734",
+  "kind": "slack",
+  "occurred_at": "2026-02-12",
+  "text": "The fraud team is hosting its lunch talk on Thursday about how they spot unusual card patterns across the store estate, and it is open to anyone in the building. Ben, can you bring the laptop for the projector? It starts at twelve and there are only forty seats, so please reply if you are coming.",
+  "visibility": "maya",
+  "links": [
+   [
+    "grace",
+    "author"
+   ],
+   [
+    "ben",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "docs:payments-team-working-norms",
+  "kind": "document",
+  "occurred_at": "2026-03-11",
+  "text": "These working norms cover how the payments team runs its weekly stand-up, how we take notes in the shared folder and when we pull in other teams. The stand-up stays under fifteen minutes, and anyone who cannot attend posts an update in the channel by mid-morning. Carla added a section on handling urgent partner calls outside core hours.",
+  "visibility": "maya",
+  "links": [
+   [
+    "grace",
+    "author"
+   ],
+   [
+    "carla",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "slack:payments-745",
+  "kind": "slack",
+  "occurred_at": "2026-04-07",
+  "text": "A vendor showed us a document scanner that reads supplier paperwork and files it into the shared folder, which could cut the paper trail at the stores. The walkthrough went well on clean scans but struggled with faded receipts. I have asked for a sample run on last month's store paperwork before we discuss it further with the team.",
+  "visibility": "maya",
+  "links": [
+   [
+    "carla",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "jira:PAY-752",
+  "kind": "jira",
+  "occurred_at": "2026-05-27",
+  "text": "Store supervisors need the refresher on cash handling and the safe drop procedure before the holiday peak, and the current slides still show the old float amounts. Update the slides with this quarter's float limits and add a short quiz at the end. Book three training sessions in the store calendar and send the invites to each supervisor's manager.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ben",
+    "assignee"
+   ],
+   [
+    "grace",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "slack:payments-758",
+  "kind": "slack",
+  "occurred_at": "2026-07-09",
+  "text": "Ibrahim, can you take my on-call week starting on the twelfth? I have a family commitment, and I will cover the weekend after instead. I have updated the rota sheet and put the handover notes in the on-call folder so you have the current contacts.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ben",
+    "author"
+   ],
+   [
+    "ibrahim",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "docs:second-floor-move-checklist",
+  "kind": "document",
+  "occurred_at": "2026-08-18",
+  "text": "The payments team moves to the second floor during the August office works, and this checklist covers desks, monitors and the locked cabinets. Each person should clear their desk by the Friday before and label any cables that belong to shared equipment. Grace will confirm the new seating plan with the facilities team once the desk map is final.",
+  "visibility": "maya",
+  "links": [
+   [
+    "carla",
+    "author"
+   ],
+   [
+    "grace",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "jira:SEC-703",
+  "kind": "jira",
+  "occurred_at": "2025-10-08",
+  "text": "Staff keep reporting suspicious messages that look like delivery notices, so we need a short awareness quiz for the whole company. Draft ten questions using examples from the reported messages, keeping each question to one clear lesson. The quiz goes out through the learning tool and results go to team leads only, not to individuals.",
+  "visibility": "maya",
+  "links": [
+   [
+    "mark",
+    "assignee"
+   ],
+   [
+    "hugo",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:SEC-711",
+  "kind": "jira",
+  "occurred_at": "2025-11-18",
+  "text": "Four of the office badge readers on the ground floor are out of support, and the vendor will stop sending firmware updates next year. Renew the reader units for the lobby and the two side doors, and confirm that the door controller accepts the new cards. Book the installer for a Saturday so the building stays open on weekdays.",
+  "visibility": "maya",
+  "links": [
+   [
+    "lucy",
+    "assignee"
+   ],
+   [
+    "hugo",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "github:dependency-scan-config-729",
+  "kind": "github",
+  "occurred_at": "2025-12-22",
+  "text": "The dependency scan was reporting the same transitive package three times because each module pinned it separately. This change moves the shared exclusions into one file and sets the severity threshold for the build to high only. Mark checked that the nightly scan still covers the Android and iOS build outputs.",
+  "visibility": "maya",
+  "links": [
+   [
+    "fatima",
+    "author"
+   ],
+   [
+    "mark",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "slack:security-736",
+  "kind": "slack",
+  "occurred_at": "2026-01-14",
+  "text": "Lunch and learn on Wednesday is a short introduction to threat modelling for anyone who builds or ships features, using the same three-column method we use in code reviews. Mark, would you open with the example from the mobile login flow? Bring a sandwich and a question, and we will finish by half past one.",
+  "visibility": "maya",
+  "links": [
+   [
+    "fatima",
+    "author"
+   ],
+   [
+    "mark",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "jira:SEC-727",
+  "kind": "jira",
+  "occurred_at": "2026-02-03",
+  "text": "The password manager licence for the team has fifteen seats left, and the renewal form asks for an updated list of active users. Remove the seats held by people who have left or changed teams and confirm the admin accounts are still correct. Send the final count to the finance contact before the vendor reminder date.",
+  "visibility": "maya",
+  "links": [
+   [
+    "lucy",
+    "assignee"
+   ],
+   [
+    "fatima",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:SEC-739",
+  "kind": "jira",
+  "occurred_at": "2026-03-16",
+  "text": "Eleven loan laptops came back from the field office without a recent disk encryption check recorded in the asset tool. Run the encryption status report on each device and reimage any laptop where the status is unknown or disabled. Record the serial numbers and the check date for every device in the asset list.",
+  "visibility": "maya",
+  "links": [
+   [
+    "mark",
+    "assignee"
+   ],
+   [
+    "lucy",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "github:mail-filter-rules-752",
+  "kind": "github",
+  "occurred_at": "2026-04-28",
+  "text": "The mail filter rules were letting through messages with password-protected archives that the sandbox cannot open, which is a common way to hide malware. This change quarantines those archives for review and adds a notice line to the message body. Fatima tested the rules against the sample set of reported messages from the last two months.",
+  "visibility": "maya",
+  "links": [
+   [
+    "mark",
+    "author"
+   ],
+   [
+    "fatima",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "docs:tabletop-exercise-notes",
+  "kind": "document",
+  "occurred_at": "2026-06-02",
+  "text": "The tabletop exercise walked through a stolen laptop with an unlocked session and a suspicious request for a password reset by phone. The group agreed the first call should go to the on-call security contact, and the helpdesk script needs a clear step for verifying identity without asking for secrets. Fatima added notes on logging each step so the exercise can be repeated next quarter.",
+  "visibility": "maya",
+  "links": [
+   [
+    "hugo",
+    "author"
+   ],
+   [
+    "fatima",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "slack:security-762",
+  "kind": "slack",
+  "occurred_at": "2026-07-30",
+  "text": "Hugo, I am moving the shared lobby display login off the common account this week, so each receptionist will have their own sign-in. The old password will be rotated on Friday afternoon, which means the wall screens may need a restart. I will post the new steps in the team channel once the accounts are live.",
+  "visibility": "maya",
+  "links": [
+   [
+    "lucy",
+    "author"
+   ],
+   [
+    "hugo",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "jira:FIN-801",
+  "kind": "jira",
+  "occurred_at": "2025-11-04",
+  "text": "Review the monthly limits on travel expense cards issued to store managers. Several cards hit the limit during the August stock audit week and managers had to ask for manual exceptions. Draft three tiers based on store size and list the cards that would move between tiers. Helen asked for the options before the next finance team review.",
+  "visibility": "maya",
+  "links": [
+   [
+    "tara",
+    "assignee"
+   ],
+   [
+    "helen",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:FIN-802",
+  "kind": "jira",
+  "occurred_at": "2026-01-14",
+  "text": "Confirm how the staff discount is treated for tax when it is applied to goods bought in store and online. The current note says the benefit is reported monthly, but two December payroll runs used a different rule. Compare the rule with the tax guidance and list the cases that need separate treatment. Paul will write up the findings for the team.",
+  "visibility": "maya",
+  "links": [
+   [
+    "paul",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:FIN-803",
+  "kind": "jira",
+  "occurred_at": "2026-06-09",
+  "text": "Audit a sample of company car fuel cards used in the last two quarters. Pull each card's transactions and check that purchases match the vehicle, the driver and a business trip. Flag cards used at the same station on the same day by different drivers. Agree with the fleet team who follows up on anything unexplained.",
+  "visibility": "maya",
+  "links": [
+   [
+    "paul",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:FIN-804",
+  "kind": "jira",
+  "occurred_at": "2026-04-07",
+  "text": "Renew the annual licences for the expense reporting app that store managers use to submit travel claims. The vendor has offered a seat count based on last year's usage, and we need to decide whether to drop the seats of people who have left. Check the contract end date, compare the new price with the current one and confirm the named users before the renewal form goes in.",
+  "visibility": "maya",
+  "links": [
+   [
+    "paul",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:FIN-805",
+  "kind": "jira",
+  "occurred_at": "2026-01-26",
+  "text": "Set up laptops, building access and finance system logins for two people joining the team in February. Both accounts need read-only access to the ledger reports until their training is signed off. Order the second monitor and a headset for each desk by the start of next week. Omar will confirm the start dates once the offers are signed.",
+  "visibility": "maya",
+  "links": [
+   [
+    "helen",
+    "assignee"
+   ],
+   [
+    "omar",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:FIN-806",
+  "kind": "jira",
+  "occurred_at": "2026-03-16",
+  "text": "Book two places on the revenue recognition workshop run by an external training provider in late November. Both analysts need the session before they take over the monthly accrual schedule. Charge the course fee to the team training line and attach the agenda to the booking. Helen wants the confirmations forwarded to her directly.",
+  "visibility": "maya",
+  "links": [
+   [
+    "tara",
+    "assignee"
+   ],
+   [
+    "helen",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:LEG-801",
+  "kind": "jira",
+  "occurred_at": "2026-04-16",
+  "text": "Build a standard template for supplier non-disclosure agreements that commercial teams can use for routine cases. It should cover confidential information, the term, permitted recipients and handling of material at the end. Anders wants clear limits on when a negotiated change goes to legal.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ines",
+    "assignee"
+   ],
+   [
+    "anders",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:LEG-802",
+  "kind": "jira",
+  "occurred_at": "2025-10-14",
+  "text": "Renew the lease on the regional hub unit that expires in March. The landlord has proposed a five year term with a break clause after three years, which needs to be compared with the current terms. Collect the service charge statements for the last two years and check the repair obligations before the notice deadline.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ruth",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:LEG-803",
+  "kind": "jira",
+  "occurred_at": "2026-03-09",
+  "text": "Renew the subscription to the legal research database used by the contracts and compliance teams. The current licence covers twelve named users, but two have left and one starter needs access. Confirm the renewal date and whether a shared login model is allowed before the notice period ends. Record the chosen seat count in the licence register.",
+  "visibility": "maya",
+  "links": [
+   [
+    "anders",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:LEG-804",
+  "kind": "jira",
+  "occurred_at": "2026-05-18",
+  "text": "Run interviews for the open role in the contracts team, empty since the summer. Shortlist five applicants and agree a two-person panel for each stage. The practical exercise is a short redline of a standard supplier agreement. Ruth wants the offer approved by the end of June.",
+  "visibility": "maya",
+  "links": [
+   [
+    "anders",
+    "assignee"
+   ],
+   [
+    "ruth",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:LEG-805",
+  "kind": "jira",
+  "occurred_at": "2026-01-08",
+  "text": "Organise a half-day negotiation training for the new starters in the legal team. The session should use a case study about a supplier dispute over a late supply schedule, with all names removed. Book the training room and the external trainer and send the agenda to everyone in the team.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ruth",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:SUP-801",
+  "kind": "jira",
+  "occurred_at": "2026-02-24",
+  "text": "Replace headsets for agents on the second team, whose microphones are worn and earcups cracked. Agents have reported crackle during calls and two units stopped charging. Order twenty-two of the model the first team already uses so the software profile stays the same. Aisha collected the list of faulty units from the floor.",
+  "visibility": "maya",
+  "links": [
+   [
+    "kim",
+    "assignee"
+   ],
+   [
+    "aisha",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:SUP-802",
+  "kind": "jira",
+  "occurred_at": "2026-03-30",
+  "text": "Rewrite the shift-swap rules so two agents can trade a shift without a manager signing each change. A swap is allowed when both agents hold the same skill tags, rest periods are kept and the rota tool is updated 48 hours ahead. Rosa asked for a short version we can print for the break room. Sam will test the rules over the next two rota cycles.",
+  "visibility": "maya",
+  "links": [
+   [
+    "sam",
+    "assignee"
+   ],
+   [
+    "rosa",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "jira:SUP-803",
+  "kind": "jira",
+  "occurred_at": "2026-06-15",
+  "text": "Add twenty seats to the phone system licence for agents joining the second team next quarter. The current licence has no spare seats, so new starters cannot log in until the seats are added. Confirm the vendor's price per seat and whether monthly or annual billing is cheaper. Update the seat register once the change is live.",
+  "visibility": "maya",
+  "links": [
+   [
+    "kim",
+    "assignee"
+   ]
+  ]
+ },
+ {
+  "id": "jira:SUP-804",
+  "kind": "jira",
+  "occurred_at": "2026-07-07",
+  "text": "Update the new agent onboarding checklist for the new phone system and shadowing schedule. The first week should include a tour of the tools, two days of listening sessions and a short quiz on the greeting script. Remove the old step about the paper log, which was retired in the spring. Rosa wants the revised checklist before the next intake starts.",
+  "visibility": "maya",
+  "links": [
+   [
+    "pedro",
+    "assignee"
+   ],
+   [
+    "rosa",
+    "reporter"
+   ]
+  ]
+ },
+ {
+  "id": "slack:finance-801",
+  "kind": "slack",
+  "occurred_at": "2025-12-02",
+  "text": "Hi all, I have started clearing the fixed asset register for store fit-out equipment. About forty items were recorded twice after the spring refits, and a few laptops show as disposed though they are still in use. I will send each store manager their list to confirm before I change anything.",
+  "visibility": "maya",
+  "links": [
+   [
+    "tara",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "slack:finance-802",
+  "kind": "slack",
+  "occurred_at": "2026-02-19",
+  "text": "Hi everyone, we are running a lunch and learn on reading the management accounts next Thursday. Tara has agreed to walk through the variance columns, so bring a copy of last month's pack. It is aimed at anyone in store operations who wants to understand the numbers in their monthly review. Places are limited to twenty, so reply here to hold one.",
+  "visibility": "maya",
+  "links": [
+   [
+    "omar",
+    "author"
+   ],
+   [
+    "tara",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "slack:finance-803",
+  "kind": "slack",
+  "occurred_at": "2026-08-13",
+  "text": "Hi team, I sat through a vendor presentation for an app that scans paper receipts and matches them to card transactions. It cuts manual entry a lot in the walkthrough, but it only reads receipts from four major providers and needs a phone camera on every desk. I have asked for a sandbox login so we can test it on last month's receipts before anyone signs anything.",
+  "visibility": "maya",
+  "links": [
+   [
+    "paul",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "slack:legal-801",
+  "kind": "slack",
+  "occurred_at": "2026-05-27",
+  "text": "Hi all, I am drafting the terms and conditions for the in-store prize draw that runs at three locations this summer. The wording needs a closing date, an age limit of eighteen and a line on how winners are notified. Ines is checking the eligibility wording against the local rules for each site, so please send store-specific questions to her.",
+  "visibility": "maya",
+  "links": [
+   [
+    "anders",
+    "author"
+   ],
+   [
+    "ines",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "slack:legal-802",
+  "kind": "slack",
+  "occurred_at": "2026-08-04",
+  "text": "Hi, I sat through a presentation on a contract management tool this morning. It stores signed supplier agreements, sends reminders before renewal dates and searches clauses across the folder. The vendor wants a three year commitment, so I have asked for a reference from another retailer before we discuss price. I will post the presentation notes here by Friday.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ines",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "slack:legal-803",
+  "kind": "slack",
+  "occurred_at": "2026-09-10",
+  "text": "Hi all, the fridge on our floor is full of old food again. From Monday, anything left in it on Friday goes in the bin, and the kitchen rota now covers a weekly clean. Please label your lunch with your name and the date. I will check the cupboard for spare mugs on Thursday.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ruth",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "slack:support-801",
+  "kind": "slack",
+  "occurred_at": "2026-04-27",
+  "text": "Hi all, the new greeting script for phone calls goes live on Monday. It opens with the agent name, asks how the caller would like to be helped and drops the long disclaimer. Aisha has tested it on her shifts and says it works well for short calls, so we will review it again after two weeks. Please keep it on the desk and do not read it word for word.",
+  "visibility": "maya",
+  "links": [
+   [
+    "sam",
+    "author"
+   ],
+   [
+    "aisha",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "slack:support-802",
+  "kind": "slack",
+  "occurred_at": "2026-04-21",
+  "text": "Hi everyone, I have booked the first-aid course for the team on the fourteenth and fifteenth of May at the training centre. The course runs both days, so please do not book other shifts for those dates. Aisha asked whether the places can go to night shift agents first, and I think that is fair. Let me know by Wednesday if you cannot attend.",
+  "visibility": "maya",
+  "links": [
+   [
+    "rosa",
+    "author"
+   ],
+   [
+    "aisha",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "slack:support-803",
+  "kind": "slack",
+  "occurred_at": "2026-09-18",
+  "text": "Hi team, I am planning the quiz night for the support floor on the last Friday of the month. Teams of four will answer rounds on general knowledge, music and pictures, and the winners get a canteen voucher. Kim said she can run the scoreboard on the big screen if we bring a laptop. Sign up here and I will make the teams.",
+  "visibility": "maya",
+  "links": [
+   [
+    "aisha",
+    "author"
+   ],
+   [
+    "kim",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "slack:support-804",
+  "kind": "slack",
+  "occurred_at": "2026-08-19",
+  "text": "Hi all, I sat through a vendor presentation on speech analytics that tags calls by topic and flags long silences. It can search every call for a phrase, which would save a lot of time on coaching reviews. The vendor wants us to sign before the end of the quarter, which I am not comfortable with, so I have asked for a trial on one team first.",
+  "visibility": "maya",
+  "links": [
+   [
+    "kim",
+    "author"
+   ]
+  ]
+ },
+ {
+  "id": "slack:support-805",
+  "kind": "slack",
+  "occurred_at": "2025-11-20",
+  "text": "Hi all, I am setting up a short refresher on accessibility for phone calls with callers who are hard of hearing or use relay services. Aisha offered to share examples from her own calls, which is really helpful. The session is forty minutes and covers pacing, repeating key details and checking understanding. Let me know which slot works best.",
+  "visibility": "maya",
+  "links": [
+   [
+    "sam",
+    "author"
+   ],
+   [
+    "aisha",
+    "mention"
+   ]
+  ]
+ },
+ {
+  "id": "docs:year-end-stock-count-timetable",
+  "kind": "document",
+  "occurred_at": "2026-03-02",
+  "text": "The year-end stock count runs over three weekends, with each store booking a fixed slot. Stores hold stock movements during their counting window, and any variance above tolerance is logged within two days. Tara keeps the variance log and sends a Monday summary during the count period.",
+  "visibility": "maya",
+  "links": [
+   [
+    "helen",
+    "author"
+   ],
+   [
+    "tara",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "docs:finance-team-offsite-agenda",
+  "kind": "document",
+  "occurred_at": "2026-09-22",
+  "text": "The finance team offsite runs in the third week of October. The morning covers the year-end close timetable and lessons from the summer stock count. The afternoon is a session on working with store managers, followed by a team dinner near the office. Paul has added a slot on the expense tool renewal, so send other items before Friday.",
+  "visibility": "maya",
+  "links": [
+   [
+    "helen",
+    "author"
+   ],
+   [
+    "paul",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "docs:finance-team-meeting-notes",
+  "kind": "document",
+  "occurred_at": "2026-05-12",
+  "text": "Notes from the monthly finance team meeting in the small room. The group agreed to decide the expense tool renewal before setting the seat count, and every new joiner gets a buddy for two weeks. Paul will circulate the workshop slides. Omar will bring open items to the next meeting.",
+  "visibility": "maya",
+  "links": [
+   [
+    "omar",
+    "author"
+   ],
+   [
+    "paul",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "docs:private-label-tea-trademark",
+  "kind": "document",
+  "occurred_at": "2026-02-05",
+  "text": "Filing plan for a trademark covering the name of our private-label tea range in the tea and tea accessories classes. Searches show two similar marks in neighbouring classes, so we will not extend the filing beyond these. Ines has the draft specification and will check the wording against the classification guide before anything goes in.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ruth",
+    "author"
+   ],
+   [
+    "ines",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "docs:staff-handbook-gift-clause",
+  "kind": "document",
+  "occurred_at": "2026-06-30",
+  "text": "Proposed wording for the gifts section of the staff handbook. Staff may accept small supplier gifts below the set limit, and anything above it is declared to the line manager. Ruth added an example for hospitality invitations, as managers asked for one after the spring events. The clause applies to everyone, including store staff.",
+  "visibility": "maya",
+  "links": [
+   [
+    "anders",
+    "author"
+   ],
+   [
+    "ruth",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "docs:e-signature-rollout-notes",
+  "kind": "document",
+  "occurred_at": "2026-07-29",
+  "text": "Meeting notes from the e-signature rollout review. Supplier agreements below the set value may be signed electronically from next month, while larger ones still need a wet signature. Anders will check the audit trail settings with the vendor. Ines will add screenshots to the signing guide.",
+  "visibility": "maya",
+  "links": [
+   [
+    "ines",
+    "author"
+   ],
+   [
+    "anders",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "docs:customer-satisfaction-survey-wording",
+  "kind": "document",
+  "occurred_at": "2026-08-26",
+  "text": "Proposed wording for the short survey customers receive after a phone call or chat. The first question asks how easy it was to get help, rated from one to five, and the second is an optional comment box. Rosa asked for the word helpful to be removed. Any change goes to the customer team before it is live.",
+  "visibility": "maya",
+  "links": [
+   [
+    "pedro",
+    "author"
+   ],
+   [
+    "rosa",
+    "contributor"
+   ]
+  ]
+ },
+ {
+  "id": "docs:support-floor-office-move",
+  "kind": "document",
+  "occurred_at": "2026-10-03",
+  "text": "Notes for moving the support floor to the east wing in the second week of November. Desks are renumbered in the new layout and each team keeps its row near its team lead. Handsets move on the Saturday before, and the quiet room becomes a meeting space. Sam will walk the floor with facilities on the Monday before the move.",
+  "visibility": "maya",
+  "links": [
+   [
+    "rosa",
+    "author"
+   ],
+   [
+    "sam",
+    "contributor"
+   ]
+  ]
+ }
+]

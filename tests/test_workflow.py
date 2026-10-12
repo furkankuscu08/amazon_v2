@@ -6,11 +6,11 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
+from tests.unit_seed import seed_db
 from workbot import service
 from workbot.llm import ModelError, OpenRouter
 from workbot.models import AreaEvaluation, Impact, Priority
 from workbot.search import candidate_pool
-from workbot.seed import seed_db
 from workbot.service import Conflict, answer_question, create_session, run_safely
 from workbot.storage import connect, load_session, valid_card, visible_record
 

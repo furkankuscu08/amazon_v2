@@ -4,10 +4,10 @@ import pytest
 from fastapi.testclient import TestClient
 from qdrant_client import QdrantClient
 
+from tests.unit_seed import seed_db
 from workbot.main import DemoRateLimiter, app
 from workbot.models import AreaEvaluation, Impact, Priority
 from workbot.search import Searcher, index_visible_records
-from workbot.seed import seed_db
 from workbot.storage import connect
 
 
