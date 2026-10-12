@@ -53,13 +53,15 @@ class Impact(StrictModel):
 
 class PersonProposal(StrictModel):
     person_id: str
-    role: Literal["direct_contact", "advisor", "routing_contact"]
     # The single source the model relies on for this role, and its own read of how
     # closely that source matches the area's consultation need. Local validation
     # checks that the primary is cited; the direct-contact evidence requirement is
-    # enforced in the deterministic audit, not this schema, so one odd field cannot
-    # void a whole area review.
+    # enforced in the deterministic audit, not this schema, so an inconsistent
+    # role/link does not void a whole area review.
     primary_evidence_id: str
+    # Bounded, unverified source-to-need summary, not an independent semantic audit.
+    contribution: str = Field(min_length=5, max_length=300)
+    role: Literal["direct_contact", "advisor", "routing_contact"]
     relevance: Literal["direct", "adjacent", "weak"]
     evidence_ids: list[str] = Field(min_length=1, max_length=8)
     confidence: Literal["high", "medium", "low"]

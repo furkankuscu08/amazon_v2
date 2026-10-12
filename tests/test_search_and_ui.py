@@ -134,6 +134,7 @@ class WebModel:
                     "people": [
                         {
                             "person_id": "nina",
+                            "contribution": "Checklist work can clarify pre-launch campaign review scope.",
                             "role": "direct_contact",
                             "primary_evidence_id": "jira:MKT-482",
                             "relevance": "direct",

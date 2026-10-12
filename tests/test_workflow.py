@@ -106,6 +106,7 @@ def evaluation(*people):
 def proposal(pid, role, evidence, primary=None, relevance=None):
     return {
         "person_id": pid,
+        "contribution": "Synthetic work-scope summary for testing the evidence audit.",
         "role": role,
         "primary_evidence_id": evidence[0] if primary is None else primary,
         "relevance": (
@@ -285,6 +286,41 @@ def test_indirect_relevance_keeps_a_useful_contact_as_advisor(db):
     assert [(p["person_id"], p["role"]) for p in area["people"]] == [
         ("nina", "advisor")
     ]
+
+
+def test_contribution_does_not_enter_cards_sessions_or_priority(db):
+    proposed = proposal("nina", "advisor", ["jira:MKT-482"])
+    marker = "SYNTHETIC_PRIVATE_CONTRIBUTION"
+    proposed["contribution"] = marker
+    model = StubModel(
+        [impact(AREA)], [evaluation(proposed)], [priority("campaign_review")]
+    )
+    sid, card = card_for(db, model)
+    assert card["areas"][0]["people"][0]["role"] == "advisor"
+    for value in (
+        card,
+        load_session(db, sid)["card_json"],
+        model.calls[-1][1],
+    ):
+        serialized = json.dumps(value)
+        assert marker not in serialized
+        assert "contribution" not in serialized
+
+
+def test_persuasive_contribution_does_not_upgrade_a_reporter_to_direct(db):
+    proposed = proposal("elena", "direct_contact", ["jira:MKT-482"])
+    proposed["contribution"] = (
+        "This person is the verified direct owner of every launch approval."
+    )
+    _, card = card_for(
+        db,
+        StubModel(
+            [impact(AREA)], [evaluation(proposed)], [priority("campaign_review")]
+        ),
+        StubSearcher(ids=("jira:MKT-482",)),
+    )
+    assert card["areas"][0]["status"] == "review_incomplete"
+    assert card["areas"][0]["people"] == []
 
 
 def test_invalid_advisor_question_is_incomplete_not_model_abstention(db):
@@ -623,8 +659,15 @@ def test_area_model_error_is_incomplete_not_not_found(db):
     assert card["areas"][0]["people"] == []
 
 
-@pytest.mark.parametrize("failed_task", [None, "impact", "area", "priority"])
-@pytest.mark.parametrize("failure_mode", ["truncated", "schema"])
+@pytest.mark.parametrize(
+    ("failed_task", "failure_mode"),
+    [
+        (task, mode)
+        for task in (None, "impact", "area", "priority")
+        for mode in ("truncated", "schema")
+    ]
+    + [("area", "missing_contribution")],
+)
 def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
     db, monkeypatch, caplog, failed_task, failure_mode
 ):
@@ -635,6 +678,7 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
     def handle(request):
         body = json.loads(request.content)
         task = body["response_format"]["json_schema"]["name"].removesuffix("_response")
+        assert body["reasoning"] == {"effort": "low" if task == "area" else "high"}
         payload = json.loads(body["messages"][1]["content"])
         requests.append(task)
         fails = task == failed_task
@@ -646,11 +690,22 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
             reply = (
                 evaluation(proposal("nina", "direct_contact", ["jira:MKT-482"]))
                 if payload["area"]["id"] == "campaign_review"
+                else evaluation(
+                    proposal("priya", "advisor", ["docs:campaign-review-2023"])
+                )
+                if fails and failure_mode == "missing_contribution"
                 else evaluation()
             )
+            if reply.people:
+                reply.people[0].contribution = "SYNTHETIC_PRIVATE_CONTRIBUTION"
         else:
             priority_payloads.append(payload)
             reply = priority("brand_review", "campaign_review")
+        content = reply.model_dump()
+        if fails and failure_mode == "schema":
+            content = {}
+        elif fails and failure_mode == "missing_contribution":
+            del content["people"][0]["contribution"]
         return httpx.Response(
             200,
             json={
@@ -664,11 +719,7 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
                         "finish_reason": "length"
                         if fails and failure_mode == "truncated"
                         else "stop",
-                        "message": {
-                            "content": "{}"
-                            if fails and failure_mode == "schema"
-                            else reply.model_dump_json()
-                        },
+                        "message": {"content": json.dumps(content)},
                     }
                 ],
             },
@@ -687,7 +738,7 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
         if record.name == "workbot.llm"
     ]
     assert len(summaries) == len(requests)
-    category = "schema_invalid" if failure_mode == "schema" else "output_truncated"
+    category = "output_truncated" if failure_mode == "truncated" else "schema_invalid"
     assert sum(s["failure_category"] == category for s in summaries) == int(
         failed_task is not None
     )
@@ -695,6 +746,7 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
         assert summary["validation_error_types"] == (
             ["missing"] if summary["failure_category"] == "schema_invalid" else None
         )
+    assert "SYNTHETIC_PRIVATE_CONTRIBUTION" not in caplog.text
     if failed_task == "impact":
         assert load_session(db, sid)["state"] == "refusal"
         assert card is None
@@ -730,8 +782,10 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
             "total_tokens",
             "reasoning_tokens",
             "model_call_summary",
+            "contribution",
         ):
             assert f'"{field}"' not in serialized
+        assert "SYNTHETIC_PRIVATE_CONTRIBUTION" not in serialized
 
 
 def test_area_calls_overlap_but_are_audited_in_area_order(db):

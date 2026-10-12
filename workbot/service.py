@@ -12,6 +12,7 @@ from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 
 from workbot.llm import ModelError
 from workbot.models import AreaEvaluation, Impact, Priority
+from workbot.questions import NEUTRAL_QUESTIONS
 from workbot.search import candidate_pool
 from workbot.storage import (
     current,
@@ -361,12 +362,12 @@ ADVISOR_KINDS = WORK_STRONG | {"responsibility", "reporter"}
 def _grounded_ask(role: str, primary_kind: str) -> str:
     """Ask about a verified link without asserting what the source contains."""
     if role == "routing_contact":
-        return "Who on the team could clarify the consultation need shown above?"
+        return NEUTRAL_QUESTIONS["routing"]
     if primary_kind == "responsibility":
-        return "What does your current responsibility cover, and could it inform the consultation need shown above?"
+        return NEUTRAL_QUESTIONS["responsibility"]
     if primary_kind in WORK_STRONG:
-        return "What did your work on the cited source cover, and could it inform the consultation need shown above?"
-    return "What can you clarify about the cited record, and could it inform the consultation need shown above?"
+        return NEUTRAL_QUESTIONS["work"]
+    return NEUTRAL_QUESTIONS["record"]
 
 
 def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
