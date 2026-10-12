@@ -1,0 +1,117 @@
+{
+  "company": "Northgate Retail (fictional): a retailer with stores, a web shop and a mobile shopping app called the Northgate app.",
+  "org_units": [
+    {"id": "growth", "name": "Growth Marketing"},
+    {"id": "brand", "name": "Brand Review"},
+    {"id": "platform", "name": "Campaign Platform"},
+    {"id": "mobile", "name": "Mobile App"},
+    {"id": "payments", "name": "Payments"},
+    {"id": "finance", "name": "Finance"},
+    {"id": "legal", "name": "Legal and Compliance"},
+    {"id": "security", "name": "Security Review"},
+    {"id": "support", "name": "Customer Support"},
+    {"id": "commerce", "name": "Commerce Operations"},
+    {"id": "data", "name": "Data and Analytics"}
+  ],
+  "people": [
+    {"id": "nina", "name": "Nina Ellis", "title": "Campaign Operations Specialist", "active": true, "org_id": "growth"},
+    {"id": "elena", "name": "Elena Park", "title": "Campaign Analyst", "active": true, "org_id": "growth"},
+    {"id": "marcus", "name": "Marcus Reed", "title": "Growth Marketing Manager", "active": true, "org_id": "growth"},
+    {"id": "jules", "name": "Jules Carter", "title": "Operations Coordinator", "active": true, "org_id": "growth"},
+    {"id": "leo", "name": "Leo Marsh", "title": "Lifecycle Marketing Specialist", "active": true, "org_id": "growth"},
+    {"id": "eve", "name": "Eve Lindqvist", "title": "Operations Associate", "active": true, "org_id": "growth"},
+    {"id": "dana", "name": "Dana Whitlock", "title": "Marketing Specialist", "active": false, "org_id": "growth"},
+
+    {"id": "priya", "name": "Priya Singh", "title": "Brand Review Lead", "active": true, "org_id": "brand"},
+    {"id": "victor", "name": "Victor Hale", "title": "Brand Review Manager", "active": true, "org_id": "brand"},
+    {"id": "hannah", "name": "Hannah Cole", "title": "Brand Designer", "active": true, "org_id": "brand"},
+    {"id": "mei", "name": "Mei Tanaka", "title": "Copy Editor", "active": true, "org_id": "brand"},
+
+    {"id": "owen", "name": "Owen Blake", "title": "Platform Engineer", "active": true, "org_id": "platform"},
+    {"id": "sofia", "name": "Sofia Moreno", "title": "Platform Engineering Manager", "active": true, "org_id": "platform"},
+    {"id": "raj", "name": "Raj Patel", "title": "Backend Engineer", "active": true, "org_id": "platform"},
+    {"id": "kofi", "name": "Kofi Mensah", "title": "Site Reliability Engineer", "active": true, "org_id": "platform"},
+    {"id": "lin", "name": "Lin Zhao", "title": "QA Engineer", "active": true, "org_id": "platform"},
+
+    {"id": "amara", "name": "Amara Okafor", "title": "Mobile Engineering Manager", "active": true, "org_id": "mobile"},
+    {"id": "diego", "name": "Diego Alvarez", "title": "Android Engineer", "active": true, "org_id": "mobile"},
+    {"id": "yuki", "name": "Yuki Sato", "title": "iOS Engineer", "active": true, "org_id": "mobile"},
+    {"id": "tom", "name": "Tom Fischer", "title": "Mobile Product Manager", "active": true, "org_id": "mobile"},
+    {"id": "nadia", "name": "Nadia Rahman", "title": "UX Designer", "active": true, "org_id": "mobile"},
+
+    {"id": "grace", "name": "Grace Novak", "title": "Payments Operations Manager", "active": true, "org_id": "payments"},
+    {"id": "ibrahim", "name": "Ibrahim Yusuf", "title": "Payments Engineer", "active": true, "org_id": "payments"},
+    {"id": "carla", "name": "Carla Mendes", "title": "Payment Partnerships Lead", "active": true, "org_id": "payments"},
+    {"id": "ben", "name": "Ben Archer", "title": "Payments Analyst", "active": true, "org_id": "payments"},
+    {"id": "stefan", "name": "Stefan Kruger", "title": "Payments Engineer", "active": false, "org_id": "payments"},
+
+    {"id": "tara", "name": "Tara Reed", "title": "Finance Analyst", "active": true, "org_id": "finance"},
+    {"id": "helen", "name": "Helen Brooks", "title": "Finance Manager", "active": true, "org_id": "finance"},
+    {"id": "omar", "name": "Omar Haddad", "title": "Budget Controller", "active": true, "org_id": "finance"},
+    {"id": "paul", "name": "Paul Jensen", "title": "Accounts Payable Specialist", "active": true, "org_id": "finance"},
+
+    {"id": "ruth", "name": "Ruth Adler", "title": "Legal Counsel", "active": true, "org_id": "legal"},
+    {"id": "anders", "name": "Anders Holm", "title": "Compliance Manager", "active": true, "org_id": "legal"},
+    {"id": "zoe", "name": "Zoe Castell", "title": "Privacy Counsel", "active": true, "org_id": "legal"},
+    {"id": "ines", "name": "Ines Duarte", "title": "Contracts Specialist", "active": true, "org_id": "legal"},
+
+    {"id": "hugo", "name": "Hugo Lambert", "title": "Security Review Manager", "active": true, "org_id": "security"},
+    {"id": "fatima", "name": "Fatima Noor", "title": "Security Engineer", "active": true, "org_id": "security"},
+    {"id": "mark", "name": "Mark Ostrow", "title": "Privacy Engineer", "active": true, "org_id": "security"},
+    {"id": "lucy", "name": "Lucy Grant", "title": "IT Access Administrator", "active": true, "org_id": "security"},
+
+    {"id": "rosa", "name": "Rosa Delgado", "title": "Customer Support Manager", "active": true, "org_id": "support"},
+    {"id": "sam", "name": "Sam Whitaker", "title": "Support Team Lead", "active": true, "org_id": "support"},
+    {"id": "aisha", "name": "Aisha Karim", "title": "Support Agent", "active": true, "org_id": "support"},
+    {"id": "pedro", "name": "Pedro Lima", "title": "Knowledge Base Editor", "active": true, "org_id": "support"},
+    {"id": "kim", "name": "Kim Nguyen", "title": "Support Tools Administrator", "active": true, "org_id": "support"},
+
+    {"id": "daniel", "name": "Daniel Frost", "title": "Commerce Operations Manager", "active": true, "org_id": "commerce"},
+    {"id": "chloe", "name": "Chloe Martin", "title": "Merchandising Coordinator", "active": true, "org_id": "commerce"},
+    {"id": "ivan", "name": "Ivan Petrov", "title": "Fulfilment Planner", "active": true, "org_id": "commerce"},
+
+    {"id": "wei", "name": "Wei Chen", "title": "Analytics Manager", "active": true, "org_id": "data"},
+    {"id": "sara", "name": "Sara Lindholm", "title": "Data Analyst", "active": true, "org_id": "data"},
+    {"id": "noah", "name": "Noah Baker", "title": "Data Engineer", "active": true, "org_id": "data"}
+  ],
+  "managers": [
+    {"org_id": "growth", "person_id": "marcus", "valid_from": "2025-01-01", "valid_to": null, "source_id": "directory:growth-manager", "visibility": "maya"},
+    {"org_id": "brand", "person_id": "victor", "valid_from": "2024-06-01", "valid_to": null, "source_id": "directory:brand-manager", "visibility": "maya"},
+    {"org_id": "platform", "person_id": "sofia", "valid_from": "2025-03-01", "valid_to": null, "source_id": "directory:platform-manager", "visibility": "maya"},
+    {"org_id": "mobile", "person_id": "amara", "valid_from": "2025-02-01", "valid_to": null, "source_id": "directory:mobile-manager", "visibility": "maya"},
+    {"org_id": "payments", "person_id": "grace", "valid_from": "2024-09-01", "valid_to": null, "source_id": "directory:payments-manager", "visibility": "maya"},
+    {"org_id": "finance", "person_id": "helen", "valid_from": "2023-11-01", "valid_to": null, "source_id": "directory:finance-manager", "visibility": "maya"},
+    {"org_id": "legal", "person_id": "anders", "valid_from": "2025-05-01", "valid_to": null, "source_id": "directory:legal-manager", "visibility": "maya"},
+    {"org_id": "security", "person_id": "hugo", "valid_from": "2024-04-01", "valid_to": null, "source_id": "directory:security-manager", "visibility": "maya"},
+    {"org_id": "support", "person_id": "rosa", "valid_from": "2025-01-15", "valid_to": null, "source_id": "directory:support-manager", "visibility": "maya"},
+    {"org_id": "commerce", "person_id": "daniel", "valid_from": "2024-10-01", "valid_to": null, "source_id": "directory:commerce-manager", "visibility": "maya"},
+    {"org_id": "data", "person_id": "wei", "valid_from": "2025-06-01", "valid_to": null, "source_id": "directory:data-manager", "visibility": "maya"}
+  ],
+  "team_remits": [
+    {"id": "growth-remit", "org_id": "growth", "scope": "Campaign planning and launch approval review", "valid_from": "2025-01-01", "valid_to": null, "source_id": "directory:growth-remit", "visibility": "maya"},
+    {"id": "brand-remit", "org_id": "brand", "scope": "Brand voice, creative asset and advertising claims review", "valid_from": "2024-06-01", "valid_to": null, "source_id": "directory:brand-remit", "visibility": "maya"},
+    {"id": "platform-remit", "org_id": "platform", "scope": "Campaign scheduling platform and internal API integrations", "valid_from": "2025-03-01", "valid_to": null, "source_id": "directory:platform-remit", "visibility": "maya"},
+    {"id": "mobile-remit", "org_id": "mobile", "scope": "Shopping app features, checkout experience and app releases", "valid_from": "2025-02-01", "valid_to": null, "source_id": "directory:mobile-remit", "visibility": "maya"},
+    {"id": "payments-remit", "org_id": "payments", "scope": "Payment methods, provider settlement and payment operations", "valid_from": "2024-09-01", "valid_to": null, "source_id": "directory:payments-remit", "visibility": "maya"},
+    {"id": "finance-remit", "org_id": "finance", "scope": "Budget planning, spend approval and supplier invoices", "valid_from": "2023-11-01", "valid_to": null, "source_id": "directory:finance-remit", "visibility": "maya"},
+    {"id": "legal-remit", "org_id": "legal", "scope": "Contracts, regulatory compliance and customer data retention", "valid_from": "2025-05-01", "valid_to": null, "source_id": "directory:legal-remit", "visibility": "maya"},
+    {"id": "security-remit", "org_id": "security", "scope": "Security review, access control and consent management", "valid_from": "2024-04-01", "valid_to": null, "source_id": "directory:security-remit", "visibility": "maya"},
+    {"id": "support-remit", "org_id": "support", "scope": "Customer contacts, returns and refund requests", "valid_from": "2025-01-15", "valid_to": null, "source_id": "directory:support-remit", "visibility": "maya"},
+    {"id": "commerce-remit", "org_id": "commerce", "scope": "Online order fulfilment, merchandising and store pickup", "valid_from": "2024-10-01", "valid_to": null, "source_id": "directory:commerce-remit", "visibility": "maya"}
+  ],
+  "responsibilities": [
+    {"id": "jules-approval", "person_id": "jules", "org_id": "growth", "scope": "Reviewing campaign launch approvals", "relation": "reviewer", "valid_from": "2026-01-01", "valid_to": null, "verified_at": "2026-09-01", "source_id": "directory:jules-approval", "visibility": "maya"},
+    {"id": "elena-old", "person_id": "elena", "org_id": "growth", "scope": "Managing campaign launch approvals", "relation": "operator", "valid_from": "2024-01-01", "valid_to": "2025-01-01", "verified_at": "2025-01-01", "source_id": "directory:elena-old", "visibility": "maya"},
+    {"id": "eve-secret", "person_id": "eve", "org_id": "growth", "scope": "Campaign budget authorization", "relation": "owner", "valid_from": "2026-01-01", "valid_to": null, "verified_at": "2026-09-01", "source_id": "directory:secret-duty", "visibility": "restricted"},
+    {"id": "priya-claims", "person_id": "priya", "org_id": "brand", "scope": "Approving advertising claims in campaign copy", "relation": "approver", "valid_from": "2025-09-01", "valid_to": null, "verified_at": "2026-08-15", "source_id": "directory:priya-claims", "visibility": "maya"},
+    {"id": "kofi-oncall", "person_id": "kofi", "org_id": "platform", "scope": "Coordinating incident response for the campaign scheduling platform", "relation": "coordinator", "valid_from": "2026-02-01", "valid_to": null, "verified_at": "2026-09-10", "source_id": "directory:kofi-oncall", "visibility": "maya"},
+    {"id": "grace-settlement", "person_id": "grace", "org_id": "payments", "scope": "Operating payment provider settlement and reconciliation", "relation": "owner", "valid_from": "2024-09-01", "valid_to": null, "verified_at": "2026-09-05", "source_id": "directory:grace-settlement", "visibility": "maya"},
+    {"id": "tara-spend", "person_id": "tara", "org_id": "finance", "scope": "Reviewing marketing spend requests above the approval threshold", "relation": "reviewer", "valid_from": "2026-03-01", "valid_to": null, "verified_at": "2026-09-01", "source_id": "directory:tara-spend", "visibility": "maya"},
+    {"id": "omar-budget-old", "person_id": "omar", "org_id": "finance", "scope": "Approving marketing budget changes", "relation": "approver", "valid_from": "2023-01-01", "valid_to": "2025-06-30", "verified_at": "2025-06-30", "source_id": "directory:omar-budget-old", "visibility": "maya"},
+    {"id": "anders-retention", "person_id": "anders", "org_id": "legal", "scope": "Maintaining the customer data retention schedule", "relation": "owner", "valid_from": "2025-05-01", "valid_to": null, "verified_at": "2026-08-20", "source_id": "directory:anders-retention", "visibility": "maya"},
+    {"id": "zoe-scoring", "person_id": "zoe", "org_id": "legal", "scope": "Privacy impact assessments for customer scoring", "relation": "owner", "valid_from": "2026-02-01", "valid_to": null, "verified_at": "2026-09-01", "source_id": "directory:zoe-scoring", "visibility": "restricted"},
+    {"id": "fatima-reviews", "person_id": "fatima", "org_id": "security", "scope": "Running security reviews for new customer-facing features", "relation": "reviewer", "valid_from": "2025-10-01", "valid_to": null, "verified_at": "2026-09-12", "source_id": "directory:fatima-reviews", "visibility": "maya"},
+    {"id": "mark-consent", "person_id": "mark", "org_id": "security", "scope": "Maintaining consent and tracking preferences in the app", "relation": "owner", "valid_from": "2025-11-01", "valid_to": null, "verified_at": "2026-09-12", "source_id": "directory:mark-consent", "visibility": "maya"},
+    {"id": "sam-returns", "person_id": "sam", "org_id": "support", "scope": "Running the returns and refund escalation queue", "relation": "owner", "valid_from": "2026-01-15", "valid_to": null, "verified_at": "2026-09-08", "source_id": "directory:sam-returns", "visibility": "maya"}
+  ]
+}
