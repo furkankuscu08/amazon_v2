@@ -10,7 +10,7 @@
 <label for="idea">Your project idea</label><textarea name="idea" id="idea" maxlength="600" required placeholder="We should accept stablecoin payments in the Northgate app."></textarea>
 <p><button type="submit">Ask Workbot</button></p></form></div></div>
 {% if recent %}<div class="bubble"><span class="who">Your earlier ideas</span><ul class="recent">
-{% for item in recent %}<li><a href="/sessions/{{ item.id }}">{{ item.idea }}</a><br><small>{{ {'card': 'Plan ready', 'stale': 'No longer valid: its evidence or access has changed since', 'question': 'Waiting for your answer', 'processing': 'Still working, or interrupted', 'refusal': 'Could not be evaluated'}[item.status] }}</small></li>{% endfor %}
+{% for item in recent %}<li><a href="/sessions/{{ item.id }}">{{ item.idea }}</a><br><small>{{ {'card': 'Plan ready', 'question': 'Waiting for your answer', 'processing': 'Still working, or interrupted', 'refusal': 'Could not be evaluated'}[item.status] }}</small></li>{% endfor %}
 </ul></div>{% endif %}
 <p><small>This is an independent web simulation. All people and records are fictional.</small></p>
 {% endblock %}

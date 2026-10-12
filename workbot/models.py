@@ -90,4 +90,13 @@ class Priority(StrictModel):
     shared_question: str | None
     # Person IDs already on the audited card, most important first. The service
     # keeps only IDs that are shown; this can neither add a person nor change a role.
-    first_conversations: list[str] = Field(max_length=4)
+    # No length cap here, and a missing list is read as empty: the plan keeps the
+    # first four, and neither slip may discard a valid order and shared question.
+    first_conversations: list[str]
+
+    @model_validator(mode="before")
+    @classmethod
+    def missing_choice_is_empty(cls, data):
+        if isinstance(data, dict) and "first_conversations" not in data:
+            return {**data, "first_conversations": []}
+        return data

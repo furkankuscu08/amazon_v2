@@ -22,6 +22,8 @@ from workbot.plan import build_plan
 from workbot.search import Searcher
 from workbot.service import (
     Conflict,
+    end_progress,
+    fail_if_abandoned,
     open_session,
     progress,
     record_answer,
@@ -129,11 +131,15 @@ def home(request: Request):
 
 
 def _run(sid: str, model, searcher) -> None:
-    db = _db()
     try:
-        run_safely(db, sid, model, searcher)
+        db = _db()
+        try:
+            run_safely(db, sid, model, searcher)
+        finally:
+            db.close()
     finally:
-        db.close()
+        # Whatever went wrong, the session page must stop reporting a live run.
+        end_progress(sid)
 
 
 def _start(sid: str) -> None:
@@ -173,6 +179,8 @@ def _get_session(sid: str):
     db = _db()
     try:
         session = load_session(db, sid)
+        if session and session["state"] == "processing" and fail_if_abandoned(db, sid):
+            session = load_session(db, sid)
         card = (
             valid_card(db, session) if session and session["state"] == "card" else None
         )

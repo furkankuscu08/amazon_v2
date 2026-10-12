@@ -46,29 +46,37 @@ CARD = {
 }
 
 
-def test_each_person_is_placed_once_preferring_their_own_team():
+def test_each_person_is_placed_once_where_their_role_is_strongest():
     assert placements(CARD["areas"]) == {
         "nina": 2,
         "leo": 2,
-        "omar": 3,
+        "omar": 6,  # direct there, only an advisor in their own team's area
         "tara": 3,
         "dan": 5,
     }
     plan = build_plan(CARD)
     assert plan["elsewhere"][0] == {"nina": "Growth"}
+    # Equal roles: the area mapped to the person's own team wins.
     assert plan["elsewhere"][2] == {"nina": None, "leo": None}
-    assert plan["elsewhere"][6] == {"omar": "Finance"}
+    assert plan["elsewhere"][3] == {"omar": "Data", "tara": None}
+    assert plan["elsewhere"][6] == {"omar": None}
 
 
 def test_fallback_takes_the_strongest_person_of_each_area_in_card_order():
     plan = build_plan(CARD)
-    assert [p["person_id"] for p in plan["first"]] == ["nina", "tara", "dan"]
+    assert [p["person_id"] for p in plan["first"]] == ["omar", "nina", "tara", "dan"]
     assert [p["label"] for p in plan["first"]] == [
+        "Related work",
         "Related work",
         "Current responsibility",
         "Can route you",
     ]
-    assert [p["area"] for p in plan["first"]] == ["Growth", "Finance", "Commerce"]
+    assert [p["area"] for p in plan["first"]] == [
+        "Data",
+        "Growth",
+        "Finance",
+        "Commerce",
+    ]
     assert plan["gaps"] == {
         "no_contact": ["Legal"],
         "team_unresolved": ["Brand"],
@@ -83,7 +91,8 @@ def test_model_choice_is_kept_in_order_capped_and_limited_to_shown_people():
     }
     plan = build_plan(card)
     assert [p["person_id"] for p in plan["first"]] == ["tara", "nina", "leo", "omar"]
-    assert plan["first"][3]["role"] == "advisor"  # shown in the home area's role
+    assert plan["first"][3]["area"] == "Data"  # shown in the home area's role
+    assert plan["first"][3]["role"] == "direct_contact"
 
 
 def test_older_card_without_team_fields_still_builds_a_plan():

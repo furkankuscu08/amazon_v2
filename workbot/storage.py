@@ -283,22 +283,19 @@ def load_session(db: sqlite3.Connection, session_id: str) -> dict | None:
 
 
 def recent_sessions(db: sqlite3.Connection, limit: int = 6) -> list[dict]:
-    """The demo user's latest requests, newest first, with a fail-closed status."""
-    rows = db.execute(
-        """SELECT * FROM sessions WHERE actor='maya' AND workspace='demo'
-        ORDER BY rowid DESC LIMIT ?""",
-        (limit,),
-    ).fetchall()
-    found = []
-    for row in rows:
-        session = dict(row)
-        status = session["state"]
-        if status == "card" and valid_card(db, session) is None:
-            status = "stale"
-        found.append(
-            {"id": session["id"], "idea": session["sentence"], "status": status}
+    """The demo user's latest requests, newest first.
+
+    Only the stored state: whether a card's evidence still holds is checked when
+    the card is opened, not for every row on every visit to the home page.
+    """
+    return [
+        {"id": row["id"], "idea": row["sentence"], "status": row["state"]}
+        for row in db.execute(
+            """SELECT id, sentence, state FROM sessions
+            WHERE actor='maya' AND workspace='demo' ORDER BY rowid DESC LIMIT ?""",
+            (limit,),
         )
-    return found
+    ]
 
 
 def valid_card(db: sqlite3.Connection, session: dict) -> dict | None:

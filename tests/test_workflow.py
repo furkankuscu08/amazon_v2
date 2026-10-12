@@ -317,6 +317,18 @@ def test_contribution_reaches_the_card_but_not_the_priority_model(db):
             "Wrote the launch checklist.",
         ),
         ("Wrote the launch checklist and could clarify how review steps are", None),
+        (
+            "Authored the settlement runbook (covers refunds, e.g. chargebacks)",
+            None,
+        ),
+        (
+            "Wrote the runbook, e.g. for refunds. It covers chargebacks (in part).",
+            "Wrote the runbook, e.g. for refunds. It covers chargebacks (in part).",
+        ),
+        (
+            "Wrote what the team calls the ‘launch checklist.’ It could clarify",
+            "Wrote what the team calls the ‘launch checklist.’",
+        ),
         ("See https://example.test for the checklist that was written.", None),
         ("The record jira:MKT-482 shows checklist work on launches.", None),
     ],
@@ -1155,8 +1167,10 @@ def test_ended_duty_is_noted_and_its_source_keeps_the_card_fail_closed(db):
     )
     assert people["elena"]["context_ids"] == ["directory:elena-old"]
     assert people["nina"]["ended_duty"] is None
-    # The model was never shown the expired duty.
-    assert "elena-old" not in json.dumps([payload for _, payload in model.calls[:2]])
+    assert "ended_duty" not in json.dumps(model.calls[-1][1])
+    # No model call was shown the expired duty, the priority call included.
+    assert model.calls[-1][0] == "priority"
+    assert "elena-old" not in json.dumps([payload for _, payload in model.calls])
     db.execute(
         "UPDATE directory_sources SET visibility='restricted' WHERE id='directory:elena-old'"
     )
@@ -1179,3 +1193,68 @@ def test_ended_duty_on_an_unrelated_topic_is_not_noted(db):
         ),
     )
     assert card["areas"][0]["people"][0]["ended_duty"] is None
+
+
+def test_ended_duty_is_not_noted_beside_a_current_duty_on_the_topic(db):
+    db.execute(
+        """INSERT INTO directory_sources SELECT 'directory:elena-new', version,
+        visibility FROM directory_sources WHERE id='directory:elena-old'"""
+    )
+    db.execute(
+        """INSERT INTO responsibilities
+        SELECT 'elena-new', person_id, org_id, scope, relation, '2025-01-02', NULL,
+        '2026-09-01', 'directory:elena-new' FROM responsibilities WHERE id='elena-old'"""
+    )
+    db.commit()
+    _, card = card_for(
+        db,
+        StubModel(
+            [impact(AREA)],
+            [evaluation(proposal("elena", "advisor", ["jira:MKT-482"]))],
+            [priority("campaign_review")],
+        ),
+    )
+    assert card["areas"][0]["people"][0]["ended_duty"] is None
+
+
+def test_routing_line_does_not_deny_an_advisor_shown_beside_it(db):
+    refs = ["directory:growth-manager", "directory:growth-remit"]
+    _, card = card_for(
+        db,
+        StubModel(
+            [impact(AREA)],
+            [
+                evaluation(
+                    proposal("marcus", "routing_contact", refs),
+                    proposal("elena", "advisor", ["jira:MKT-482"]),
+                )
+            ],
+            [priority("campaign_review")],
+        ),
+    )
+    people = {p["person_id"]: p for p in card["areas"][0]["people"]}
+    assert people["elena"]["role"] == "advisor"
+    assert people["marcus"]["headline"].startswith(
+        "No direct contact for this was established. Manages the team. Team remit:"
+    )
+    assert "No one with visible work" not in json.dumps(card)
+
+
+def test_extra_or_missing_first_conversations_keep_the_order(db):
+    assert (
+        Priority.model_validate(
+            {"order": ["a"], "shared_question": None}
+        ).first_conversations
+        == []
+    )
+    chosen = ["nina", "elena", "marcus", "leo", "jules", "nina"]
+    _, card = card_for(
+        db,
+        StubModel(
+            [impact(AREA)],
+            [evaluation(proposal("nina", "direct_contact", ["jira:MKT-482"]))],
+            [priority("campaign_review", first=chosen)],
+        ),
+    )
+    assert card["priority_applied"] is True
+    assert card["first_conversations"] == ["nina"]

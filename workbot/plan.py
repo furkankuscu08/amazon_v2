@@ -7,7 +7,7 @@ plan only reorders and groups people the audit already accepted.
 from __future__ import annotations
 
 MAX_FIRST_CONVERSATIONS = 4
-_ROLE = {"direct_contact": 0, "advisor": 1, "routing_contact": 2}
+ROLE_ORDER = {"direct_contact": 0, "advisor": 1, "routing_contact": 2}
 _CONFIDENCE = {"high": 0, "medium": 1, "low": 2}
 _GAPS = {
     "not_found": "no_contact",
@@ -27,19 +27,20 @@ def _label(person: dict) -> str:
 
 
 def _strength(person: dict) -> tuple[int, int]:
-    return _ROLE[person["role"]], _CONFIDENCE.get(person.get("confidence"), 3)
+    return ROLE_ORDER[person["role"]], _CONFIDENCE.get(person.get("confidence"), 3)
 
 
 def placements(areas: list[dict]) -> dict[str, int]:
-    """Give each person one home on the card: the area mapped to their own team
-    when they appear there, otherwise the area where their role is strongest."""
+    """Give each person one home on the card: the area where their role is
+    strongest, preferring the area mapped to their own team between equal roles."""
     best: dict[str, tuple] = {}
     for index, area in enumerate(areas):
         for person in area["people"]:
             own_team = person.get("org_id") is not None and (
                 person.get("org_id") == area.get("org_unit_id")
             )
-            key = (not own_team, *_strength(person), index)
+            role, confidence = _strength(person)
+            key = (role, not own_team, confidence, index)
             if person["person_id"] not in best or key < best[person["person_id"]]:
                 best[person["person_id"]] = key
     return {person_id: key[-1] for person_id, key in best.items()}

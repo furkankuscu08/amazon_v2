@@ -226,9 +226,10 @@ def test_web_card_reload_and_source_visibility(tmp_path, monkeypatch):
         )
         db.commit()
         db.close()
+        # No run is working on it (a restart, say): it must not wait forever.
         running = client.get("/sessions/running")
-        assert "still being processed, or it was interrupted" in running.text
-        assert '<meta http-equiv="refresh" content="5">' in running.text
+        assert "Unable to evaluate this request safely" in running.text
+        assert "Working on it" not in running.text
         home = client.get("/").text
         assert "Your earlier ideas" in home
         assert "Help plan marketing campaigns" in home
@@ -238,7 +239,6 @@ def test_web_card_reload_and_source_visibility(tmp_path, monkeypatch):
         db.commit()
         db.close()
         assert client.get(url).status_code == 410
-        assert "No longer valid" in client.get("/").text
         assert client.get(url + "/sources/jira:MKT-482").status_code == 410
     finally:
         del app.state.model

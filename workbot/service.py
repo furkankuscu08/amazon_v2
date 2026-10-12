@@ -14,6 +14,7 @@ from threading import Lock
 
 from workbot.llm import ModelError
 from workbot.models import AreaEvaluation, Impact, Priority
+from workbot.plan import ROLE_ORDER
 from workbot.questions import NEUTRAL_QUESTIONS
 from workbot.search import candidate_pool, keywords
 from workbot.storage import (
@@ -27,7 +28,7 @@ from workbot.storage import (
 )
 
 log = logging.getLogger(__name__)
-MAX_PARALLEL_AREA_CALLS = 6  # An idea has at most six areas; review them together.
+MAX_PARALLEL_AREA_CALLS = 6  # Worker threads; more areas than this simply queue.
 
 # What a running request is doing, for the waiting page only: a stage and area
 # labels with a done flag. Never people, sources, counts, or model diagnostics.
@@ -56,6 +57,29 @@ def _report(sid: str, stage: str | None = None, areas=None, done=None) -> None:
         for area in entry["areas"]:
             if area["id"] == done:
                 area["done"] = True
+
+
+def end_progress(sid: str) -> None:
+    with _progress_lock:
+        _progress.pop(sid, None)
+
+
+def fail_if_abandoned(db, sid: str) -> bool:
+    """Close a `processing` session that no run is working on any more.
+
+    Every live run has a progress entry from before its state becomes
+    `processing` until after it leaves that state, so a session without one was
+    lost to a restart or a crashed worker and would otherwise wait forever.
+    """
+    if progress(sid) is not None:
+        return False
+    changed = db.execute(
+        """UPDATE sessions SET state='refusal', question=NULL, card_json=NULL,
+        snapshot_json=NULL WHERE id=? AND state='processing'""",
+        (sid,),
+    )
+    db.commit()
+    return changed.rowcount == 1
 
 
 class Conflict(Exception):
@@ -89,6 +113,8 @@ def open_session(db, idem_key: str, sentence: str) -> tuple[str, bool]:
                 VALUES (?, 'maya', 'demo', ?, ?, '[]', 'processing')""",
                 (sid, idem_key, sentence),
             )
+            # Before the commit: a visible `processing` row always has progress.
+            _report(sid, "impact")
     except sqlite3.IntegrityError:
         row = db.execute(
             "SELECT * FROM sessions WHERE actor='maya' AND workspace='demo' AND idem_key=?",
@@ -97,7 +123,6 @@ def open_session(db, idem_key: str, sentence: str) -> tuple[str, bool]:
         if row and row["sentence"] == sentence:
             return row["id"], False
         raise Conflict("This request key belongs to a different idea") from None
-    _report(sid, "impact")
     return sid, True
 
 
@@ -133,7 +158,8 @@ def record_answer(db, sid: str, answer: str | None) -> bool:
         )
         if changed.rowcount != 1:
             raise Conflict("This clarification has already been answered")
-    _report(sid, "impact")
+        # Before the commit: a visible `processing` row always has progress.
+        _report(sid, "impact")
     return True
 
 
@@ -149,8 +175,7 @@ def run_safely(db, sid: str, model, searcher) -> None:
         log.warning("workflow_failed type=%s", type(exc).__name__)
         _state(db, sid, "refusal")
     finally:
-        with _progress_lock:
-            _progress.pop(sid, None)
+        end_progress(sid)
 
 
 def _collect_area_reviews(
@@ -271,8 +296,6 @@ def run(db, sid: str, model, searcher) -> None:
             card["areas"].append(item)
             if area.mapping == "mapping_unresolved":
                 continue
-            if len(pending) == MAX_PARALLEL_AREA_CALLS:
-                _collect_area_reviews(db, card, pending, finished)
             started = time.monotonic()
             submitted = False
             try:
@@ -362,12 +385,14 @@ def run(db, sid: str, model, searcher) -> None:
 
 
 def _priority_areas(areas: list[dict]) -> list[dict]:
-    """The unverified model summary is shown to the user, not fed to another model."""
+    """Keep text no model has audited or may see out of the priority call: the
+    unverified model summary and the expired-duty note with its source."""
+    hidden = {"contribution", "ended_duty", "context_ids"}
     return [
         {
             **area,
             "people": [
-                {k: v for k, v in person.items() if k != "contribution"}
+                {k: v for k, v in person.items() if k not in hidden}
                 for person in area["people"]
             ],
         }
@@ -385,17 +410,18 @@ def _safe_question(text: str) -> bool:
     return 0 < len(text) <= 300 and text.endswith("?") and not _UNSAFE_TEXT.search(text)
 
 
+# Closing punctuation, optionally inside a quote or bracket; not "e.g." or "i.e.".
+_SENTENCE_END = re.compile(r"(?<!\be\.g)(?<!\bi\.e)[.!][)\]'\"’”]*(?=\s|$)")
+
+
 def _shown_contribution(text: str) -> str | None:
     """Show the model's summary only as complete sentences; never repair or verify it."""
     text = " ".join(text.split())
     if _UNSAFE_TEXT.search(text):
         return None
-    if not text.endswith((".", "!")):
-        # Keep the complete sentences before a cut-off tail, if there are any.
-        end = max(text.rfind(". "), text.rfind("! "))
-        if end < 0:
-            return None
-        text = text[: end + 1]
+    # Keep the complete sentences before a cut-off tail, if there are any.
+    ends = [match.end() for match in _SENTENCE_END.finditer(text)]
+    text = text[: ends[-1]] if ends else ""
     return text if len(text) >= 20 else None
 
 
@@ -455,7 +481,7 @@ def _evidence(db, candidate: dict, evidence_id: str) -> tuple[str, str, str] | N
             return (
                 "manager",
                 f"Currently manages the relevant team [{evidence_id}].",
-                "Currently manages the team; no one with direct work was established.",
+                "Currently manages the team.",
             )
         return (
             "remit",
@@ -494,17 +520,24 @@ def _ended_duty(db, person_id: str, topic: set[str]) -> dict | None:
     """A visible responsibility that has ended and shares a word with the area.
 
     The model never sees expired duties. This is a directory fact shown beside a
-    person so an outdated owner is not mistaken for the current one.
+    person so an outdated owner is not mistaken for the current one. It is left
+    out when the person holds a current duty on the topic, such as a renewal.
     """
+    rows = [
+        dict(row)
+        for row in db.execute(
+            """SELECT * FROM responsibilities WHERE person_id=?
+            ORDER BY valid_to DESC, id""",
+            (person_id,),
+        )
+        if topic & set(keywords(row["scope"]))
+        and visible_directory_source(db, row["source_id"])
+    ]
+    if any(current(row) for row in rows):
+        return None
     today = time.strftime("%Y-%m-%d", time.gmtime())
-    for row in db.execute(
-        """SELECT * FROM responsibilities WHERE person_id=? AND valid_to IS NOT NULL
-        AND valid_to < ? ORDER BY valid_to DESC, id""",
-        (person_id, today),
-    ):
-        if topic & set(keywords(row["scope"])) and visible_directory_source(
-            db, row["source_id"]
-        ):
+    for row in rows:
+        if row["valid_to"] and row["valid_to"] < today:
             scope = row["scope"][0].lower() + row["scope"][1:]
             return {
                 "source_id": row["source_id"],
@@ -564,10 +597,9 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
             continue
         headline = facts[proposal.primary_evidence_id][2]
         if role == "routing_contact":
+            # The reason for routing is added below, once the area's people are known.
             remit = next(f[2] for f in facts.values() if f[0] == "remit")
-            headline = (
-                f"No one with visible work on this was found. Manages the team. {remit}"
-            )
+            headline = f"Manages the team. {remit}"
         ended = _ended_duty(db, proposal.person_id, topic)
         accepted.append(
             {
@@ -610,9 +642,17 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
         for p in accepted
         if p["role"] != "routing_contact" or (not has_direct and not rejected_direct)
     ]
-    role_order = {"direct_contact": 0, "advisor": 1, "routing_contact": 2}
+    # Say why a manager is listed without contradicting an advisor shown beside them.
+    reason = (
+        "No direct contact for this was established."
+        if any(p["role"] == "advisor" for p in accepted)
+        else "No one with visible work on this was found."
+    )
+    for person in accepted:
+        if person["role"] == "routing_contact":
+            person["headline"] = f"{reason} {person['headline']}"
     item["people"] = sorted(
-        accepted, key=lambda p: (role_order[p["role"]], p["person_id"])
+        accepted, key=lambda p: (ROLE_ORDER[p["role"]], p["person_id"])
     )
     item["direct_review_incomplete"] = rejected_direct and not has_direct
     item["status"] = (
