@@ -133,11 +133,14 @@ def run(db, sid: str, model, searcher) -> None:
         _state(db, sid, "refusal")
         return
     impact_started = time.monotonic()
+    answers = json.loads(session["answers_json"])
+    # Skipping a clarification ends the question budget; say so to the model.
+    skipped = any(a["answer"] is None for a in answers)
     payload = {
         "idea": session["sentence"],
-        "answers": json.loads(session["answers_json"]),
+        "answers": answers,
         "org_units": inventory,
-        "remaining_questions": max(0, 2 - session["questions_asked"]),
+        "remaining_questions": 0 if skipped else max(0, 2 - session["questions_asked"]),
     }
     if len(json.dumps(payload)) > 12000:
         _state(db, sid, "refusal")
@@ -149,8 +152,7 @@ def run(db, sid: str, model, searcher) -> None:
         if impact.question:
             if (
                 not _safe_question(impact.question)
-                or session["questions_asked"] >= 2
-                or any(a["answer"] is None for a in payload["answers"])
+                or payload["remaining_questions"] == 0
             ):
                 raise ModelError("Question budget exhausted")
             db.execute(
@@ -258,7 +260,8 @@ def run(db, sid: str, model, searcher) -> None:
     try:
         card["calls"]["priority"] = 1
         priority = model.complete(
-            "priority", {"idea": session["sentence"], "areas": card["areas"]}
+            "priority",
+            {"idea": session["sentence"], "areas": _priority_areas(card["areas"])},
         )
         if (
             isinstance(priority, Priority)
@@ -283,16 +286,48 @@ def run(db, sid: str, model, searcher) -> None:
         _state(db, sid, "refusal")
 
 
+def _priority_areas(areas: list[dict]) -> list[dict]:
+    """The unverified model summary is shown to the user, not fed to another model."""
+    return [
+        {
+            **area,
+            "people": [
+                {k: v for k, v in person.items() if k != "contribution"}
+                for person in area["people"]
+            ],
+        }
+        for area in areas
+    ]
+
+
+_UNSAFE_TEXT = re.compile(
+    r"(?:https?://|\b[\w.+-]+@[\w.-]+\.|\b(?:jira|slack|docs|github|directory):)",
+    re.IGNORECASE,
+)
+
+
 def _safe_question(text: str) -> bool:
-    return (
-        0 < len(text) <= 300
-        and text.endswith("?")
-        and not re.search(
-            r"(?:https?://|\b[\w.+-]+@[\w.-]+\.|\b(?:jira|slack|docs|github|directory):)",
-            text,
-            re.IGNORECASE,
-        )
-    )
+    return 0 < len(text) <= 300 and text.endswith("?") and not _UNSAFE_TEXT.search(text)
+
+
+def _shown_contribution(text: str) -> str | None:
+    """Show the model's summary only as complete sentences; never repair or verify it."""
+    text = " ".join(text.split())
+    if _UNSAFE_TEXT.search(text):
+        return None
+    if not text.endswith((".", "!")):
+        # Keep the complete sentences before a cut-off tail, if there are any.
+        end = max(text.rfind(". "), text.rfind("! "))
+        if end < 0:
+            return None
+        text = text[: end + 1]
+    return text if len(text) >= 20 else None
+
+
+def _excerpt(text: str, limit: int = 220) -> str:
+    if len(text) <= limit:
+        return text
+    return text[:limit].rsplit(" ", 1)[0].rstrip(",;:") + " …"
 
 
 def _safe_shared_question(db, text: str, card: dict) -> bool:
@@ -350,7 +385,7 @@ def _evidence(db, candidate: dict, evidence_id: str) -> tuple[str, str] | None:
     ).fetchone()
     if not record or not link:
         return None
-    description = f"{evidence['relation'].capitalize()} of {record['kind']} record on {record['occurred_at']}: ‘{record['text'][:220]}’ [{evidence_id}]."
+    description = f"{evidence['relation'].capitalize()} of {record['kind']} record on {record['occurred_at']}: ‘{_excerpt(record['text'])}’ [{evidence_id}]."
     return evidence["relation"], description
 
 
@@ -374,7 +409,6 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
     candidates = {p["person_id"]: p for p in pool["people"]}
     accepted = []
     rejected_direct = False
-    invalid_ask = False
     for proposal in evaluation.people:
         candidate = candidates.get(proposal.person_id)
         if (
@@ -418,12 +452,6 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
             continue
         elif role == "routing_contact" and not {"manager", "remit"} <= kinds:
             continue
-        if not _safe_question(proposal.ask):
-            # A malformed question is not evidence that the contact is irrelevant.
-            # Do not show the person or turn a failed review into not_found.
-            invalid_ask = True
-            rejected_direct |= role == "direct_contact"
-            continue
         accepted.append(
             {
                 "person_id": proposal.person_id,
@@ -438,9 +466,10 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
                     for sid, fact in facts.items()
                     if sid != proposal.primary_evidence_id
                 ],
+                # Unverified model text, shown labelled as such; None hides the line.
+                "contribution": _shown_contribution(proposal.contribution),
                 "ask": _grounded_ask(role, primary_kind),
-                # The model must acknowledge uncertainty in its schema, but its
-                # untrusted free text is replaced by a stable, role-specific caution.
+                # A stable, role-specific caution rather than model free text.
                 "unverified": (
                     "Ownership of the new idea and subject expertise have not been established."
                     if role == "routing_contact"
@@ -462,5 +491,5 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
     item["status"] = (
         "people"
         if item["people"]
-        else ("review_incomplete" if rejected_direct or invalid_ask else "not_found")
+        else ("review_incomplete" if rejected_direct else "not_found")
     )

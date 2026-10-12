@@ -59,14 +59,14 @@ class PersonProposal(StrictModel):
     # enforced in the deterministic audit, not this schema, so an inconsistent
     # role/link does not void a whole area review.
     primary_evidence_id: str
-    # Bounded, unverified source-to-need summary, not an independent semantic audit.
-    contribution: str = Field(min_length=5, max_length=300)
+    # Unverified source-to-need summary, not an independent semantic audit. The
+    # schema cap is well above the prompt's requested length so a provider that
+    # enforces it does not cut a sentence short.
+    contribution: str = Field(min_length=5, max_length=600)
     role: Literal["direct_contact", "advisor", "routing_contact"]
     relevance: Literal["direct", "adjacent", "weak"]
     evidence_ids: list[str] = Field(min_length=1, max_length=8)
     confidence: Literal["high", "medium", "low"]
-    ask: str = Field(min_length=5, max_length=240)
-    unverified: str = Field(min_length=3, max_length=300)
 
     @model_validator(mode="after")
     def primary_is_cited(self) -> PersonProposal:

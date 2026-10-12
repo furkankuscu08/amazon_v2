@@ -22,10 +22,9 @@ from workbot.service import _grounded_ask, _safe_question
         ("advisor", "mention", "record"),
     ],
 )
-def test_prompt_and_card_share_the_same_neutral_questions(role, kind, expected):
+def test_card_question_follows_the_verified_role_and_primary_kind(role, kind, expected):
     question = _grounded_ask(role, kind)
     assert question == NEUTRAL_QUESTIONS[expected]
-    assert PROMPTS["area"].count(f'"{question}"') == 1
     assert _safe_question(question)
     assert 5 <= len(question) <= 240
 
@@ -42,14 +41,8 @@ def test_reporter_template_does_not_attribute_personal_work_or_ownership():
     assert "owner" not in question
 
 
-def test_ask_schema_is_not_a_template_enum_or_a_semantic_filter():
-    schema = PersonProposal.model_json_schema()["properties"]["ask"]
-    assert schema == {
-        "type": "string",
-        "title": "Ask",
-        "minLength": 5,
-        "maxLength": 240,
-    }
-    assert "copy EXACTLY ONE" in PROMPTS["area"]
-    assert "including reporter" in PROMPTS["area"]
-    assert "Do not turn contribution into a customized question" in PROMPTS["area"]
+def test_model_is_not_asked_to_write_questions_for_people():
+    assert not {"ask", "unverified"} & set(PersonProposal.model_fields)
+    prompt = " ".join(PROMPTS["area"].split())
+    assert "Do not draft questions or messages for the person" in prompt
+    assert not any(question in prompt for question in NEUTRAL_QUESTIONS.values())

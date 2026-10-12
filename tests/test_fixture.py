@@ -5,8 +5,9 @@ import re
 from datetime import date
 from pathlib import Path
 
+from workbot.search import candidate_pool
 from workbot.seed import load_fixture, seed_db
-from workbot.storage import connect
+from workbot.storage import connect, visible_record
 
 RELATIONS = {"assignee", "author", "contributor", "reporter", "mention"}
 KINDS = {"jira", "slack", "github", "document"}
@@ -130,3 +131,35 @@ def test_expectations_refer_to_the_fixture():
             + [p for group in idea.get("must_show_any", []) for p in group]
         )
         assert named and set(named) <= set(people) - set(expected["never_show"])
+
+
+def test_candidate_cap_follows_retrieval_rank_not_recency(tmp_path):
+    db = connect(str(tmp_path / "rank.sqlite3"))
+    seed_db(db)
+    # The best-ranked record is the oldest; eleven newer, unrelated records with
+    # other authors follow it. Its author must keep a place among the ten.
+    ranked = [
+        "docs:campaign-review-2023",
+        "docs:support-floor-office-move",
+        "slack:data-602",
+        "docs:growth-quarterly-themes",
+        "docs:finance-team-offsite-agenda",
+        "slack:growth-604",
+        "slack:support-803",
+        "slack:plt-88",
+        "jira:MOB-779",
+        "docs:campaign-calendar-q4",
+        "slack:commerce-601",
+        "jira:PAY-171",
+    ]
+    area = {
+        "org_unit_id": "brand",
+        "search_intents": [{"keyword": "zzzz", "semantic": "zzzz"}],
+    }
+    pool = candidate_pool(db, area, [visible_record(db, rid) for rid in ranked])
+    people = [person["person_id"] for person in pool["people"]]
+    assert len(people) == 10
+    assert people[0] == "priya"
+    assert "ben" not in people
+    assert "rank" not in json.dumps(pool)
+    db.close()

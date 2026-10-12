@@ -140,8 +140,6 @@ class WebModel:
                             "relevance": "direct",
                             "evidence_ids": ["jira:MKT-482"],
                             "confidence": "high",
-                            "ask": "Who reviews campaign launches?",
-                            "unverified": "Ownership remains to be checked.",
                         }
                     ]
                 }
@@ -188,6 +186,11 @@ def test_web_card_reload_and_source_visibility(tmp_path, monkeypatch):
         assert "Primary cited source:" in card.text
         assert f'href="{url}/sources/jira%3AMKT-482"' in card.text
         assert "Ask to check the connection:" in card.text
+        assert "Model summary (unverified):" in card.text
+        assert (
+            "Checklist work can clarify pre-launch campaign review scope." in card.text
+        )
+        assert 'http-equiv="refresh"' not in card.text
         assert client.get(url).text == card.text
         assert client.get(url + "/sources/slack:restricted-plan").status_code == 404
         assert client.get(url + "/sources/jira:MKT-482").status_code == 200
@@ -207,6 +210,17 @@ def test_web_card_reload_and_source_visibility(tmp_path, monkeypatch):
         assert previous.status_code == 200
         assert "Primary cited source:" not in previous.text
         assert "Source IDs and dates" in previous.text
+        db = connect(path)
+        db.execute(
+            """INSERT INTO sessions
+            (id, actor, workspace, idem_key, sentence, answers_json, state)
+            VALUES ('running', 'maya', 'demo', 'running', 'An idea', '[]', 'processing')"""
+        )
+        db.commit()
+        db.close()
+        running = client.get("/sessions/running")
+        assert "still being processed, or it was interrupted" in running.text
+        assert '<meta http-equiv="refresh" content="5">' in running.text
         db = connect(path)
         db.execute("UPDATE people SET active=0 WHERE id='nina'")
         db.commit()

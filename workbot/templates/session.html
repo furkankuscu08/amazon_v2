@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Workbot · stakeholder areas</title><style>
+<title>Workbot · stakeholder areas</title>{% if session.state == 'processing' and not stale %}<meta http-equiv="refresh" content="5">{% endif %}<style>
 body{font:16px/1.5 system-ui,sans-serif;max-width:1000px;margin:2rem auto;padding:0 1.2rem;color:#192536;background:#f6f8fa}
 article,.panel{background:white;padding:1.3rem;margin:1rem 0;border-radius:10px;box-shadow:0 1px 5px #ccd2db}section.person{border-top:1px solid #ddd;padding:.8rem 0}
 .badge{display:inline-block;background:#e6edf9;padding:.15rem .5rem;border-radius:4px}.warning{border-left:4px solid #ae7620;padding-left:1rem}
@@ -15,7 +15,7 @@ a{color:#22549b}small{color:#555}ul{padding-left:1.4rem}
 <form method="post" action="/sessions/{{ session.id }}/answer"><textarea name="answer" maxlength="500" required></textarea><p><button type="submit">Continue</button></p></form>
 <form method="post" action="/sessions/{{ session.id }}/answer"><input type="hidden" name="skip" value="1"><button type="submit">Continue without answering</button></form></article>
 {% elif session.state == 'refusal' %}<article class="warning"><h2>Unable to evaluate this request safely</h2><p>No stakeholder card was produced. Check the model setup or try a new idea.</p></article>
-{% elif session.state == 'processing' %}<article><p>Processing was interrupted. Start a new request; no partial card is shown.</p></article>
+{% elif session.state == 'processing' %}<article><p>This request is still being processed, or it was interrupted. This page refreshes every few seconds; if nothing changes after a couple of minutes, start a new request. No partial card is shown.</p></article>
 {% elif card %}
 {% if card.shared_question %}<article><h2>Open question across areas</h2><p>{{ card.shared_question }}</p></article>{% endif %}
 {% for area in card.areas %}<article><h2>{{ area.label }}</h2><p>{{ area.rationale }}</p>{% if area.consultation_need %}<p><strong>Consultation need:</strong> {{ area.consultation_need }}</p>{% endif %}
@@ -28,9 +28,10 @@ a{color:#22549b}small{color:#555}ul{padding-left:1.4rem}
 {% if area.no_visible_work_trace and area.mapping == 'mapped' %}<p><small>No relevant accessible work trace was found in this search; other evidence may still exist.</small></p>{% endif %}
 {% for person in area.people %}<section class="person"><h3>{{ person.name }} <span class="badge">Proposed {{ person.role.replace('_', ' ') }}</span></h3>
 {% if person.primary_evidence_id %}<p><strong>Primary cited source:</strong> <a href="/sessions/{{ session.id }}/sources/{{ person.primary_evidence_id | urlencode }}">{{ person.primary_evidence_id }}</a></p>{% endif %}
+{% if person.contribution %}<p><strong>Model summary (unverified):</strong> {{ person.contribution }}</p>{% endif %}
 <strong>Visible source and connection:</strong><ul>{% for fact in person.why %}<li>{{ fact }}</li>{% endfor %}</ul>
 <p><strong>Ask to check the connection:</strong> {{ person.ask }}</p><p><strong>Not established:</strong> {{ person.unverified }}</p>
 <details><summary>Source IDs and dates</summary><ul>{% for source_id in person.evidence_ids %}<li><a href="/sessions/{{ session.id }}/sources/{{ source_id | urlencode }}">{{ source_id }}</a></li>{% endfor %}</ul></details></section>{% endfor %}
 </article>{% endfor %}
-<p><small>All shown people were proposed by the model and checked against this synthetic directory. Workbot sends no messages or invitations. Reloading does not call the model again.</small></p>
+<p><small>All shown people were proposed by the model and their cited links were checked against this synthetic directory. Model summaries are the model's own reading of a source and were not checked against it. Workbot sends no messages or invitations. Reloading does not call the model again.</small></p>
 {% endif %}</body></html>

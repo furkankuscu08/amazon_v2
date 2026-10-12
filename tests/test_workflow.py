@@ -116,8 +116,6 @@ def proposal(pid, role, evidence, primary=None, relevance=None):
         ),
         "evidence_ids": evidence,
         "confidence": "medium",
-        "ask": "Who should review this proposal?",
-        "unverified": "Ownership of the new idea is unknown.",
     }
 
 
@@ -288,23 +286,47 @@ def test_indirect_relevance_keeps_a_useful_contact_as_advisor(db):
     ]
 
 
-def test_contribution_does_not_enter_cards_sessions_or_priority(db):
+def test_contribution_reaches_the_card_but_not_the_priority_model(db):
     proposed = proposal("nina", "advisor", ["jira:MKT-482"])
-    marker = "SYNTHETIC_PRIVATE_CONTRIBUTION"
+    marker = "The checklist work covers launch review steps.   It is not ownership."
     proposed["contribution"] = marker
     model = StubModel(
         [impact(AREA)], [evaluation(proposed)], [priority("campaign_review")]
     )
-    sid, card = card_for(db, model)
-    assert card["areas"][0]["people"][0]["role"] == "advisor"
-    for value in (
-        card,
-        load_session(db, sid)["card_json"],
-        model.calls[-1][1],
-    ):
-        serialized = json.dumps(value)
-        assert marker not in serialized
-        assert "contribution" not in serialized
+    _, card = card_for(db, model)
+    assert card["areas"][0]["people"][0]["contribution"] == (
+        "The checklist work covers launch review steps. It is not ownership."
+    )
+    priority_input = json.dumps(model.calls[-1][1])
+    assert model.calls[-1][0] == "priority"
+    assert "contribution" not in priority_input
+    assert "launch review steps" not in priority_input
+
+
+@pytest.mark.parametrize(
+    ("text", "shown"),
+    [
+        (
+            "Wrote the launch checklist. It could clarify review steps but not own",
+            "Wrote the launch checklist.",
+        ),
+        ("Wrote the launch checklist and could clarify how review steps are", None),
+        ("See https://example.test for the checklist that was written.", None),
+        ("The record jira:MKT-482 shows checklist work on launches.", None),
+    ],
+)
+def test_cut_off_or_unsafe_contribution_is_trimmed_or_hidden(db, text, shown):
+    proposed = proposal("nina", "advisor", ["jira:MKT-482"])
+    proposed["contribution"] = text
+    _, card = card_for(
+        db,
+        StubModel(
+            [impact(AREA)], [evaluation(proposed)], [priority("campaign_review")]
+        ),
+    )
+    person = card["areas"][0]["people"][0]
+    assert person["person_id"] == "nina"
+    assert person["contribution"] == shown
 
 
 def test_persuasive_contribution_does_not_upgrade_a_reporter_to_direct(db):
@@ -323,47 +345,6 @@ def test_persuasive_contribution_does_not_upgrade_a_reporter_to_direct(db):
     assert card["areas"][0]["people"] == []
 
 
-def test_invalid_advisor_question_is_incomplete_not_model_abstention(db):
-    unsafe = proposal("nina", "advisor", ["jira:MKT-482"])
-    unsafe["ask"] = "Nina Ellis"
-    model = StubModel(
-        [impact(AREA)], [evaluation(unsafe)], [priority("campaign_review")]
-    )
-    _, card = card_for(db, model)
-    area = card["areas"][0]
-    assert area["status"] == "review_incomplete"
-    assert area["people"] == []
-    assert area["direct_review_incomplete"] is False
-    assert "Nina Ellis" not in json.dumps(area)
-    assert "invalid_ask" not in json.dumps(card)
-    assert model.calls[-1][0] == "priority"
-
-
-def test_invalid_question_does_not_rescue_an_unsupported_advisor(db):
-    unsafe = proposal("elena", "advisor", ["slack:mention-55"])
-    unsafe["ask"] = "Elena Park"
-    model = StubModel(
-        [impact(AREA)], [evaluation(unsafe)], [priority("campaign_review")]
-    )
-    _, card = card_for(db, model, StubSearcher(ids=("slack:mention-55",)))
-    assert card["areas"][0]["status"] == "not_found"
-    assert card["areas"][0]["people"] == []
-
-
-def test_invalid_question_on_downgraded_contact_does_not_fail_direct_review(db):
-    proposed = proposal("nina", "direct_contact", ["jira:MKT-482"])
-    proposed["relevance"] = "adjacent"
-    proposed["ask"] = "Nina Ellis"
-    _, card = card_for(
-        db,
-        StubModel(
-            [impact(AREA)], [evaluation(proposed)], [priority("campaign_review")]
-        ),
-    )
-    assert card["areas"][0]["status"] == "review_incomplete"
-    assert card["areas"][0]["direct_review_incomplete"] is False
-
-
 def test_empty_model_response_is_still_not_found(db):
     _, card = card_for(
         db,
@@ -379,7 +360,7 @@ def test_primary_source_is_first_and_shown_question_has_no_model_premise(db):
         ["jira:MKT-482", "slack:retail-814"],
         primary="slack:retail-814",
     )
-    proposed["ask"] = "Which consent rules does the checklist already require?"
+    proposed["contribution"] = "Which consent rules does the checklist already require?"
     _, card = card_for(
         db,
         StubModel(
@@ -399,7 +380,6 @@ def test_primary_source_is_first_and_shown_question_has_no_model_premise(db):
 
 def test_reporter_advisor_question_does_not_assume_work_on_the_record(db):
     proposed = proposal("elena", "advisor", ["jira:MKT-482"])
-    proposed["ask"] = "Which security approvals did you lead?"
     _, card = card_for(
         db,
         StubModel(
@@ -648,6 +628,31 @@ def test_idempotency_question_skip_and_priority_fallback(db):
     assert not result["priority_applied"]
     assert json.loads(load_session(db, sid)["answers_json"])[0]["answer"] is None
     assert len(model.calls) == 4
+    impact_calls = [payload for task, payload in model.calls if task == "impact"]
+    assert [call["remaining_questions"] for call in impact_calls] == [2, 0]
+
+
+def test_question_after_a_skipped_clarification_is_refused(db):
+    first = Impact.model_validate(
+        {"question": "What sort of campaigns do you mean?", "areas": []}
+    )
+    second = Impact.model_validate({"question": "Which region?", "areas": []})
+    model = StubModel([first, second])
+    sid, _ = card_for(db, model)
+    answer_question(db, sid, None, model, StubSearcher())
+    assert load_session(db, sid)["state"] == "refusal"
+
+
+def test_mention_only_person_is_not_a_work_candidate(db):
+    pool = candidate_pool(db, AREA, [visible_record(db, "slack:mention-55")])
+    for person in pool["people"]:
+        assert {e["relation"] for e in person["evidence"]} != {"mention"}
+
+
+def test_long_record_excerpt_ends_on_a_word_with_an_ellipsis():
+    text = "word " * 80
+    assert service._excerpt("short text") == "short text"
+    assert service._excerpt(text) == ("word " * 44).strip() + " …"
 
 
 def test_area_model_error_is_incomplete_not_not_found(db):
@@ -782,10 +787,11 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
             "total_tokens",
             "reasoning_tokens",
             "model_call_summary",
-            "contribution",
         ):
             assert f'"{field}"' not in serialized
+        # An incomplete summary is hidden; none is ever passed to priority.
         assert "SYNTHETIC_PRIVATE_CONTRIBUTION" not in serialized
+    assert '"contribution"' not in json.dumps(priority_payloads)
 
 
 def test_area_calls_overlap_but_are_audited_in_area_order(db):
