@@ -1,5 +1,9 @@
 # WorkBot problem analysis and solution decisions — 30 September 2026
 
+> **Archived historical analysis:** This document records the evidence and discussion state on 30 September 2026, not the current implementation plan. Start with the [agent handoff](../handoff.md) for current behavior and unresolved priorities. Low area reasoning, the contribution field, and shared neutral asks were subsequently implemented and merged; the [combined comparison](../quality-evaluation.md#matched-main-versus-combined-candidate-area-comparison-12-october-2026) does not isolate their individual effects or complete the isolated experiments proposed below.
+
+References to “current”, “today's code”, “new observations”, and numbered code lines below are relative to the analysis date, not today's checkout. The `/tmp/opencode/...` paths record historical artifact locations; the older local observation/preparation directories are no longer available in this environment. See the [recovery history](../quality-evaluation.md#worktree-recovery-and-handoff-12-october-2026) and [approved handoff merge](../quality-evaluation.md#approved-development-baseline-merge-and-agent-handoff). Neither these historical approvals nor the later merge grants a new live-call budget.
+
 ## Scope and evidence standard
 
 This is an evidence-led diagnosis and discussion plan, not a new product specification or authorization to implement the options below. Separate three questions: did the call complete and validate, is the proposed person/source useful, and are the role and question claims supported? A schema-valid response is not a semantically correct review; a neutral displayed question does not verify the proposed role.

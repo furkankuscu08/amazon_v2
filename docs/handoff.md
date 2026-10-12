@@ -3,8 +3,23 @@
 ## Starting point
 
 - Continue from `main` in the repository, not from a required external candidate worktree. The user explicitly approved the combined implementation as the next development baseline, while accepting that semantic quality issues remain unresolved. Read `AGENTS.md` and `README.md` before changing behavior.
-- `baseline/pre-combined-candidate-20261012` preserves pre-merge main `33ef28c`. The live-tested combined application code is `e77bee6`; handoff packaging changes documentation/tests/artifacts, not that application code. Keep both actual observed versions identifiable in future comparisons.
 - Current behavior: low reasoning for area evaluation, high for impact/priority; a required 5-300-character unverified `contribution`; shared neutral model questions and unchanged verified-evidence card-question selection. No new authentication, real integration, messaging, verifier, retry, fallback, or semantic relevance gate was added.
+
+| Reference | Meaning |
+| --- | --- |
+| `8287939` | Approved 12 October handoff merge, not a permanently latest HEAD |
+| `e77bee6` | Combined application code actually observed in the matched area comparison |
+| `33ef28c` | Pre-merge main code observed in the comparison's baseline arm |
+| `baseline/pre-combined-candidate-20261012` | Tag preserving `33ef28c` for historical comparisons |
+
+Handoff packaging changed documentation/tests/artifacts, not the observed application code. Continue from current main and keep both actually observed versions identifiable in future comparisons; do not describe a later checkout as an already observed arm.
+
+## Reading route
+
+- [AGENTS.md](../AGENTS.md): working rules and preservation boundaries; then inspect the code/tests relevant to the task.
+- [README.md](../README.md): setup, current behavior, operational commands, and prototype limitations.
+- [Quality evaluation](quality-evaluation.md): role rubric, dated observations, assistant versus user judgments, and historical artifact availability.
+- [Comparison bundle guide](evaluations/20261012-main-vs-combined/README.md): relative paths for offline inspection of the immutable 12-call captures and separate reviews.
 
 ## What is established
 
@@ -17,6 +32,12 @@ The [matched area comparison](quality-evaluation.md#matched-main-versus-combined
 3. **Pending judgments:** Historical/Platform Priya's direct boundary, Growth Nina/Jules direct boundaries, Elena's reporter-primary usefulness, and four main-arm ask premises remain genuinely debatable. The advisor rubric is user-approved; these per-case assistant judgments are not human-adjudicated. Do not score pending as success/failure or reject historical work merely for age. The raw provisional direct count was six per arm; the separate review excludes two Priya cases per arm and reports four. Both records are preserved.
 
 These are handoff priorities, not an automatically authorized implementation plan. No extra live calls are approved; the 12-call comparison budget is exhausted. No schema or truncation failures occurred in this comparison, so it did not demonstrate a fix for earlier failures.
+
+## Validation scope at handoff
+
+- **Offline:** Handoff preparation and the merged tree passed all 306 offline tests, Ruff lint/format checks, and diff checks, with the existing Starlette test-client deprecation warning. This is a dated validation result, not proof that future edits pass those checks or that model semantics improved.
+- **Live:** The final comparison retained 12 area invocations, six per frozen arm. It did not rerun impact, retrieval, priority, or the end-to-end UI flow; the merged combined version has not received a new full live web-flow validation. Earlier HTTP observations used earlier code/settings and do not fill that gap.
+- **Preservation:** The 91 bundled JSON files matched their original local files byte-for-byte at packaging. Offline integrity tests check retained captures and separate review boundaries, not independent semantic correctness. Packaging and merge preparation added no model calls.
 
 ## Evidence and preservation
 
@@ -35,5 +56,3 @@ git diff --check
 ```
 
 These are offline checks. For live work, obtain a new explicit context/call budget, prepare new per-arm manifests against actual prompt/LLM/schema hashes, retain exact evidence order and original needs, count every start including unknown outcomes, and use separate observation processes/directories with no automatic replacement. Main now contains the combined behavior; referring to an unqualified main arm as the old high-effort implementation would be incorrect.
-
-Handoff preparation passed all 306 offline tests, Ruff lint/format checks, and `git diff --check`; the existing Starlette test-client deprecation warning remains. The 91 bundled JSON files match their local originals byte-for-byte, and the app/prompt/schema code and older fixture/label files are unchanged from the observed combined commit. Packaging and merge preparation added no model calls.

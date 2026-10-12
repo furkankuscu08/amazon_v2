@@ -1,5 +1,7 @@
 # Öneri: Kanıt temelli stakeholder alan kartı
 
+> **Arşiv durumu:** Tasarım geçmişi için korunmuştur; güncel uygulama planı veya otomatik görev listesi değildir. Güncel başlangıç ve açık öncelikler için [devir belgesini](../handoff.md), mevcut davranış ve kurulum için [README'yi](../../README.md) okuyun. Bazı fikirlerin uygulanmış olması, bu belgenin tamamının onaylandığı veya uygulandığı anlamına gelmez.
+
 > **Durum: kavramsal yeniden tasarım önerisi.** Hedef, **yarışmada güvenle gösterilebilecek ve farklı cümlelerde sınanabilecek sürümdür**; sonraki faz fikirleri bu belgenin kapsamında değildir. Bu belge mevcut kodun veya yayımlanmış API'nin davranışını tarif etmez; uygulama kararı değildir.
 Sayısal sınırlar aşağıda başlangıç varsayımıdır; değerlendirmeyle doğrulanmalıdır.
 
