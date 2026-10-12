@@ -1,0 +1,13 @@
+{
+  "task": "area",
+  "outcome": "success",
+  "failure_category": null,
+  "validation_error_types": null,
+  "duration_seconds": 26.616,
+  "http_status": 200,
+  "finish_reason": "stop",
+  "prompt_tokens": 1551,
+  "completion_tokens": 806,
+  "total_tokens": 2357,
+  "reasoning_tokens": 174
+}

@@ -1,0 +1,53 @@
+{
+  "people": [
+    {
+      "person_id": "nina",
+      "role": "direct_contact",
+      "primary_evidence_id": "slack:retail-814",
+      "relevance": "direct",
+      "evidence_ids": [
+        "slack:retail-814",
+        "jira:MKT-482"
+      ],
+      "confidence": "high",
+      "ask": "Does coordinating the retail campaign launch review with channel owners involve any platform tooling or automation constraints?",
+      "unverified": "Whether her review coordination covers the prior campaign review process's applicability to current launches"
+    },
+    {
+      "person_id": "priya",
+      "role": "direct_contact",
+      "primary_evidence_id": "docs:campaign-review-2023",
+      "relevance": "direct",
+      "evidence_ids": [
+        "docs:campaign-review-2023"
+      ],
+      "confidence": "medium",
+      "ask": "Does the 2023 retail campaign review process describe any platform or tooling dependencies that might have changed for current launches?",
+      "unverified": "Whether the 2023 process was maintained or updated after the previous team"
+    },
+    {
+      "person_id": "owen",
+      "role": "advisor",
+      "primary_evidence_id": "github:campaign-scheduler-76",
+      "relevance": "adjacent",
+      "evidence_ids": [
+        "github:campaign-scheduler-76"
+      ],
+      "confidence": "medium",
+      "ask": "Does the integration between the campaign scheduler and the platform API support configurable steps for launch review workflows?",
+      "unverified": "Whether the scheduler integration relates to review workflows rather than scheduling only"
+    },
+    {
+      "person_id": "elena",
+      "role": "advisor",
+      "primary_evidence_id": "jira:MKT-482",
+      "relevance": "weak",
+      "evidence_ids": [
+        "jira:MKT-482"
+      ],
+      "confidence": "low",
+      "ask": "What platform steps are involved in finalizing the retail campaign audience approval checklist you reported?",
+      "unverified": "Whether the checklist involves platform constraints beyond the reported task"
+    }
+  ]
+}

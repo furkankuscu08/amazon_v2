@@ -1,0 +1,41 @@
+{
+  "people": [
+    {
+      "person_id": "owen",
+      "role": "direct_contact",
+      "primary_evidence_id": "github:campaign-scheduler-76",
+      "relevance": "direct",
+      "evidence_ids": [
+        "github:campaign-scheduler-76"
+      ],
+      "confidence": "high",
+      "ask": "Which existing scheduler workflows or timing behaviors might break once the scheduler-to-platform integration update lands?",
+      "unverified": "Initiative ownership beyond authoring this update is unverified."
+    },
+    {
+      "person_id": "nina",
+      "role": "direct_contact",
+      "primary_evidence_id": "jira:MKT-482",
+      "relevance": "direct",
+      "evidence_ids": [
+        "jira:MKT-482",
+        "slack:retail-814"
+      ],
+      "confidence": "high",
+      "ask": "Do the retail campaign launch checklist and review coordination include scheduled launch timing steps that depend on the scheduler-to-platform integration?",
+      "unverified": "Whether her launch workflows actually touch the scheduler API is unverified."
+    },
+    {
+      "person_id": "jules",
+      "role": "direct_contact",
+      "primary_evidence_id": "directory:jules-approval",
+      "relevance": "direct",
+      "evidence_ids": [
+        "directory:jules-approval"
+      ],
+      "confidence": "medium",
+      "ask": "Does your campaign launch approval review rely on any scheduling or timing information that would be affected by the integration change?",
+      "unverified": "The exact scope and depth of the approval review duty is unverified."
+    }
+  ]
+}

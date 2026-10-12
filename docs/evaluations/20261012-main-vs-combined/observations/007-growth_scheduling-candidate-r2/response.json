@@ -1,0 +1,44 @@
+{
+  "people": [
+    {
+      "person_id": "owen",
+      "primary_evidence_id": "github:campaign-scheduler-76",
+      "contribution": "Authored the update to the integration between the campaign scheduler and the platform API, so can explain what the change touches; operator scheduling workflows are not covered by this source.",
+      "role": "direct_contact",
+      "relevance": "direct",
+      "evidence_ids": [
+        "github:campaign-scheduler-76"
+      ],
+      "confidence": "high",
+      "ask": "What did your work on the cited source cover, and could it inform the consultation need shown above?",
+      "unverified": "Whether the integration update is complete or in progress is not stated."
+    },
+    {
+      "person_id": "nina",
+      "primary_evidence_id": "jira:MKT-482",
+      "contribution": "Assigned the retail campaign audience approval checklist before launch and coordinated the retail campaign launch review with channel owners, covering operator launch-coordination expectations; scheduling-workflow internals are not evidenced.",
+      "role": "direct_contact",
+      "relevance": "direct",
+      "evidence_ids": [
+        "jira:MKT-482",
+        "slack:retail-814"
+      ],
+      "confidence": "medium",
+      "ask": "What did your work on the cited source cover, and could it inform the consultation need shown above?",
+      "unverified": "No evidence of direct work on scheduler or platform API workflows."
+    },
+    {
+      "person_id": "jules",
+      "primary_evidence_id": "directory:jules-approval",
+      "contribution": "Current responsibility for reviewing campaign launch approvals, which could clarify approval expectations if the scheduler-to-platform integration changes; scheduling workflows themselves are outside this scope.",
+      "role": "advisor",
+      "relevance": "adjacent",
+      "evidence_ids": [
+        "directory:jules-approval"
+      ],
+      "confidence": "medium",
+      "ask": "What does your current responsibility cover, and could it inform the consultation need shown above?",
+      "unverified": "No evidence of involvement in scheduling workflows or the integration."
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "status": "complete",
+  "completed": [
+    {
+      "ordinal": 1,
+      "returncode": 0,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      }
+    },
+    {
+      "ordinal": 2,
+      "returncode": 0,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      }
+    },
+    {
+      "ordinal": 3,
+      "returncode": 0,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      }
+    },
+    {
+      "ordinal": 4,
+      "returncode": 0,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      }
+    },
+    {
+      "ordinal": 5,
+      "returncode": 0,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      }
+    },
+    {
+      "ordinal": 6,
+      "returncode": 0,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      }
+    },
+    {
+      "ordinal": 7,
+      "returncode": 0,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      }
+    },
+    {
+      "ordinal": 8,
+      "returncode": 0,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      }
+    },
+    {
+      "ordinal": 9,
+      "returncode": 0,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      }
+    },
+    {
+      "ordinal": 10,
+      "returncode": 0,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      }
+    },
+    {
+      "ordinal": 11,
+      "returncode": 0,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      }
+    },
+    {
+      "ordinal": 12,
+      "returncode": 0,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      }
+    }
+  ],
+  "started_invocations": 12
+}

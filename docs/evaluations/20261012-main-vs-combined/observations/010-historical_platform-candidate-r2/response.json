@@ -1,0 +1,57 @@
+{
+  "people": [
+    {
+      "person_id": "priya",
+      "primary_evidence_id": "docs:campaign-review-2023",
+      "contribution": "Authored the 2023 retail campaign review and approval process document for the previous team; can describe the original review steps and their intended scope, helping assess applicability to current launches.",
+      "role": "direct_contact",
+      "relevance": "direct",
+      "evidence_ids": [
+        "docs:campaign-review-2023"
+      ],
+      "confidence": "high",
+      "ask": "What did your work on the cited source cover, and could it inform the consultation need shown above?",
+      "unverified": "Whether the process was updated since 2023 is not documented."
+    },
+    {
+      "person_id": "nina",
+      "primary_evidence_id": "jira:MKT-482",
+      "contribution": "Assigned to finalize the retail campaign audience approval checklist before launch and stated she coordinates the retail campaign launch review with channel owners; can clarify how current launch reviews are run versus the prior process.",
+      "role": "direct_contact",
+      "relevance": "direct",
+      "evidence_ids": [
+        "jira:MKT-482",
+        "slack:retail-814"
+      ],
+      "confidence": "high",
+      "ask": "What did your work on the cited source cover, and could it inform the consultation need shown above?",
+      "unverified": "Platform-level constraints affecting the review workflow are not evidenced in her sources."
+    },
+    {
+      "person_id": "owen",
+      "primary_evidence_id": "github:campaign-scheduler-76",
+      "contribution": "Authored an update integrating the campaign scheduler with the platform API; can speak to current platform tooling and scheduling/API constraints relevant to reviewing campaign workflows for launches.",
+      "role": "direct_contact",
+      "relevance": "direct",
+      "evidence_ids": [
+        "github:campaign-scheduler-76"
+      ],
+      "confidence": "medium",
+      "ask": "What did your work on the cited source cover, and could it inform the consultation need shown above?",
+      "unverified": "Whether this integration touches review or approval tooling specifically is not documented."
+    },
+    {
+      "person_id": "elena",
+      "primary_evidence_id": "jira:MKT-482",
+      "contribution": "Reported the retail campaign audience approval checklist ticket; can explain the context and scope of that launch approval task, though no assignment or platform ownership is evidenced.",
+      "role": "advisor",
+      "relevance": "weak",
+      "evidence_ids": [
+        "jira:MKT-482"
+      ],
+      "confidence": "medium",
+      "ask": "What can you clarify about the cited record, and could it inform the consultation need shown above?",
+      "unverified": "A slack mention discussed launch approval but no assignment was made."
+    }
+  ]
+}

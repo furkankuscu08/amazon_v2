@@ -1,0 +1,178 @@
+{
+  "synthetic": true,
+  "area_prompt_sha256": "023b912a1ab64d4d307ddaf19a1d16b1e1ae0fc45704ef2d322feba16f43b4a8",
+  "llm_sha256": "b5718e811cf241256afcf41f813c759ae6a69bfc3081560a1467e81421091121",
+  "schema_sha256": "22e13d170cc2e9a1f14b62c79d6ad10b902efc7939dbc6563331f1d4eb5d7c3d",
+  "retrieved_ids": [
+    "github:campaign-scheduler-76",
+    "jira:MKT-483",
+    "docs:campaign-review-2023",
+    "slack:retail-814",
+    "jira:MKT-482",
+    "docs:wallet-loyalty",
+    "jira:old-employee",
+    "slack:mention-55"
+  ],
+  "payload": {
+    "idea": "We want to update the integration between the campaign scheduler and the platform API.",
+    "answers": [],
+    "area": {
+      "id": "growth-campaign-operations",
+      "label": "Growth campaign operations",
+      "rationale": "Fixed synthetic consultation context for a main-versus-combined-candidate comparison.",
+      "consultation_need": "What scheduling workflows, campaign timing, or operator expectations would need to keep working if the scheduler-to-platform integration changes?",
+      "search_intents": [
+        {
+          "keyword": "campaign scheduler workflows timing",
+          "semantic": "campaign scheduling workflows and timing dependencies"
+        },
+        {
+          "keyword": "growth campaign operations scheduling",
+          "semantic": "growth marketing campaign operations use of scheduler"
+        },
+        {
+          "keyword": "campaign launch scheduling dependencies",
+          "semantic": "dependencies for launching campaigns through scheduler and platform API"
+        }
+      ],
+      "mapping": "mapped",
+      "org_unit_id": "growth",
+      "mapping_reason": null
+    },
+    "candidates": [
+      {
+        "person_id": "owen",
+        "name": "Owen Blake",
+        "title": "Platform Engineer",
+        "org_id": "platform",
+        "evidence": [
+          {
+            "id": "github:campaign-scheduler-76",
+            "kind": "github",
+            "date": "2026-08-13",
+            "relation": "author",
+            "text": "Update integration between the campaign scheduler and the platform API."
+          }
+        ]
+      },
+      {
+        "person_id": "elena",
+        "name": "Elena Park",
+        "title": "Campaign Analyst",
+        "org_id": "growth",
+        "evidence": [
+          {
+            "id": "jira:MKT-483",
+            "kind": "jira",
+            "date": "2026-08-12",
+            "relation": "assignee",
+            "text": "Campaign performance report and post-launch metrics."
+          },
+          {
+            "id": "jira:MKT-482",
+            "kind": "jira",
+            "date": "2026-08-10",
+            "relation": "reporter",
+            "text": "Finalize the retail campaign audience approval checklist before launch."
+          },
+          {
+            "id": "slack:mention-55",
+            "kind": "slack",
+            "date": "2026-07-04",
+            "relation": "mention",
+            "text": "Someone mentioned Elena when discussing launch approval; no assignment was made."
+          }
+        ]
+      },
+      {
+        "person_id": "nina",
+        "name": "Nina Ellis",
+        "title": "Campaign Operations Specialist",
+        "org_id": "growth",
+        "evidence": [
+          {
+            "id": "slack:retail-814",
+            "kind": "slack",
+            "date": "2026-08-11",
+            "relation": "author",
+            "text": "I will coordinate the retail campaign launch review with channel owners."
+          },
+          {
+            "id": "jira:MKT-482",
+            "kind": "jira",
+            "date": "2026-08-10",
+            "relation": "assignee",
+            "text": "Finalize the retail campaign audience approval checklist before launch."
+          }
+        ]
+      },
+      {
+        "person_id": "tara",
+        "name": "Tara Reed",
+        "title": "Finance Analyst",
+        "org_id": "finance",
+        "evidence": [
+          {
+            "id": "docs:wallet-loyalty",
+            "kind": "document",
+            "date": "2026-06-01",
+            "relation": "author",
+            "text": "Wallet loyalty points campaign promotion, unrelated to checkout payment processing."
+          }
+        ]
+      },
+      {
+        "person_id": "priya",
+        "name": "Priya Singh",
+        "title": "Brand Review Lead",
+        "org_id": "brand",
+        "evidence": [
+          {
+            "id": "docs:campaign-review-2023",
+            "kind": "document",
+            "date": "2023-05-10",
+            "relation": "author",
+            "text": "Retail campaign review and approval process for the previous team."
+          }
+        ]
+      },
+      {
+        "person_id": "jules",
+        "name": "Jules Carter",
+        "title": "Operations Coordinator",
+        "org_id": "growth",
+        "evidence": [
+          {
+            "id": "directory:jules-approval",
+            "kind": "responsibility",
+            "relation": "reviewer",
+            "date": "2026-09-01",
+            "text": "Reviewing campaign launch approvals"
+          }
+        ]
+      },
+      {
+        "person_id": "marcus",
+        "name": "Marcus Reed",
+        "title": "Growth Marketing Manager",
+        "org_id": "growth",
+        "evidence": [
+          {
+            "id": "directory:growth-manager",
+            "kind": "manager",
+            "relation": "manages",
+            "date": "2025-01-01",
+            "text": "Currently manages growth"
+          },
+          {
+            "id": "directory:growth-remit",
+            "kind": "remit",
+            "relation": "team_scope",
+            "date": "2025-01-01",
+            "text": "Campaign planning and launch approval review"
+          }
+        ]
+      }
+    ]
+  }
+}
