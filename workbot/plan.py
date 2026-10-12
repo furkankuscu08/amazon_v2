@@ -23,7 +23,7 @@ def _label(person: dict) -> str:
         return "Can advise"
     if person.get("primary_kind") == "responsibility":
         return "Current responsibility"
-    return "Did this work"
+    return "Related work"
 
 
 def _strength(person: dict) -> tuple[int, int]:

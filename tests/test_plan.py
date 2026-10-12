@@ -64,7 +64,7 @@ def test_fallback_takes_the_strongest_person_of_each_area_in_card_order():
     plan = build_plan(CARD)
     assert [p["person_id"] for p in plan["first"]] == ["nina", "tara", "dan"]
     assert [p["label"] for p in plan["first"]] == [
-        "Did this work",
+        "Related work",
         "Current responsibility",
         "Can route you",
     ]

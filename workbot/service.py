@@ -380,19 +380,19 @@ def _evidence(db, candidate: dict, evidence_id: str) -> tuple[str, str, str] | N
         if evidence["kind"] == "responsibility":
             return (
                 "responsibility",
-                f"Currently {row['relation']} for {row['scope']} [{evidence_id}].",
-                f"Currently {row['relation']} for {row['scope']}.",
+                f"Current {row['relation']}: {row['scope']} [{evidence_id}].",
+                f"Current {row['relation']}: {row['scope']}.",
             )
         if evidence["kind"] == "manager":
             return (
                 "manager",
                 f"Currently manages the relevant team [{evidence_id}].",
-                "Currently manages the team; no direct contact was established.",
+                "Currently manages the team; no one with direct work was established.",
             )
         return (
             "remit",
-            f"The team covers {row['scope']} [{evidence_id}].",
-            f"The team covers {row['scope']}.",
+            f"Team remit: {row['scope']} [{evidence_id}].",
+            f"Team remit: {row['scope']}.",
         )
     record = visible_record(db, evidence_id)
     link = db.execute(

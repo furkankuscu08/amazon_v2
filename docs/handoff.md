@@ -33,7 +33,7 @@ Win the hackathon with a prototype that has **no obvious errors**; resolving deb
 3. **Card content** (done; assistant's recommendation, accepted for now): `contribution` is shown as "Model summary (unverified)", trimmed to complete sentences or hidden, and kept out of the priority call. The role stays a label.
 4. **One end-to-end live measurement** (done): results are summarised under Current state and Known issues.
 5. **New scope agreed with the user on 12 October 2026:** stop calibrating roles and instead make the existing strengths visible. Three pieces of work, in order:
-   1. A short "talk to these people first" plan at the top of the card (implemented offline in `workbot/plan.py`; the priority call now also returns up to four person IDs; not yet checked with live calls).
+   1. A short "talk to these people first" plan at the top of the card (done in `workbot/plan.py`; the priority call now also returns up to four person IDs). A second approved live run of the six ideas (47 calls, all successful) put every must-show person of the answer key into the plan, usually first; one clarification was asked, skipped, and handled. The outdated policy author appeared in the plan as an advisor under Finance next to the current reviewer. Weak picks remain, for example a payments runbook author for pickup lockers.
    2. Live progress instead of a two-minute wait: run all areas at once and show them as they complete.
    3. Make two or three trust moments visible for the demo (an outdated owner replaced by the current one, no visible trace leading to a routing contact) and add the Alexa+-like framing.
    Out of scope: further role calibration or prompt tuning, a larger fixture, sending messages or tracking conversations.

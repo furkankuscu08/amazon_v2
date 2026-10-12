@@ -178,7 +178,7 @@ def test_direct_responsibility_without_matching_title(db):
     )
     _, card = card_for(db, model, StubSearcher(ids=()))
     assert card["areas"][0]["people"][0]["person_id"] == "jules"
-    assert "Currently reviewer" in card["areas"][0]["people"][0]["why"][0]
+    assert "Current reviewer:" in card["areas"][0]["people"][0]["why"][0]
 
 
 def test_current_visible_responsibility_can_support_an_advisor(db):
