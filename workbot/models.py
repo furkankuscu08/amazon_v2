@@ -88,3 +88,6 @@ class AreaEvaluation(StrictModel):
 class Priority(StrictModel):
     order: list[str]
     shared_question: str | None
+    # Person IDs already on the audited card, most important first. The service
+    # keeps only IDs that are shown; this can neither add a person nor change a role.
+    first_conversations: list[str] = Field(max_length=4)

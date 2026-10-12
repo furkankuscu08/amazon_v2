@@ -174,6 +174,7 @@ def run(db, sid: str, model, searcher) -> None:
         "idea": session["sentence"],
         "areas": [],
         "shared_question": None,
+        "first_conversations": [],
         "priority_applied": False,
         "calls": {"impact": 1, "area": 0, "priority": 0},
         "duration_seconds": {"impact": round(time.monotonic() - impact_started, 3)},
@@ -274,6 +275,12 @@ def run(db, sid: str, model, searcher) -> None:
             )
             order = {area_id: index for index, area_id in enumerate(priority.order)}
             card["areas"].sort(key=lambda area: order[area["id"]])
+            shown = {p["person_id"] for a in card["areas"] for p in a["people"]}
+            card["first_conversations"] = [
+                pid
+                for pid in dict.fromkeys(priority.first_conversations)
+                if pid in shown
+            ]
             if safe_shared_question:
                 card["shared_question"] = priority.shared_question
             card["priority_applied"] = True
@@ -341,7 +348,7 @@ def _safe_shared_question(db, text: str, card: dict) -> bool:
     )
 
 
-def _evidence(db, candidate: dict, evidence_id: str) -> tuple[str, str] | None:
+def _evidence(db, candidate: dict, evidence_id: str) -> tuple[str, str, str] | None:
     evidence = next((e for e in candidate["evidence"] if e["id"] == evidence_id), None)
     if not evidence or not source(db, evidence_id):
         return None
@@ -374,10 +381,19 @@ def _evidence(db, candidate: dict, evidence_id: str) -> tuple[str, str] | None:
             return (
                 "responsibility",
                 f"Currently {row['relation']} for {row['scope']} [{evidence_id}].",
+                f"Currently {row['relation']} for {row['scope']}.",
             )
         if evidence["kind"] == "manager":
-            return ("manager", f"Currently manages the relevant team [{evidence_id}].")
-        return ("remit", f"The team covers {row['scope']} [{evidence_id}].")
+            return (
+                "manager",
+                f"Currently manages the relevant team [{evidence_id}].",
+                "Currently manages the team; no direct contact was established.",
+            )
+        return (
+            "remit",
+            f"The team covers {row['scope']} [{evidence_id}].",
+            f"The team covers {row['scope']}.",
+        )
     record = visible_record(db, evidence_id)
     link = db.execute(
         "SELECT relation FROM work_links WHERE record_id=? AND person_id=? AND relation=?",
@@ -386,7 +402,8 @@ def _evidence(db, candidate: dict, evidence_id: str) -> tuple[str, str] | None:
     if not record or not link:
         return None
     description = f"{evidence['relation'].capitalize()} of {record['kind']} record on {record['occurred_at']}: ‘{_excerpt(record['text'])}’ [{evidence_id}]."
-    return evidence["relation"], description
+    headline = f"{evidence['relation'].capitalize()} of a {record['kind']} record: ‘{_excerpt(record['text'], 120)}’"
+    return evidence["relation"], description, headline
 
 
 WORK_STRONG = {"assignee", "author", "contributor"}
@@ -407,6 +424,7 @@ def _grounded_ask(role: str, primary_kind: str) -> str:
 
 def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
     candidates = {p["person_id"]: p for p in pool["people"]}
+    teams = {row["id"]: row["name"] for row in db.execute("SELECT * FROM org_units")}
     accepted = []
     rejected_direct = False
     for proposal in evaluation.people:
@@ -456,7 +474,13 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
             {
                 "person_id": proposal.person_id,
                 "name": candidate["name"],
+                "title": candidate["title"],
+                "org_id": candidate["org_id"],
+                "team": teams.get(candidate["org_id"], candidate["org_id"]),
                 "role": role,
+                "primary_kind": primary_kind,
+                # One short audited line for the plan at the top of the card.
+                "headline": facts[proposal.primary_evidence_id][2],
                 "confidence": proposal.confidence,
                 "primary_evidence_id": proposal.primary_evidence_id,
                 "evidence_ids": proposal.evidence_ids,

@@ -17,6 +17,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 
 from workbot.llm import OpenRouter
+from workbot.plan import build_plan
 from workbot.search import Searcher
 from workbot.service import Conflict, answer_question, create_session
 from workbot.storage import (
@@ -160,7 +161,14 @@ def show_session(request: Request, sid: str):
             status_code=410,
         )
     return templates.TemplateResponse(
-        request, "session.html", {"session": session, "card": card, "stale": False}
+        request,
+        "session.html",
+        {
+            "session": session,
+            "card": card,
+            "stale": False,
+            "plan": build_plan(card) if card else None,
+        },
     )
 
 

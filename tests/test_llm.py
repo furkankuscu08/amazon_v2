@@ -221,7 +221,7 @@ def test_area_low_is_task_local_and_preserves_transport_contract(
     replies = {
         "impact": {"question": "Which staging release is in scope?", "areas": []},
         "area": {"people": []},
-        "priority": {"order": [], "shared_question": None},
+        "priority": {"order": [], "shared_question": None, "first_conversations": []},
     }
 
     def handle(request):
@@ -513,7 +513,10 @@ def test_call_summary_success_has_only_safe_fields(
     [
         ("impact", '{"question":"Which release scope?","areas":[]}'),
         ("area", '{"people":[]}'),
-        ("priority", '{"order":["release_review"],"shared_question":null}'),
+        (
+            "priority",
+            '{"order":["release_review"],"shared_question":null,"first_conversations":[]}',
+        ),
     ],
 )
 def test_summary_supports_all_three_tasks_with_missing_usage(
@@ -914,7 +917,9 @@ def test_parallel_summaries_are_call_local(
                 "choices": [
                     {
                         "finish_reason": "stop",
-                        "message": {"content": '{"order":[],"shared_question":null}'},
+                        "message": {
+                            "content": '{"order":[],"shared_question":null,"first_conversations":[]}'
+                        },
                     }
                 ],
             },
@@ -1045,7 +1050,11 @@ def test_schema_constraint_types_preserve_errors_and_usage(
         ("area", "{}", "missing"),
         ("area", '{"people":[],"SYNTHETIC_PRIVATE_EXTRA":"secret"}', "extra_forbidden"),
         ("area", '{"people":[false]}', "model_type"),
-        ("priority", '{"order":false,"shared_question":null}', "list_type"),
+        (
+            "priority",
+            '{"order":false,"shared_question":null,"first_conversations":[]}',
+            "list_type",
+        ),
         ("impact", '{"question":null,"areas":[]}', "value_error"),
     ],
 )

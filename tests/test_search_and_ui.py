@@ -144,7 +144,9 @@ class WebModel:
                     ]
                 }
             )
-        return Priority.model_validate({"order": ["growth"], "shared_question": None})
+        return Priority.model_validate(
+            {"order": ["growth"], "shared_question": None, "first_conversations": []}
+        )
 
 
 class WebSearch:
@@ -186,6 +188,10 @@ def test_web_card_reload_and_source_visibility(tmp_path, monkeypatch):
         assert "Primary cited source:" in card.text
         assert f'href="{url}/sources/jira%3AMKT-482"' in card.text
         assert "Ask to check the connection:" in card.text
+        assert "Before you start, talk to one person." in card.text
+        assert "Did this work" in card.text
+        assert "Assignee of a jira record:" in card.text
+        assert "All 1 consultation areas and everyone considered" in card.text
         assert "Model summary (unverified):" in card.text
         assert (
             "Checklist work can clarify pre-launch campaign review scope." in card.text

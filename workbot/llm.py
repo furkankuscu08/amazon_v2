@@ -83,7 +83,13 @@ person, and do not suggest triggering actions.
 Return only JSON matching the supplied schema, with all required fields. No
 markdown, extra fields, or reasoning narrative.""",
     "priority": """Order ALL supplied area IDs exactly once by attention needed, including
-unresolved and empty areas. Do not add, remove, select or rank people. Optionally
+unresolved and empty areas. Then choose first_conversations: at most four
+person_id values taken from the supplied areas' people, most important first, each
+person once. Choose the people the requester should talk to first because their
+cited work or current responsibility is most central to the idea itself; prefer
+direct contacts in the areas the idea is mainly about over advisors and routing
+contacts in peripheral areas. Use [] when no people are supplied. Do not add
+people, change roles, or use any ID that is not supplied. Optionally
 ask ONE unanswered cross-area question supported by supplied facts; otherwise
 shared_question=null. If asking, use a single English question of at most 300
 characters ending in '?' without URLs, email addresses, or source IDs. Do not

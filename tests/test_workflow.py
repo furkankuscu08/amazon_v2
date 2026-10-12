@@ -119,8 +119,14 @@ def proposal(pid, role, evidence, primary=None, relevance=None):
     }
 
 
-def priority(*ids):
-    return Priority.model_validate({"order": list(ids), "shared_question": None})
+def priority(*ids, first=()):
+    return Priority.model_validate(
+        {
+            "order": list(ids),
+            "shared_question": None,
+            "first_conversations": list(first),
+        }
+    )
 
 
 def card_for(db, model, searcher=None, key="key-1"):
@@ -1062,6 +1068,7 @@ def test_priority_cannot_introduce_a_new_directory_person(db):
                 {
                     "order": ["campaign_review"],
                     "shared_question": "Should Eve Restricted approve this campaign?",
+                    "first_conversations": ["eve", "nina", "nina"],
                 }
             )
         ],
@@ -1070,6 +1077,8 @@ def test_priority_cannot_introduce_a_new_directory_person(db):
     assert card["areas"][0]["people"][0]["person_id"] == "nina"
     assert card["shared_question"] is None
     assert card["priority_applied"]
+    assert card["first_conversations"] == ["nina"]
+    assert "eve" not in json.dumps(card)
 
 
 def test_unsafe_shared_question_does_not_discard_valid_area_order(db):
@@ -1081,6 +1090,7 @@ def test_unsafe_shared_question_does_not_discard_valid_area_order(db):
                 {
                     "order": ["regional_compliance", "campaign_review"],
                     "shared_question": "See https://example.org for more context?",
+                    "first_conversations": [],
                 }
             )
         ],
@@ -1110,6 +1120,7 @@ def test_priority_guard_error_does_not_leave_a_partially_reordered_card(
                 {
                     "order": ["regional_compliance", "campaign_review"],
                     "shared_question": "Who should review the launch process?",
+                    "first_conversations": [],
                 }
             )
         ],
