@@ -850,7 +850,7 @@ def test_area_calls_overlap_but_are_audited_in_area_order(db):
         )
     )
     _, card = card_for(db, model, searcher)
-    assert model.peak == 2
+    assert model.peak >= 2
     assert model.priority_after_areas
     assert searcher.calls == 3
     assert card["calls"] == {"impact": 1, "area": 3, "priority": 1}

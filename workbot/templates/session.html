@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Workbot · stakeholder areas</title>{% if session.state == 'processing' and not stale %}<meta http-equiv="refresh" content="5">{% endif %}<style>
+<title>Workbot · stakeholder areas</title><style>
 body{font:16px/1.5 system-ui,sans-serif;max-width:1000px;margin:2rem auto;padding:0 1.2rem;color:#192536;background:#f6f8fa}
 article,.panel{background:white;padding:1.3rem;margin:1rem 0;border-radius:10px;box-shadow:0 1px 5px #ccd2db}section.person,p.person{border-top:1px solid #ddd;padding:.8rem 0}p.person{margin:0}.plan ol{padding-left:1.4rem}.plan li{margin:.9rem 0}.plan h3{margin:0}details.panel>summary{cursor:pointer;font-weight:600}details.panel article{box-shadow:none;border-top:1px solid #ddd;border-radius:0;padding:1rem 0;margin:0}
 .badge{display:inline-block;background:#e6edf9;padding:.15rem .5rem;border-radius:4px}.warning{border-left:4px solid #ae7620;padding-left:1rem}
 button{background:#22549b;color:white;border:0;border-radius:6px;padding:.65rem 1rem;font:inherit}textarea{width:100%;box-sizing:border-box;min-height:5rem;font:inherit}
-a{color:#22549b}small{color:#555}ul{padding-left:1.4rem}
+ul.steps{list-style:none;padding-left:0}ul.steps li{padding:.25rem 0}ul.steps li.done{color:#555}ul.steps li.done::before{content:'✓  '}ul.steps li.now{font-weight:600}ul.steps li.now::before{content:'…  '}a{color:#22549b}small{color:#555}ul{padding-left:1.4rem}
 </style></head><body>
 <p><a href="/">← New idea</a> · <small>Workbot · simulated Alexa+ experience · synthetic data</small></p>
 <header class="panel"><h1>Consultation areas</h1><p><strong>Idea:</strong> {{ session.sentence }}</p></header>
@@ -15,7 +15,15 @@ a{color:#22549b}small{color:#555}ul{padding-left:1.4rem}
 <form method="post" action="/sessions/{{ session.id }}/answer"><textarea name="answer" maxlength="500" required></textarea><p><button type="submit">Continue</button></p></form>
 <form method="post" action="/sessions/{{ session.id }}/answer"><input type="hidden" name="skip" value="1"><button type="submit">Continue without answering</button></form></article>
 {% elif session.state == 'refusal' %}<article class="warning"><h2>Unable to evaluate this request safely</h2><p>No stakeholder card was produced. Check the model setup or try a new idea.</p></article>
-{% elif session.state == 'processing' %}<article><p>This request is still being processed, or it was interrupted. This page refreshes every few seconds; if nothing changes after a couple of minutes, start a new request. No partial card is shown.</p></article>
+{% elif session.state == 'processing' %}<article id="progress">
+{% if progress %}<h2>Working on it…</h2><ul class="steps">
+<li class="{{ 'now' if progress.stage == 'impact' else 'done' }}">Understanding the idea and who it could affect</li>
+{% for area in progress.areas %}<li class="{{ 'done' if area.done else 'now' }}">{{ 'Checked' if area.done else 'Checking' }} {{ area.label }}</li>{% endfor %}
+{% if progress.stage == 'priority' %}<li class="now">Choosing who to talk to first</li>{% endif %}</ul>
+<p><small>People are shown only once every area has been checked.</small></p>
+{% else %}<p>This request is still being processed, or it was interrupted. This page refreshes every few seconds; if nothing changes after a couple of minutes, start a new request. No partial card is shown.</p>{% endif %}</article>
+<script>setInterval(async () => { try { const page = await fetch(location.href, {cache: 'no-store'}); const next = new DOMParser().parseFromString(await page.text(), 'text/html'); const now = next.getElementById('progress'); if (now) { document.getElementById('progress').replaceWith(now); } else { location.reload(); } } catch (error) {} }, 2000);</script>
+<noscript><meta http-equiv="refresh" content="5"></noscript>
 {% elif card %}
 {% set count = plan.first | length %}
 <article class="plan"><h2>{% if count == 0 %}I found no one to point you to from the work I can see.{% elif count == 1 %}Before you start, talk to one person.{% else %}Before you start, talk to {{ ['two', 'three', 'four'][count - 2] }} people.{% endif %}</h2>

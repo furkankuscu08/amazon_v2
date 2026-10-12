@@ -8,7 +8,9 @@ import re
 import sqlite3
 import time
 import uuid
+from collections.abc import Callable
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
+from threading import Lock
 
 from workbot.llm import ModelError
 from workbot.models import AreaEvaluation, Impact, Priority
@@ -25,7 +27,35 @@ from workbot.storage import (
 )
 
 log = logging.getLogger(__name__)
-MAX_PARALLEL_AREA_CALLS = 2
+MAX_PARALLEL_AREA_CALLS = 6  # An idea has at most six areas; review them together.
+
+# What a running request is doing, for the waiting page only: a stage and area
+# labels with a done flag. Never people, sources, counts, or model diagnostics.
+# In-memory on purpose: a restart loses the run itself, so it loses this too.
+_progress: dict[str, dict] = {}
+_progress_lock = Lock()
+
+
+def progress(sid: str) -> dict | None:
+    with _progress_lock:
+        entry = _progress.get(sid)
+        return (
+            {"stage": entry["stage"], "areas": [dict(a) for a in entry["areas"]]}
+            if entry
+            else None
+        )
+
+
+def _report(sid: str, stage: str | None = None, areas=None, done=None) -> None:
+    with _progress_lock:
+        entry = _progress.setdefault(sid, {"stage": "impact", "areas": []})
+        if stage:
+            entry["stage"] = stage
+        if areas is not None:
+            entry["areas"] = areas
+        for area in entry["areas"]:
+            if area["id"] == done:
+                area["done"] = True
 
 
 class Conflict(Exception):
@@ -40,7 +70,8 @@ def _state(db, sid: str, state: str, question: str | None = None) -> None:
     db.commit()
 
 
-def create_session(db, idem_key: str, sentence: str, model, searcher) -> str:
+def open_session(db, idem_key: str, sentence: str) -> tuple[str, bool]:
+    """Store a new request; the bool is False when this key already has one."""
     if (
         not sentence.strip()
         or len(sentence) > 600
@@ -64,13 +95,21 @@ def create_session(db, idem_key: str, sentence: str, model, searcher) -> str:
             (idem_key,),
         ).fetchone()
         if row and row["sentence"] == sentence:
-            return row["id"]
+            return row["id"], False
         raise Conflict("This request key belongs to a different idea") from None
-    run_safely(db, sid, model, searcher)
+    _report(sid, "impact")
+    return sid, True
+
+
+def create_session(db, idem_key: str, sentence: str, model, searcher) -> str:
+    sid, created = open_session(db, idem_key, sentence)
+    if created:
+        run_safely(db, sid, model, searcher)
     return sid
 
 
-def answer_question(db, sid: str, answer: str | None, model, searcher) -> None:
+def record_answer(db, sid: str, answer: str | None) -> bool:
+    """Store a clarification answer; False when the saved session is unusable."""
     session = load_session(db, sid)
     if not session or session["state"] != "question":
         raise Conflict("There is no pending clarification")
@@ -82,7 +121,7 @@ def answer_question(db, sid: str, answer: str | None, model, searcher) -> None:
             raise TypeError("Invalid saved answers")
     except (ValueError, TypeError):
         _state(db, sid, "refusal")
-        return
+        return False
     answers.append(
         {"question": session["question"], "answer": answer.strip() if answer else None}
     )
@@ -94,7 +133,13 @@ def answer_question(db, sid: str, answer: str | None, model, searcher) -> None:
         )
         if changed.rowcount != 1:
             raise Conflict("This clarification has already been answered")
-    run_safely(db, sid, model, searcher)
+    _report(sid, "impact")
+    return True
+
+
+def answer_question(db, sid: str, answer: str | None, model, searcher) -> None:
+    if record_answer(db, sid, answer):
+        run_safely(db, sid, model, searcher)
 
 
 def run_safely(db, sid: str, model, searcher) -> None:
@@ -103,10 +148,16 @@ def run_safely(db, sid: str, model, searcher) -> None:
     except Exception as exc:  # noqa: BLE001 — no raw model or document text in logs.
         log.warning("workflow_failed type=%s", type(exc).__name__)
         _state(db, sid, "refusal")
+    finally:
+        with _progress_lock:
+            _progress.pop(sid, None)
 
 
 def _collect_area_reviews(
-    db, card: dict, pending: dict[Future, tuple[dict, dict, float]]
+    db,
+    card: dict,
+    pending: dict[Future, tuple[dict, dict, float]],
+    finished: Callable[[str], None],
 ) -> None:
     done, _ = wait(pending, return_when=FIRST_COMPLETED)
     for future in done:
@@ -122,6 +173,7 @@ def _collect_area_reviews(
             item["people"] = []
         finally:
             card["duration_seconds"][item["id"]] = round(time.monotonic() - started, 3)
+            finished(item["id"])
 
 
 def run(db, sid: str, model, searcher) -> None:
@@ -132,6 +184,7 @@ def run(db, sid: str, model, searcher) -> None:
     if not inventory:
         _state(db, sid, "refusal")
         return
+    _report(sid, "impact")
     impact_started = time.monotonic()
     answers = json.loads(session["answers_json"])
     # Skipping a clarification ends the question budget; say so to the model.
@@ -180,6 +233,18 @@ def run(db, sid: str, model, searcher) -> None:
         "duration_seconds": {"impact": round(time.monotonic() - impact_started, 3)},
     }
     pending: dict[Future, tuple[dict, dict, float]] = {}
+    _report(
+        sid,
+        "areas",
+        areas=[
+            {"id": a.id, "label": a.label, "done": a.mapping == "mapping_unresolved"}
+            for a in impact.areas
+        ],
+    )
+
+    def finished(area_id: str) -> None:
+        _report(sid, done=area_id)
+
     with ThreadPoolExecutor(max_workers=MAX_PARALLEL_AREA_CALLS) as executor:
         for area in impact.areas:
             item = {
@@ -207,7 +272,7 @@ def run(db, sid: str, model, searcher) -> None:
             if area.mapping == "mapping_unresolved":
                 continue
             if len(pending) == MAX_PARALLEL_AREA_CALLS:
-                _collect_area_reviews(db, card, pending)
+                _collect_area_reviews(db, card, pending, finished)
             started = time.monotonic()
             submitted = False
             try:
@@ -254,8 +319,11 @@ def run(db, sid: str, model, searcher) -> None:
                     card["duration_seconds"][area.id] = round(
                         time.monotonic() - started, 3
                     )
+                    finished(area.id)
         while pending:
-            _collect_area_reviews(db, card, pending)
+            _collect_area_reviews(db, card, pending, finished)
+
+    _report(sid, "priority")
 
     priority_started = time.monotonic()
     try:

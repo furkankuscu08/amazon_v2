@@ -7,7 +7,7 @@ import time
 import uuid
 from collections import defaultdict, deque
 from functools import lru_cache
-from threading import Lock
+from threading import Lock, Thread
 from urllib.parse import parse_qs
 
 from dotenv import load_dotenv
@@ -19,7 +19,13 @@ from starlette.concurrency import run_in_threadpool
 from workbot.llm import OpenRouter
 from workbot.plan import build_plan
 from workbot.search import Searcher
-from workbot.service import Conflict, answer_question, create_session
+from workbot.service import (
+    Conflict,
+    open_session,
+    progress,
+    record_answer,
+    run_safely,
+)
 from workbot.storage import (
     connect,
     initialize,
@@ -113,16 +119,34 @@ def home(request: Request):
     return templates.TemplateResponse(request, "home.html", {"key": str(uuid.uuid4())})
 
 
-def _create(key: str, idea: str) -> str:
+def _run(sid: str, model, searcher) -> None:
     db = _db()
     try:
-        return create_session(db, key, idea, _model(), _searcher())
+        run_safely(db, sid, model, searcher)
     finally:
         db.close()
 
 
+def _start(sid: str) -> None:
+    """Run the workflow off the request so the page can show progress meanwhile."""
+    thread = Thread(target=_run, args=(sid, _model(), _searcher()), daemon=True)
+    app.state.last_run = thread
+    thread.start()
+
+
+def _create(key: str, idea: str) -> str:
+    db = _db()
+    try:
+        sid, created = open_session(db, key, idea)
+    finally:
+        db.close()
+    if created:
+        _start(sid)
+    return sid
+
+
 @app.post("/sessions")
-async def open_session(request: Request):
+async def post_session(request: Request):
     form = await _form(request)
     _guard_model_request(request)
     try:
@@ -168,6 +192,7 @@ def show_session(request: Request, sid: str):
             "card": card,
             "stale": False,
             "plan": build_plan(card) if card else None,
+            "progress": progress(sid) if session["state"] == "processing" else None,
         },
     )
 
@@ -175,9 +200,11 @@ def show_session(request: Request, sid: str):
 def _answer(sid: str, answer: str | None):
     db = _db()
     try:
-        answer_question(db, sid, answer, _model(), _searcher())
+        recorded = record_answer(db, sid, answer)
     finally:
         db.close()
+    if recorded:
+        _start(sid)
 
 
 @app.post("/sessions/{sid}/answer")

@@ -1,4 +1,5 @@
 import json
+from threading import Event
 
 import pytest
 from fastapi.testclient import TestClient
@@ -179,6 +180,7 @@ def test_web_card_reload_and_source_visibility(tmp_path, monkeypatch):
         )
         assert response.status_code == 303
         url = response.headers["location"]
+        app.state.last_run.join(10)
         sid = url.rsplit("/", 1)[-1]
         card = client.get(url)
         assert card.status_code == 200
@@ -262,6 +264,7 @@ def test_not_found_does_not_expose_retrieved_but_uncited_source(tmp_path, monkey
         )
         assert response.status_code == 303
         url = response.headers["location"]
+        app.state.last_run.join(10)
         page = client.get(url)
         assert page.status_code == 200
         assert "No verified contact found" in page.text
@@ -308,3 +311,54 @@ def test_demo_rate_limit_resets_after_window():
     assert not limiter.allow("maya", now=2)
     assert limiter.allow("other", now=2)
     assert limiter.allow("maya", now=11)
+
+
+def test_waiting_page_shows_area_progress_without_people(tmp_path, monkeypatch):
+    path = str(tmp_path / "progress.sqlite3")
+    db = connect(path)
+    seed_db(db)
+    db.close()
+    monkeypatch.setenv("WORKBOT_DB_PATH", path)
+    reached_area, release = Event(), Event()
+
+    class SlowAreaModel(WebModel):
+        def complete(self, task, payload):
+            if task == "area":
+                reached_area.set()
+                assert release.wait(10)
+            return super().complete(task, payload)
+
+    app.state.model = SlowAreaModel()
+    app.state.searcher = WebSearch()
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/sessions",
+            data={"idea": "Help plan marketing campaigns", "idempotency_key": "slow"},
+            follow_redirects=False,
+        )
+        assert response.status_code == 303
+        url = response.headers["location"]
+        assert reached_area.wait(10)
+        waiting = client.get(url)
+        assert "Working on it" in waiting.text
+        assert "Checking " in waiting.text
+        assert "Nina Ellis" not in waiting.text
+        assert "jira:MKT-482" not in waiting.text
+        # Resubmitting the same request must not start a second run.
+        again = client.post(
+            "/sessions",
+            data={"idea": "Help plan marketing campaigns", "idempotency_key": "slow"},
+            follow_redirects=False,
+        )
+        assert again.headers["location"] == url
+        release.set()
+        app.state.last_run.join(10)
+        done = client.get(url)
+        assert "Before you start, talk to one person." in done.text
+        assert "Working on it" not in done.text
+        assert app.state.model.__class__ is SlowAreaModel
+    finally:
+        release.set()
+        del app.state.model
+        del app.state.searcher
