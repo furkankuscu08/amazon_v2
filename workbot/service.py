@@ -15,7 +15,7 @@ from threading import Lock
 from workbot.llm import ModelError
 from workbot.models import AreaEvaluation, Impact, Priority
 from workbot.questions import NEUTRAL_QUESTIONS
-from workbot.search import candidate_pool
+from workbot.search import candidate_pool, keywords
 from workbot.storage import (
     current,
     load_session,
@@ -449,7 +449,7 @@ def _evidence(db, candidate: dict, evidence_id: str) -> tuple[str, str, str] | N
             return (
                 "responsibility",
                 f"Current {row['relation']}: {row['scope']} [{evidence_id}].",
-                f"Current {row['relation']}: {row['scope']}.",
+                f"Current {row['relation']} — {row['scope'][0].lower()}{row['scope'][1:]}.",
             )
         if evidence["kind"] == "manager":
             return (
@@ -490,8 +490,32 @@ def _grounded_ask(role: str, primary_kind: str) -> str:
     return NEUTRAL_QUESTIONS["record"]
 
 
+def _ended_duty(db, person_id: str, topic: set[str]) -> dict | None:
+    """A visible responsibility that has ended and shares a word with the area.
+
+    The model never sees expired duties. This is a directory fact shown beside a
+    person so an outdated owner is not mistaken for the current one.
+    """
+    today = time.strftime("%Y-%m-%d", time.gmtime())
+    for row in db.execute(
+        """SELECT * FROM responsibilities WHERE person_id=? AND valid_to IS NOT NULL
+        AND valid_to < ? ORDER BY valid_to DESC, id""",
+        (person_id, today),
+    ):
+        if topic & set(keywords(row["scope"])) and visible_directory_source(
+            db, row["source_id"]
+        ):
+            scope = row["scope"][0].lower() + row["scope"][1:]
+            return {
+                "source_id": row["source_id"],
+                "text": f"An earlier responsibility ended on {row['valid_to']}: {row['relation']} — {scope}.",
+            }
+    return None
+
+
 def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
     candidates = {p["person_id"]: p for p in pool["people"]}
+    topic = set(keywords(f"{item['label']} {item['consultation_need']}"))
     teams = {row["id"]: row["name"] for row in db.execute("SELECT * FROM org_units")}
     accepted = []
     rejected_direct = False
@@ -538,6 +562,13 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
             continue
         elif role == "routing_contact" and not {"manager", "remit"} <= kinds:
             continue
+        headline = facts[proposal.primary_evidence_id][2]
+        if role == "routing_contact":
+            remit = next(f[2] for f in facts.values() if f[0] == "remit")
+            headline = (
+                f"No one with visible work on this was found. Manages the team. {remit}"
+            )
+        ended = _ended_duty(db, proposal.person_id, topic)
         accepted.append(
             {
                 "person_id": proposal.person_id,
@@ -548,7 +579,11 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
                 "role": role,
                 "primary_kind": primary_kind,
                 # One short audited line for the plan at the top of the card.
-                "headline": facts[proposal.primary_evidence_id][2],
+                "headline": headline,
+                # A directory fact the model did not see; its source is tracked so
+                # the card fails closed if that source stops being visible.
+                "ended_duty": ended["text"] if ended else None,
+                "context_ids": [ended["source_id"]] if ended else [],
                 "confidence": proposal.confidence,
                 "primary_evidence_id": proposal.primary_evidence_id,
                 "evidence_ids": proposal.evidence_ids,

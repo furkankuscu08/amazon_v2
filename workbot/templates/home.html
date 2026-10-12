@@ -1,16 +1,16 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Workbot · simulated Alexa+ experience</title><style>
-body{font:16px/1.55 system-ui,sans-serif;max-width:860px;margin:3rem auto;padding:0 1.2rem;color:#192536;background:#f6f8fa}
-main,article{background:white;padding:1.5rem;border-radius:12px;box-shadow:0 1px 5px #ccd2db}
-textarea{width:100%;box-sizing:border-box;min-height:7rem;font:inherit;padding:.7rem}button{background:#22549b;color:white;border:0;border-radius:6px;padding:.7rem 1.2rem;font:inherit;cursor:pointer}
-small{color:#555}a{color:#22549b}
-</style></head><body><main>
-<small>Workbot · simulated Alexa+ experience · synthetic company data</small>
-<h1>Who should Maya talk to?</h1>
-<p>Describe a project idea. Workbot discovers relevant consultation areas and evidence-backed people; it does not contact anyone.</p>
+{% extends "base.html" %}
+{% block body %}
+<div class="turn"><span class="ring"></span><div class="bubble card">
+<span class="who">Workbot</span>
+<h2>Who should Maya talk to?</h2>
+<p>Tell me a project idea. I will look through the work traces and directory you can see, and tell you who to talk to before you start and why. I do not contact anyone.</p></div></div>
+<div class="turn user"><div class="bubble" style="flex:1">
+<span class="who">Maya</span>
 <form action="/sessions" method="post"><input type="hidden" name="idempotency_key" value="{{ key }}">
-<label for="idea">Your project idea</label><textarea name="idea" id="idea" maxlength="600" required placeholder="I want AI to help prepare retail marketing campaigns..."></textarea>
-<p><button type="submit">Explore stakeholders</button></p></form>
-<small>This is an independent web simulation, not an official Alexa+ integration. All people and records are fictional.</small>
-</main></body></html>
+<label for="idea">Your project idea</label><textarea name="idea" id="idea" maxlength="600" required placeholder="We should accept stablecoin payments in the Northgate app."></textarea>
+<p><button type="submit">Ask Workbot</button></p></form></div></div>
+{% if recent %}<div class="bubble"><span class="who">Your earlier ideas</span><ul class="recent">
+{% for item in recent %}<li><a href="/sessions/{{ item.id }}">{{ item.idea }}</a><br><small>{{ {'card': 'Plan ready', 'stale': 'No longer valid: its evidence or access has changed since', 'question': 'Waiting for your answer', 'processing': 'Still working, or interrupted', 'refusal': 'Could not be evaluated'}[item.status] }}</small></li>{% endfor %}
+</ul></div>{% endif %}
+<p><small>This is an independent web simulation. All people and records are fictional.</small></p>
+{% endblock %}

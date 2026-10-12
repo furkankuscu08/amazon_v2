@@ -229,11 +229,16 @@ def test_web_card_reload_and_source_visibility(tmp_path, monkeypatch):
         running = client.get("/sessions/running")
         assert "still being processed, or it was interrupted" in running.text
         assert '<meta http-equiv="refresh" content="5">' in running.text
+        home = client.get("/").text
+        assert "Your earlier ideas" in home
+        assert "Help plan marketing campaigns" in home
+        assert "Plan ready" in home
         db = connect(path)
         db.execute("UPDATE people SET active=0 WHERE id='nina'")
         db.commit()
         db.close()
         assert client.get(url).status_code == 410
+        assert "No longer valid" in client.get("/").text
         assert client.get(url + "/sources/jira:MKT-482").status_code == 410
     finally:
         del app.state.model

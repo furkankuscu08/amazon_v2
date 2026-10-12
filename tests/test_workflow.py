@@ -446,6 +446,9 @@ def test_manager_needs_explicit_proposal_current_remit_and_no_direct(db):
     )
     _, card = card_for(db, model, StubSearcher(ids=()))
     assert card["areas"][0]["people"][0]["role"] == "routing_contact"
+    assert card["areas"][0]["people"][0]["headline"].startswith(
+        "No one with visible work on this was found. Manages the team. Team remit:"
+    )
     db.execute("UPDATE team_remits SET valid_to='2025-12-31' WHERE id='growth-remit'")
     db.commit()
     assert (
@@ -1132,3 +1135,47 @@ def test_priority_guard_error_does_not_leave_a_partially_reordered_card(
     ]
     assert card["priority_applied"] is False
     assert card["shared_question"] is None
+
+
+def test_ended_duty_is_noted_and_its_source_keeps_the_card_fail_closed(db):
+    model = StubModel(
+        [impact(AREA)],
+        [
+            evaluation(
+                proposal("elena", "advisor", ["jira:MKT-482"]),
+                proposal("nina", "direct_contact", ["jira:MKT-482"]),
+            )
+        ],
+        [priority("campaign_review")],
+    )
+    sid, card = card_for(db, model)
+    people = {p["person_id"]: p for p in card["areas"][0]["people"]}
+    assert people["elena"]["ended_duty"].startswith(
+        "An earlier responsibility ended on 2025-01-01:"
+    )
+    assert people["elena"]["context_ids"] == ["directory:elena-old"]
+    assert people["nina"]["ended_duty"] is None
+    # The model was never shown the expired duty.
+    assert "elena-old" not in json.dumps([payload for _, payload in model.calls[:2]])
+    db.execute(
+        "UPDATE directory_sources SET visibility='restricted' WHERE id='directory:elena-old'"
+    )
+    db.commit()
+    assert valid_card(db, load_session(db, sid)) is None
+
+
+def test_ended_duty_on_an_unrelated_topic_is_not_noted(db):
+    area = {
+        **AREA,
+        "label": "Scheduler integration",
+        "consultation_need": "Which scheduler interfaces would change.",
+    }
+    _, card = card_for(
+        db,
+        StubModel(
+            [impact(area)],
+            [evaluation(proposal("elena", "advisor", ["jira:MKT-482"]))],
+            [priority("campaign_review")],
+        ),
+    )
+    assert card["areas"][0]["people"][0]["ended_duty"] is None

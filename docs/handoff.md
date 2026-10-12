@@ -24,7 +24,7 @@ Win the hackathon with a prototype that has **no obvious errors**; resolving deb
 | The shown `contribution` is unverified model text; whether it is cut off less often under the new 600-character cap and 250-character request is unmeasured | Hypothesis until a live run | `workbot/models.py`, `workbot/llm.py`, `workbot/service.py` `_shown_contribution` |
 | A request still takes 85-115 seconds. With all areas together the area stage fell to 21-26 s, but the single impact call takes about 45 s, during which the progress view shows one unchanged line, and priority takes 21-42 s | Measured on two ideas in one live trial | `workbot/llm.py` (impact and priority calls) |
 | Impact and priority still use high reasoning, which once exhausted the 8,192-token cap on an area call; on impact that would refuse the request | Not seen in the live run (at most 1,434 completion tokens per call); frequency unknown | `workbot/llm.py` |
-| No Alexa+-like conversational framing in the UI; no LICENSE file | Observation; deferred to demo planning | `workbot/templates/`, repository root |
+| No LICENSE file | The user has to choose the licence | repository root |
 
 ## Agreed next steps
 
@@ -35,5 +35,5 @@ Win the hackathon with a prototype that has **no obvious errors**; resolving deb
 5. **New scope agreed with the user on 12 October 2026:** stop calibrating roles and instead make the existing strengths visible. Three pieces of work, in order:
    1. A short "talk to these people first" plan at the top of the card (done in `workbot/plan.py`; the priority call now also returns up to four person IDs). A second approved live run of the six ideas (47 calls, all successful) put every must-show person of the answer key into the plan, usually first; one clarification was asked, skipped, and handled. The outdated policy author appeared in the plan as an advisor under Finance next to the current reviewer. Weak picks remain, for example a payments runbook author for pickup lockers.
    2. Live progress instead of a two-minute wait (done): requests return at once, the workflow runs on a background thread, all areas are reviewed together, and the session page lists areas as they are checked. A short approved live trial (two ideas, 16 calls, all successful) showed six simultaneous area calls working and the progress view advancing.
-   3. Make two or three trust moments visible for the demo (an outdated owner replaced by the current one, no visible trace leading to a routing contact) and add the Alexa+-like framing.
+   3. Trust moments and framing (implemented offline, not yet run live): pages render as a conversation with the simulation disclaimer in the header; a routing contact's line says no visible work was found; an ended related responsibility is noted beside a person from the directory, with its source tracked in the dependency snapshot; the home page lists earlier ideas and marks plans whose evidence has changed. Still open: a LICENSE file (the user has to choose the licence), the demo video, and the submission text.
    Out of scope: further role calibration or prompt tuning, a larger fixture, sending messages or tracking conversations.

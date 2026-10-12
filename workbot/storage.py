@@ -177,7 +177,14 @@ def dependency_snapshot(db: sqlite3.Connection, card: dict) -> dict | None:
         sid
         for area in card["areas"]
         for p in area["people"]
-        for sid in p["evidence_ids"]
+        for sid in [*p["evidence_ids"], *p.get("context_ids", [])]
+    }
+    # Shown as ended duties, so they must stay visible and unchanged, not current.
+    context_ids = {
+        sid
+        for area in card["areas"]
+        for p in area["people"]
+        for sid in p.get("context_ids", [])
     }
     people = {}
     for pid in sorted(people_ids):
@@ -221,7 +228,9 @@ def dependency_snapshot(db: sqlite3.Connection, card: dict) -> dict | None:
                         (sid,),
                     )
                 )
-            if not related or any(not current(item) for item in related):
+            if not related or (
+                sid not in context_ids and any(not current(item) for item in related)
+            ):
                 return None
             relations[sid] = _digest(related)
         else:
@@ -271,6 +280,25 @@ def load_session(db: sqlite3.Connection, session_id: str) -> dict | None:
         (session_id,),
     ).fetchone()
     return dict(row) if row else None
+
+
+def recent_sessions(db: sqlite3.Connection, limit: int = 6) -> list[dict]:
+    """The demo user's latest requests, newest first, with a fail-closed status."""
+    rows = db.execute(
+        """SELECT * FROM sessions WHERE actor='maya' AND workspace='demo'
+        ORDER BY rowid DESC LIMIT ?""",
+        (limit,),
+    ).fetchall()
+    found = []
+    for row in rows:
+        session = dict(row)
+        status = session["state"]
+        if status == "card" and valid_card(db, session) is None:
+            status = "stale"
+        found.append(
+            {"id": session["id"], "idea": session["sentence"], "status": status}
+        )
+    return found
 
 
 def valid_card(db: sqlite3.Connection, session: dict) -> dict | None:

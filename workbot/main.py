@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import time
 import uuid
@@ -30,6 +31,7 @@ from workbot.storage import (
     connect,
     initialize,
     load_session,
+    recent_sessions,
     source,
     valid_card,
 )
@@ -116,7 +118,14 @@ async def _form(request: Request) -> dict[str, str]:
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return templates.TemplateResponse(request, "home.html", {"key": str(uuid.uuid4())})
+    db = _db()
+    try:
+        recent = recent_sessions(db)
+    finally:
+        db.close()
+    return templates.TemplateResponse(
+        request, "home.html", {"key": str(uuid.uuid4()), "recent": recent}
+    )
 
 
 def _run(sid: str, model, searcher) -> None:
@@ -172,6 +181,16 @@ def _get_session(sid: str):
         db.close()
 
 
+def _answers(session: dict) -> list[dict]:
+    try:
+        answers = json.loads(session["answers_json"])
+        return [
+            {"question": str(a["question"]), "answer": a["answer"]} for a in answers
+        ]
+    except (ValueError, TypeError, KeyError):
+        return []
+
+
 @app.get("/sessions/{sid}", response_class=HTMLResponse)
 def show_session(request: Request, sid: str):
     session, card = _get_session(sid)
@@ -181,7 +200,12 @@ def show_session(request: Request, sid: str):
         return templates.TemplateResponse(
             request,
             "session.html",
-            {"session": session, "stale": True, "card": None},
+            {
+                "session": session,
+                "stale": True,
+                "card": None,
+                "answers": _answers(session),
+            },
             status_code=410,
         )
     return templates.TemplateResponse(
@@ -191,6 +215,7 @@ def show_session(request: Request, sid: str):
             "session": session,
             "card": card,
             "stale": False,
+            "answers": _answers(session),
             "plan": build_plan(card) if card else None,
             "progress": progress(sid) if session["state"] == "processing" else None,
         },
