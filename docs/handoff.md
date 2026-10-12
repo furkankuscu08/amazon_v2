@@ -1,58 +1,33 @@
-# WorkBot agent handoff
+# WorkBot handoff
 
-## Starting point
+Updated 12 October 2026. Read [AGENTS.md](../AGENTS.md) for working rules and [README.md](../README.md) for setup and current behavior.
 
-- Continue from `main` in the repository, not from a required external candidate worktree. The user explicitly approved the combined implementation as the next development baseline, while accepting that semantic quality issues remain unresolved. Read `AGENTS.md` and `README.md` before changing behavior.
-- Current behavior: low reasoning for area evaluation, high for impact/priority; a required 5-300-character unverified `contribution`; shared neutral model questions and unchanged verified-evidence card-question selection. No new authentication, real integration, messaging, verifier, retry, fallback, or semantic relevance gate was added.
+## Current state
 
-| Reference | Meaning |
-| --- | --- |
-| `8287939` | Approved 12 October handoff merge, not a permanently latest HEAD |
-| `e77bee6` | Combined application code actually observed in the matched area comparison |
-| `33ef28c` | Pre-merge main code observed in the comparison's baseline arm |
-| `baseline/pre-combined-candidate-20261012` | Tag preserving `33ef28c` for historical comparisons |
+- Application behavior is unchanged from the merged combined baseline: low reasoning for area evaluation, high for impact and priority; a required 5-300-character unverified `contribution`; shared neutral questions on the card.
+- The earlier evaluation scripts, captured observations, labels, comparison bundle, and their reports were removed from the tree. They remain at the `archive/pre-cleanup-20261012` tag. The reason: all of it measured a nine-person fixture on which every mapped area retrieved 6-8 of the 8 visible records and saw one of only two candidate pools, so retrieval and candidate selection were never actually tested and role judgments rested on single-sentence records.
+- The current main has had no full live web-flow run. No live calls are approved.
 
-Handoff packaging changed documentation/tests/artifacts, not the observed application code. Continue from current main and keep both actually observed versions identifiable in future comparisons; do not describe a later checkout as an already observed arm.
+## Goal agreed with the user
 
-## Reading route
+Win the hackathon with a prototype that has **no obvious errors**; resolving debatable edge cases is not the goal. The demo itself will be planned later.
 
-- [AGENTS.md](../AGENTS.md): working rules and preservation boundaries; then inspect the code/tests relevant to the task.
-- [README.md](../README.md): setup, current behavior, operational commands, and prototype limitations.
-- [Quality evaluation](quality-evaluation.md): role rubric, dated observations, assistant versus user judgments, and historical artifact availability.
-- [Comparison bundle guide](evaluations/20261012-main-vs-combined/README.md): relative paths for offline inspection of the immutable 12-call captures and separate reviews.
+## Known issues
 
-## What is established
+| Issue | Status | Where |
+| --- | --- | --- |
+| Fixture too small for retrieval or candidate selection to discriminate | Confirmed from the removed traces | `workbot/seed.py`, `workbot/search.py` |
+| Unsupported `direct_contact` roles pass the audit, and roles flip between identical calls | Acceptance mechanism confirmed; cause likely thin evidence (hypothesis) | `workbot/service.py` `audit_area` |
+| `contribution` text cut off at the 300-character cap | Strong correlation in 14 observed strings: all five at exactly 300 were incomplete, none below 300 was | `workbot/models.py`, area prompt in `workbot/llm.py` |
+| A malformed `ask` drops an otherwise valid person although the text is discarded anyway | Confirmed in code | `workbot/service.py` `audit_area` |
+| After a skipped clarification the model is told one question remains, but asking it refuses the whole request | Confirmed in code, untested, never observed live | `workbot/service.py` `run` |
+| Synchronous request with no progress view; `processing` state says "Processing was interrupted" | Confirmed in code | `workbot/main.py`, `workbot/templates/session.html` |
+| Impact and priority still use high reasoning, which once exhausted the 8,192-token cap on an area call; on impact that would refuse the request | Mechanism observed once on an area call; frequency unknown | `workbot/llm.py` |
+| No Alexa+-like conversational framing in the UI; no LICENSE file | Observation; deferred to demo planning | `workbot/templates/`, repository root |
 
-The [matched area comparison](quality-evaluation.md#matched-main-versus-combined-candidate-area-comparison-12-october-2026) used three frozen synthetic needs, identical ordered visible evidence/candidates, and two repetitions per arm. All six calls per arm validated. Candidate median duration was 25.464 s versus 41.011 s; reported total tokens were 13,380 versus 14,770. All 14 candidate asks matched the correct neutral choice. All 12 preselected person/correct-primary controls and both exact-integration supported-direct controls per arm were retained. These are small combined-branch observations, not isolated effort causality, general reliability, billed-cost verification, or independent human validation.
+## Agreed next steps
 
-## First unresolved priorities
-
-1. **Source-to-need role calibration:** Decided unsupported direct claims remained four per arm and all survived audit. Growth Owen is still direct even when contribution says operator workflows are not covered. `audit_area` already receives consultation need in `item`; it does not independently test semantic entailment. Merely passing another argument or trusting contribution prose will not solve this. Preserve useful primary-backed advisors and supported direct contacts; do not blanket-convert direct to advisor or require area expertise for advisors. Confirm the next intervention with the user rather than silently adding a fourth verifier or a case-tuned threshold.
-2. **Contribution text quality:** Three candidate strings have incomplete/malformed endings, one includes a non-English character, and four Nina summaries mix primary and secondary facts. These were schema-valid `stop` replies, not completion-cap failures. Do not infer provider clipping from a 300-character value, silently repair a live field, add a language detector without a decision, or treat a persuasive explanation as verified support. Keep the text out of cards, sessions, priority and production logs.
-3. **Pending judgments:** Historical/Platform Priya's direct boundary, Growth Nina/Jules direct boundaries, Elena's reporter-primary usefulness, and four main-arm ask premises remain genuinely debatable. The advisor rubric is user-approved; these per-case assistant judgments are not human-adjudicated. Do not score pending as success/failure or reject historical work merely for age. The raw provisional direct count was six per arm; the separate review excludes two Priya cases per arm and reports four. Both records are preserved.
-
-These are handoff priorities, not an automatically authorized implementation plan. No extra live calls are approved; the 12-call comparison budget is exhausted. No schema or truncation failures occurred in this comparison, so it did not demonstrate a fix for earlier failures.
-
-## Validation scope at handoff
-
-- **Offline:** Handoff preparation and the merged tree passed all 306 offline tests, Ruff lint/format checks, and diff checks, with the existing Starlette test-client deprecation warning. This is a dated validation result, not proof that future edits pass those checks or that model semantics improved.
-- **Live:** The final comparison retained 12 area invocations, six per frozen arm. It did not rerun impact, retrieval, priority, or the end-to-end UI flow; the merged combined version has not received a new full live web-flow validation. Earlier HTTP observations used earlier code/settings and do not fill that gap.
-- **Preservation:** The 91 bundled JSON files matched their original local files byte-for-byte at packaging. Offline integrity tests check retained captures and separate review boundaries, not independent semantic correctness. Packaging and merge preparation added no model calls.
-
-## Evidence and preservation
-
-- [Portable comparison bundle](evaluations/20261012-main-vs-combined/README.md): byte-identical allowed synthetic captures, manifests/contexts, summaries, separate audits, terminal markers, frozen references and separate post-review labels. Use the relative bundle paths for offline inspection. Original absolute paths are provenance, not executable instructions or a valid new call budget.
-- The original local copy is `/home/furkankuscu08/projects/workbot-live-comparison-20261012/`. The source recovery backup is `/home/furkankuscu08/projects/workbot-recovery-20261012/`; it remains local and is not required to read the bundled comparison.
-- Older `/tmp/opencode` preparation freezes/manifests and earlier local observation directories are unavailable. Intermediate OpenCode trees have not been identified as the exact Package 1/Package 2 freezes. Do not present reconstructed artifacts as recovered originals or infer the lost fourth GLM outcome/usage/billing.
-- Keep existing `tests/fixtures/` observations and labels immutable. `scripts/historical_models.py` is an explicit offline adapter for uncaptured contribution fields, never a repair path for live responses. A placeholder is unobserved/unscored, not a generated explanation.
-
-## Validation before further changes
-
-```bash
-uv run --python 3.12 --no-project --with-requirements requirements.txt python -m pytest -q
-uv run --python 3.12 --no-project --with-requirements requirements.txt ruff check workbot tests scripts
-uv run --python 3.12 --no-project --with-requirements requirements.txt ruff format --check workbot tests scripts
-git diff --check
-```
-
-These are offline checks. For live work, obtain a new explicit context/call budget, prepare new per-arm manifests against actual prompt/LLM/schema hashes, retain exact evidence order and original needs, count every start including unknown outcomes, and use separate observation processes/directories with no automatic replacement. Main now contains the combined behavior; referring to an unqualified main arm as the old high-effort implementation would be incorrect.
+1. **New synthetic fixture** (approved): about 48 people, 10 org units, and 170 work records of 2-4 sentences (at most 400 characters), stored as JSON under `workbot/data/` and loaded by `workbot/seed.py`, with no database schema change. Six topic clusters with hard cases (adjacent topic, expired responsibility, moved or departed people, mention-only, restricted-only evidence, no-trace routing) plus unrelated background records. The existing campaign characters stay in the campaign cluster. The current nine-person data moves into `tests/` as unit-test data. Deliverables include a mechanical validity test, an offline retrieval check, and a small expectations file (must show / must never show / must be `not_found`) for about six ideas. The record skeleton is shown to the user before text generation.
+2. **Small confirmed fixes** (approved): relieve the `contribution` cap problem, stop a malformed `ask` from dropping a person, fix the skipped-clarification contradiction, and correct the `processing` message.
+3. **Card content** (assistant's recommendation, accepted for now): show `contribution` labelled as an unverified model summary and keep the role as a label.
+4. **One end-to-end live measurement** on the new fixture against the expectations file, counting obvious errors only. Requires a separately approved call budget.
