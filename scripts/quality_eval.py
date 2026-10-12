@@ -6,7 +6,7 @@ import json
 import tempfile
 from pathlib import Path
 
-from workbot.models import AreaEvaluation
+from scripts.historical_models import historical_evaluation
 from workbot.search import candidate_pool
 from workbot.seed import seed_db
 from workbot.service import audit_area
@@ -57,18 +57,16 @@ def evaluate(snapshot: dict, db) -> dict:
         pool = candidate_pool(db, area, records)
         if any(p["person_id"] not in visible_people for p in pool["people"]):
             raise ValueError("Candidate has no visible person evidence")
-        evaluation = AreaEvaluation.model_validate(
-            {
-                "people": [
-                    {
-                        **proposal,
-                        "confidence": "medium",
-                        "ask": "What did you do on the cited work?",
-                        "unverified": "Current ownership is not established.",
-                    }
-                    for proposal in area["model_proposals"]
-                ]
-            }
+        evaluation = historical_evaluation(
+            [
+                {
+                    **proposal,
+                    "confidence": "medium",
+                    "ask": "What did you do on the cited work?",
+                    "unverified": "Current ownership is not established.",
+                }
+                for proposal in area["model_proposals"]
+            ]
         )
         item = {"people": [], "status": "not_found", "direct_review_incomplete": False}
         audit_area(db, item, pool, evaluation)

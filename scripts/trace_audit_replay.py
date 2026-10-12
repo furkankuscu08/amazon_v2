@@ -5,6 +5,7 @@ candidate pool from the captured ``retrieved_ids`` and ``search_intents`` with a
 freshly seeded SQLite database, submits the schema-valid captured proposals to
 the current ``audit_area``, and reports only audit/UI delta counts and status
 transitions. It makes no accuracy or model-behavior claims.
+An uncaptured contribution is an explicit, unscored offline placeholder.
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from argparse import ArgumentParser
 from collections import Counter
 from pathlib import Path
 
+from scripts.historical_models import historical_evaluation
 from scripts.trace_diagnostics import (
     RESTRICTED_MARKERS,
     TRACES,
@@ -112,10 +114,15 @@ def _captured_evaluation(area: dict) -> AreaEvaluation:
             "confidence": proposal["confidence"],
             "ask": proposal["ask"],
             "unverified": PLACEHOLDER_UNVERIFIED,
+            **(
+                {"contribution": proposal["contribution"]}
+                if "contribution" in proposal
+                else {}
+            ),
         }
         for proposal in area["model_proposals"]
     ]
-    return AreaEvaluation.model_validate({"people": people})
+    return historical_evaluation(people)
 
 
 def _acceptance(people: list[dict]) -> set:

@@ -1,0 +1,1495 @@
+{
+  "commits": {
+    "main": "33ef28c360b4827b6229bd3764a9484fc11187c4",
+    "candidate": "e77bee647f5911be2b5aee964e62f031aeac7d11"
+  },
+  "approved_max_invocations": 12,
+  "actual_started": 12,
+  "aggregates": {
+    "main": {
+      "planned": 6,
+      "started": 6,
+      "summaries_retained": 6,
+      "locally_schema_valid_summaries": 6,
+      "valid_responses_retained": 6,
+      "audits_retained": 6,
+      "confirmed_failure_categories": {},
+      "median_call_duration_seconds_all_summaries": 41.010999999999996,
+      "median_call_duration_seconds_schema_valid": 41.010999999999996,
+      "provider_usage": {
+        "prompt_tokens": {
+          "observed_calls": 6,
+          "reported_sum": 7992
+        },
+        "completion_tokens": {
+          "observed_calls": 6,
+          "reported_sum": 6778
+        },
+        "total_tokens": {
+          "observed_calls": 6,
+          "reported_sum": 14770
+        },
+        "reasoning_tokens": {
+          "observed_calls": 6,
+          "reported_sum": 5020
+        }
+      },
+      "frozen_control_counts_conditional_on_retained_valid_outputs": {
+        "useful_reference": 12,
+        "model_person_with_correct_primary": 12,
+        "card_person_with_correct_primary": 12,
+        "direct_label_pending": 2,
+        "unsupported_model_direct": 6,
+        "unsupported_card_direct": 6,
+        "negative_reference_model_present": 0,
+        "negative_reference_card_present": 0,
+        "supported_direct_control": 2,
+        "supported_model_direct_retained": 2,
+        "supported_card_direct_retained": 2
+      },
+      "original_asks": 16,
+      "format_invalid_asks": 0,
+      "asks_matching_requested_neutral_choice": 0
+    },
+    "candidate": {
+      "planned": 6,
+      "started": 6,
+      "summaries_retained": 6,
+      "locally_schema_valid_summaries": 6,
+      "valid_responses_retained": 6,
+      "audits_retained": 6,
+      "confirmed_failure_categories": {},
+      "median_call_duration_seconds_all_summaries": 25.464,
+      "median_call_duration_seconds_schema_valid": 25.464,
+      "provider_usage": {
+        "prompt_tokens": {
+          "observed_calls": 6,
+          "reported_sum": 9678
+        },
+        "completion_tokens": {
+          "observed_calls": 6,
+          "reported_sum": 3702
+        },
+        "total_tokens": {
+          "observed_calls": 6,
+          "reported_sum": 13380
+        },
+        "reasoning_tokens": {
+          "observed_calls": 6,
+          "reported_sum": 1428
+        }
+      },
+      "frozen_control_counts_conditional_on_retained_valid_outputs": {
+        "useful_reference": 12,
+        "model_person_with_correct_primary": 12,
+        "card_person_with_correct_primary": 12,
+        "direct_label_pending": 2,
+        "unsupported_model_direct": 6,
+        "unsupported_card_direct": 6,
+        "negative_reference_model_present": 0,
+        "negative_reference_card_present": 0,
+        "supported_direct_control": 2,
+        "supported_model_direct_retained": 2,
+        "supported_card_direct_retained": 2
+      },
+      "original_asks": 14,
+      "format_invalid_asks": 0,
+      "asks_matching_requested_neutral_choice": 14
+    }
+  },
+  "observations": [
+    {
+      "ordinal": 1,
+      "context": "growth_scheduling",
+      "arm": "main",
+      "repetition": 1,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/001-growth_scheduling-main-r1",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/growth_scheduling-main.json",
+      "started": true,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      },
+      "summary": {
+        "task": "area",
+        "outcome": "success",
+        "failure_category": null,
+        "validation_error_types": null,
+        "duration_seconds": 46.801,
+        "http_status": 200,
+        "finish_reason": "stop",
+        "prompt_tokens": 1478,
+        "completion_tokens": 1388,
+        "total_tokens": 2866,
+        "reasoning_tokens": 1036
+      },
+      "retained_response": true,
+      "retained_audit": true,
+      "audit_status": "people",
+      "model_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        },
+        {
+          "person_id": "nina",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "jira:MKT-482"
+        },
+        {
+          "person_id": "jules",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "directory:jules-approval"
+        }
+      ],
+      "card_people_roles_primary": [
+        {
+          "person_id": "jules",
+          "role": "direct_contact",
+          "primary_evidence_id": "directory:jules-approval"
+        },
+        {
+          "person_id": "nina",
+          "role": "direct_contact",
+          "primary_evidence_id": "jira:MKT-482"
+        },
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        }
+      ],
+      "reference_control_results": {
+        "owen": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": true,
+          "unsupported_card_direct": true,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        },
+        "nina": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": true,
+          "unsupported_model_direct": false,
+          "unsupported_card_direct": false,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        }
+      },
+      "ask_descriptive_checks": [
+        {
+          "person_id": "owen",
+          "format_valid": true,
+          "matches_requested_neutral_choice": false
+        },
+        {
+          "person_id": "nina",
+          "format_valid": true,
+          "matches_requested_neutral_choice": false
+        },
+        {
+          "person_id": "jules",
+          "format_valid": true,
+          "matches_requested_neutral_choice": false
+        }
+      ],
+      "note": "Neutral-choice membership is descriptive, not a new acceptance gate or proof of role/need relevance. Original premises and contribution claims need separate source-based review."
+    },
+    {
+      "ordinal": 2,
+      "context": "growth_scheduling",
+      "arm": "candidate",
+      "repetition": 1,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/002-growth_scheduling-candidate-r1",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/growth_scheduling-candidate.json",
+      "started": true,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      },
+      "summary": {
+        "task": "area",
+        "outcome": "success",
+        "failure_category": null,
+        "validation_error_types": null,
+        "duration_seconds": 28.959,
+        "http_status": 200,
+        "finish_reason": "stop",
+        "prompt_tokens": 1759,
+        "completion_tokens": 914,
+        "total_tokens": 2673,
+        "reasoning_tokens": 559
+      },
+      "retained_response": true,
+      "retained_audit": true,
+      "audit_status": "people",
+      "model_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        },
+        {
+          "person_id": "nina",
+          "role": "advisor",
+          "relevance": "adjacent",
+          "primary_evidence_id": "slack:retail-814"
+        }
+      ],
+      "card_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        },
+        {
+          "person_id": "nina",
+          "role": "advisor",
+          "primary_evidence_id": "slack:retail-814"
+        }
+      ],
+      "reference_control_results": {
+        "owen": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": true,
+          "unsupported_card_direct": true,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        },
+        "nina": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": true,
+          "unsupported_model_direct": false,
+          "unsupported_card_direct": false,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        }
+      },
+      "ask_descriptive_checks": [
+        {
+          "person_id": "owen",
+          "format_valid": true,
+          "matches_requested_neutral_choice": true
+        },
+        {
+          "person_id": "nina",
+          "format_valid": true,
+          "matches_requested_neutral_choice": true
+        }
+      ],
+      "note": "Neutral-choice membership is descriptive, not a new acceptance gate or proof of role/need relevance. Original premises and contribution claims need separate source-based review."
+    },
+    {
+      "ordinal": 3,
+      "context": "historical_platform",
+      "arm": "candidate",
+      "repetition": 1,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/003-historical_platform-candidate-r1",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/historical_platform-candidate.json",
+      "started": true,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      },
+      "summary": {
+        "task": "area",
+        "outcome": "success",
+        "failure_category": null,
+        "validation_error_types": null,
+        "duration_seconds": 29.808,
+        "http_status": 200,
+        "finish_reason": "stop",
+        "prompt_tokens": 1551,
+        "completion_tokens": 871,
+        "total_tokens": 2422,
+        "reasoning_tokens": 354
+      },
+      "retained_response": true,
+      "retained_audit": true,
+      "audit_status": "people",
+      "model_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "advisor",
+          "relevance": "weak",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        },
+        {
+          "person_id": "priya",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "docs:campaign-review-2023"
+        },
+        {
+          "person_id": "nina",
+          "role": "advisor",
+          "relevance": "adjacent",
+          "primary_evidence_id": "jira:MKT-482"
+        }
+      ],
+      "card_people_roles_primary": [
+        {
+          "person_id": "priya",
+          "role": "direct_contact",
+          "primary_evidence_id": "docs:campaign-review-2023"
+        },
+        {
+          "person_id": "nina",
+          "role": "advisor",
+          "primary_evidence_id": "jira:MKT-482"
+        },
+        {
+          "person_id": "owen",
+          "role": "advisor",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        }
+      ],
+      "reference_control_results": {
+        "owen": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": false,
+          "unsupported_card_direct": false,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        },
+        "nina": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": false,
+          "unsupported_card_direct": false,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        },
+        "priya": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": true,
+          "unsupported_card_direct": true,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        }
+      },
+      "ask_descriptive_checks": [
+        {
+          "person_id": "owen",
+          "format_valid": true,
+          "matches_requested_neutral_choice": true
+        },
+        {
+          "person_id": "priya",
+          "format_valid": true,
+          "matches_requested_neutral_choice": true
+        },
+        {
+          "person_id": "nina",
+          "format_valid": true,
+          "matches_requested_neutral_choice": true
+        }
+      ],
+      "note": "Neutral-choice membership is descriptive, not a new acceptance gate or proof of role/need relevance. Original premises and contribution claims need separate source-based review."
+    },
+    {
+      "ordinal": 4,
+      "context": "historical_platform",
+      "arm": "main",
+      "repetition": 1,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/004-historical_platform-main-r1",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/historical_platform-main.json",
+      "started": true,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      },
+      "summary": {
+        "task": "area",
+        "outcome": "success",
+        "failure_category": null,
+        "validation_error_types": null,
+        "duration_seconds": 58.005,
+        "http_status": 200,
+        "finish_reason": "stop",
+        "prompt_tokens": 1270,
+        "completion_tokens": 2036,
+        "total_tokens": 3306,
+        "reasoning_tokens": 1534
+      },
+      "retained_response": true,
+      "retained_audit": true,
+      "audit_status": "people",
+      "model_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        },
+        {
+          "person_id": "priya",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "docs:campaign-review-2023"
+        },
+        {
+          "person_id": "nina",
+          "role": "advisor",
+          "relevance": "adjacent",
+          "primary_evidence_id": "slack:retail-814"
+        },
+        {
+          "person_id": "elena",
+          "role": "advisor",
+          "relevance": "weak",
+          "primary_evidence_id": "jira:MKT-482"
+        }
+      ],
+      "card_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        },
+        {
+          "person_id": "priya",
+          "role": "direct_contact",
+          "primary_evidence_id": "docs:campaign-review-2023"
+        },
+        {
+          "person_id": "elena",
+          "role": "advisor",
+          "primary_evidence_id": "jira:MKT-482"
+        },
+        {
+          "person_id": "nina",
+          "role": "advisor",
+          "primary_evidence_id": "slack:retail-814"
+        }
+      ],
+      "reference_control_results": {
+        "owen": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": true,
+          "unsupported_card_direct": true,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        },
+        "nina": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": false,
+          "unsupported_card_direct": false,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        },
+        "priya": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": true,
+          "unsupported_card_direct": true,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        }
+      },
+      "ask_descriptive_checks": [
+        {
+          "person_id": "owen",
+          "format_valid": true,
+          "matches_requested_neutral_choice": false
+        },
+        {
+          "person_id": "priya",
+          "format_valid": true,
+          "matches_requested_neutral_choice": false
+        },
+        {
+          "person_id": "nina",
+          "format_valid": true,
+          "matches_requested_neutral_choice": false
+        },
+        {
+          "person_id": "elena",
+          "format_valid": true,
+          "matches_requested_neutral_choice": false
+        }
+      ],
+      "note": "Neutral-choice membership is descriptive, not a new acceptance gate or proof of role/need relevance. Original premises and contribution claims need separate source-based review."
+    },
+    {
+      "ordinal": 5,
+      "context": "exact_integration",
+      "arm": "main",
+      "repetition": 1,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/005-exact_integration-main-r1",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/exact_integration-main.json",
+      "started": true,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      },
+      "summary": {
+        "task": "area",
+        "outcome": "success",
+        "failure_category": null,
+        "validation_error_types": null,
+        "duration_seconds": 6.578,
+        "http_status": 200,
+        "finish_reason": "stop",
+        "prompt_tokens": 1248,
+        "completion_tokens": 177,
+        "total_tokens": 1425,
+        "reasoning_tokens": 71
+      },
+      "retained_response": true,
+      "retained_audit": true,
+      "audit_status": "people",
+      "model_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        }
+      ],
+      "card_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        }
+      ],
+      "reference_control_results": {
+        "owen": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": false,
+          "unsupported_card_direct": false,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": true,
+          "supported_model_direct_retained": true,
+          "supported_card_direct_retained": true
+        },
+        "nina": {
+          "useful_reference": false,
+          "model_person_with_correct_primary": false,
+          "card_person_with_correct_primary": false,
+          "direct_label_pending": false,
+          "unsupported_model_direct": false,
+          "unsupported_card_direct": false,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        }
+      },
+      "ask_descriptive_checks": [
+        {
+          "person_id": "owen",
+          "format_valid": true,
+          "matches_requested_neutral_choice": false
+        }
+      ],
+      "note": "Neutral-choice membership is descriptive, not a new acceptance gate or proof of role/need relevance. Original premises and contribution claims need separate source-based review."
+    },
+    {
+      "ordinal": 6,
+      "context": "exact_integration",
+      "arm": "candidate",
+      "repetition": 1,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/006-exact_integration-candidate-r1",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/exact_integration-candidate.json",
+      "started": true,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      },
+      "summary": {
+        "task": "area",
+        "outcome": "success",
+        "failure_category": null,
+        "validation_error_types": null,
+        "duration_seconds": 7.428,
+        "http_status": 200,
+        "finish_reason": "stop",
+        "prompt_tokens": 1529,
+        "completion_tokens": 175,
+        "total_tokens": 1704,
+        "reasoning_tokens": 16
+      },
+      "retained_response": true,
+      "retained_audit": true,
+      "audit_status": "people",
+      "model_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        }
+      ],
+      "card_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        }
+      ],
+      "reference_control_results": {
+        "owen": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": false,
+          "unsupported_card_direct": false,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": true,
+          "supported_model_direct_retained": true,
+          "supported_card_direct_retained": true
+        },
+        "nina": {
+          "useful_reference": false,
+          "model_person_with_correct_primary": false,
+          "card_person_with_correct_primary": false,
+          "direct_label_pending": false,
+          "unsupported_model_direct": false,
+          "unsupported_card_direct": false,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        }
+      },
+      "ask_descriptive_checks": [
+        {
+          "person_id": "owen",
+          "format_valid": true,
+          "matches_requested_neutral_choice": true
+        }
+      ],
+      "note": "Neutral-choice membership is descriptive, not a new acceptance gate or proof of role/need relevance. Original premises and contribution claims need separate source-based review."
+    },
+    {
+      "ordinal": 7,
+      "context": "growth_scheduling",
+      "arm": "candidate",
+      "repetition": 2,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/007-growth_scheduling-candidate-r2",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/growth_scheduling-candidate.json",
+      "started": true,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      },
+      "summary": {
+        "task": "area",
+        "outcome": "success",
+        "failure_category": null,
+        "validation_error_types": null,
+        "duration_seconds": 24.312,
+        "http_status": 200,
+        "finish_reason": "stop",
+        "prompt_tokens": 1759,
+        "completion_tokens": 775,
+        "total_tokens": 2534,
+        "reasoning_tokens": 307
+      },
+      "retained_response": true,
+      "retained_audit": true,
+      "audit_status": "people",
+      "model_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        },
+        {
+          "person_id": "nina",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "jira:MKT-482"
+        },
+        {
+          "person_id": "jules",
+          "role": "advisor",
+          "relevance": "adjacent",
+          "primary_evidence_id": "directory:jules-approval"
+        }
+      ],
+      "card_people_roles_primary": [
+        {
+          "person_id": "nina",
+          "role": "direct_contact",
+          "primary_evidence_id": "jira:MKT-482"
+        },
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        },
+        {
+          "person_id": "jules",
+          "role": "advisor",
+          "primary_evidence_id": "directory:jules-approval"
+        }
+      ],
+      "reference_control_results": {
+        "owen": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": true,
+          "unsupported_card_direct": true,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        },
+        "nina": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": true,
+          "unsupported_model_direct": false,
+          "unsupported_card_direct": false,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        }
+      },
+      "ask_descriptive_checks": [
+        {
+          "person_id": "owen",
+          "format_valid": true,
+          "matches_requested_neutral_choice": true
+        },
+        {
+          "person_id": "nina",
+          "format_valid": true,
+          "matches_requested_neutral_choice": true
+        },
+        {
+          "person_id": "jules",
+          "format_valid": true,
+          "matches_requested_neutral_choice": true
+        }
+      ],
+      "note": "Neutral-choice membership is descriptive, not a new acceptance gate or proof of role/need relevance. Original premises and contribution claims need separate source-based review."
+    },
+    {
+      "ordinal": 8,
+      "context": "growth_scheduling",
+      "arm": "main",
+      "repetition": 2,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/008-growth_scheduling-main-r2",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/growth_scheduling-main.json",
+      "started": true,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      },
+      "summary": {
+        "task": "area",
+        "outcome": "success",
+        "failure_category": null,
+        "validation_error_types": null,
+        "duration_seconds": 35.221,
+        "http_status": 200,
+        "finish_reason": "stop",
+        "prompt_tokens": 1478,
+        "completion_tokens": 1093,
+        "total_tokens": 2571,
+        "reasoning_tokens": 853
+      },
+      "retained_response": true,
+      "retained_audit": true,
+      "audit_status": "people",
+      "model_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        },
+        {
+          "person_id": "nina",
+          "role": "advisor",
+          "relevance": "adjacent",
+          "primary_evidence_id": "slack:retail-814"
+        },
+        {
+          "person_id": "jules",
+          "role": "advisor",
+          "relevance": "adjacent",
+          "primary_evidence_id": "directory:jules-approval"
+        }
+      ],
+      "card_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        },
+        {
+          "person_id": "jules",
+          "role": "advisor",
+          "primary_evidence_id": "directory:jules-approval"
+        },
+        {
+          "person_id": "nina",
+          "role": "advisor",
+          "primary_evidence_id": "slack:retail-814"
+        }
+      ],
+      "reference_control_results": {
+        "owen": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": true,
+          "unsupported_card_direct": true,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        },
+        "nina": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": true,
+          "unsupported_model_direct": false,
+          "unsupported_card_direct": false,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        }
+      },
+      "ask_descriptive_checks": [
+        {
+          "person_id": "owen",
+          "format_valid": true,
+          "matches_requested_neutral_choice": false
+        },
+        {
+          "person_id": "nina",
+          "format_valid": true,
+          "matches_requested_neutral_choice": false
+        },
+        {
+          "person_id": "jules",
+          "format_valid": true,
+          "matches_requested_neutral_choice": false
+        }
+      ],
+      "note": "Neutral-choice membership is descriptive, not a new acceptance gate or proof of role/need relevance. Original premises and contribution claims need separate source-based review."
+    },
+    {
+      "ordinal": 9,
+      "context": "historical_platform",
+      "arm": "main",
+      "repetition": 2,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/009-historical_platform-main-r2",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/historical_platform-main.json",
+      "started": true,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      },
+      "summary": {
+        "task": "area",
+        "outcome": "success",
+        "failure_category": null,
+        "validation_error_types": null,
+        "duration_seconds": 52.198,
+        "http_status": 200,
+        "finish_reason": "stop",
+        "prompt_tokens": 1270,
+        "completion_tokens": 1799,
+        "total_tokens": 3069,
+        "reasoning_tokens": 1332
+      },
+      "retained_response": true,
+      "retained_audit": true,
+      "audit_status": "people",
+      "model_people_roles_primary": [
+        {
+          "person_id": "nina",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "slack:retail-814"
+        },
+        {
+          "person_id": "priya",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "docs:campaign-review-2023"
+        },
+        {
+          "person_id": "owen",
+          "role": "advisor",
+          "relevance": "adjacent",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        },
+        {
+          "person_id": "elena",
+          "role": "advisor",
+          "relevance": "weak",
+          "primary_evidence_id": "jira:MKT-482"
+        }
+      ],
+      "card_people_roles_primary": [
+        {
+          "person_id": "nina",
+          "role": "direct_contact",
+          "primary_evidence_id": "slack:retail-814"
+        },
+        {
+          "person_id": "priya",
+          "role": "direct_contact",
+          "primary_evidence_id": "docs:campaign-review-2023"
+        },
+        {
+          "person_id": "elena",
+          "role": "advisor",
+          "primary_evidence_id": "jira:MKT-482"
+        },
+        {
+          "person_id": "owen",
+          "role": "advisor",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        }
+      ],
+      "reference_control_results": {
+        "owen": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": false,
+          "unsupported_card_direct": false,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        },
+        "nina": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": true,
+          "unsupported_card_direct": true,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        },
+        "priya": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": true,
+          "unsupported_card_direct": true,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        }
+      },
+      "ask_descriptive_checks": [
+        {
+          "person_id": "nina",
+          "format_valid": true,
+          "matches_requested_neutral_choice": false
+        },
+        {
+          "person_id": "priya",
+          "format_valid": true,
+          "matches_requested_neutral_choice": false
+        },
+        {
+          "person_id": "owen",
+          "format_valid": true,
+          "matches_requested_neutral_choice": false
+        },
+        {
+          "person_id": "elena",
+          "format_valid": true,
+          "matches_requested_neutral_choice": false
+        }
+      ],
+      "note": "Neutral-choice membership is descriptive, not a new acceptance gate or proof of role/need relevance. Original premises and contribution claims need separate source-based review."
+    },
+    {
+      "ordinal": 10,
+      "context": "historical_platform",
+      "arm": "candidate",
+      "repetition": 2,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/010-historical_platform-candidate-r2",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/historical_platform-candidate.json",
+      "started": true,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      },
+      "summary": {
+        "task": "area",
+        "outcome": "success",
+        "failure_category": null,
+        "validation_error_types": null,
+        "duration_seconds": 26.616,
+        "http_status": 200,
+        "finish_reason": "stop",
+        "prompt_tokens": 1551,
+        "completion_tokens": 806,
+        "total_tokens": 2357,
+        "reasoning_tokens": 174
+      },
+      "retained_response": true,
+      "retained_audit": true,
+      "audit_status": "people",
+      "model_people_roles_primary": [
+        {
+          "person_id": "priya",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "docs:campaign-review-2023"
+        },
+        {
+          "person_id": "nina",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "jira:MKT-482"
+        },
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        },
+        {
+          "person_id": "elena",
+          "role": "advisor",
+          "relevance": "weak",
+          "primary_evidence_id": "jira:MKT-482"
+        }
+      ],
+      "card_people_roles_primary": [
+        {
+          "person_id": "nina",
+          "role": "direct_contact",
+          "primary_evidence_id": "jira:MKT-482"
+        },
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        },
+        {
+          "person_id": "priya",
+          "role": "direct_contact",
+          "primary_evidence_id": "docs:campaign-review-2023"
+        },
+        {
+          "person_id": "elena",
+          "role": "advisor",
+          "primary_evidence_id": "jira:MKT-482"
+        }
+      ],
+      "reference_control_results": {
+        "owen": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": true,
+          "unsupported_card_direct": true,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        },
+        "nina": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": true,
+          "unsupported_card_direct": true,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        },
+        "priya": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": true,
+          "unsupported_card_direct": true,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        }
+      },
+      "ask_descriptive_checks": [
+        {
+          "person_id": "priya",
+          "format_valid": true,
+          "matches_requested_neutral_choice": true
+        },
+        {
+          "person_id": "nina",
+          "format_valid": true,
+          "matches_requested_neutral_choice": true
+        },
+        {
+          "person_id": "owen",
+          "format_valid": true,
+          "matches_requested_neutral_choice": true
+        },
+        {
+          "person_id": "elena",
+          "format_valid": true,
+          "matches_requested_neutral_choice": true
+        }
+      ],
+      "note": "Neutral-choice membership is descriptive, not a new acceptance gate or proof of role/need relevance. Original premises and contribution claims need separate source-based review."
+    },
+    {
+      "ordinal": 11,
+      "context": "exact_integration",
+      "arm": "candidate",
+      "repetition": 2,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/011-exact_integration-candidate-r2",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/exact_integration-candidate.json",
+      "started": true,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      },
+      "summary": {
+        "task": "area",
+        "outcome": "success",
+        "failure_category": null,
+        "validation_error_types": null,
+        "duration_seconds": 8.211,
+        "http_status": 200,
+        "finish_reason": "stop",
+        "prompt_tokens": 1529,
+        "completion_tokens": 161,
+        "total_tokens": 1690,
+        "reasoning_tokens": 18
+      },
+      "retained_response": true,
+      "retained_audit": true,
+      "audit_status": "people",
+      "model_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        }
+      ],
+      "card_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        }
+      ],
+      "reference_control_results": {
+        "owen": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": false,
+          "unsupported_card_direct": false,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": true,
+          "supported_model_direct_retained": true,
+          "supported_card_direct_retained": true
+        },
+        "nina": {
+          "useful_reference": false,
+          "model_person_with_correct_primary": false,
+          "card_person_with_correct_primary": false,
+          "direct_label_pending": false,
+          "unsupported_model_direct": false,
+          "unsupported_card_direct": false,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        }
+      },
+      "ask_descriptive_checks": [
+        {
+          "person_id": "owen",
+          "format_valid": true,
+          "matches_requested_neutral_choice": true
+        }
+      ],
+      "note": "Neutral-choice membership is descriptive, not a new acceptance gate or proof of role/need relevance. Original premises and contribution claims need separate source-based review."
+    },
+    {
+      "ordinal": 12,
+      "context": "exact_integration",
+      "arm": "main",
+      "repetition": 2,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/012-exact_integration-main-r2",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/exact_integration-main.json",
+      "started": true,
+      "inspection": {
+        "started_invocations": 1,
+        "approved_max_invocations": 1,
+        "stage": "audit",
+        "execution_status": "complete",
+        "call_outcome": "success",
+        "failure_category": null,
+        "provider_outcome": "response_observed",
+        "usage_available": true,
+        "retry_allowed": false
+      },
+      "summary": {
+        "task": "area",
+        "outcome": "success",
+        "failure_category": null,
+        "validation_error_types": null,
+        "duration_seconds": 10.27,
+        "http_status": 200,
+        "finish_reason": "stop",
+        "prompt_tokens": 1248,
+        "completion_tokens": 285,
+        "total_tokens": 1533,
+        "reasoning_tokens": 194
+      },
+      "retained_response": true,
+      "retained_audit": true,
+      "audit_status": "people",
+      "model_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "relevance": "direct",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        }
+      ],
+      "card_people_roles_primary": [
+        {
+          "person_id": "owen",
+          "role": "direct_contact",
+          "primary_evidence_id": "github:campaign-scheduler-76"
+        }
+      ],
+      "reference_control_results": {
+        "owen": {
+          "useful_reference": true,
+          "model_person_with_correct_primary": true,
+          "card_person_with_correct_primary": true,
+          "direct_label_pending": false,
+          "unsupported_model_direct": false,
+          "unsupported_card_direct": false,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": true,
+          "supported_model_direct_retained": true,
+          "supported_card_direct_retained": true
+        },
+        "nina": {
+          "useful_reference": false,
+          "model_person_with_correct_primary": false,
+          "card_person_with_correct_primary": false,
+          "direct_label_pending": false,
+          "unsupported_model_direct": false,
+          "unsupported_card_direct": false,
+          "negative_reference_model_present": false,
+          "negative_reference_card_present": false,
+          "supported_direct_control": false,
+          "supported_model_direct_retained": false,
+          "supported_card_direct_retained": false
+        }
+      },
+      "ask_descriptive_checks": [
+        {
+          "person_id": "owen",
+          "format_valid": true,
+          "matches_requested_neutral_choice": false
+        }
+      ],
+      "note": "Neutral-choice membership is descriptive, not a new acceptance gate or proof of role/need relevance. Original premises and contribution claims need separate source-based review."
+    }
+  ],
+  "limitations": [
+    "Three reused synthetic contexts, two repetitions per arm; not a production quality or population error-rate estimate.",
+    "Combined branch changes effort, prompt and schema; cannot identify an individual package's causal effect.",
+    "Source-based frozen controls are assistant judgments under the user-approved rubric, not independently human-adjudicated labels.",
+    "Reference coverage conditions on retained valid outputs; completeness failures are reported separately.",
+    "Growth Nina direct boundary and unscored proposal usefulness remain pending.",
+    "Usage is provider-reported; missing values stay missing. Sums are not independently verified cost or internal reasoning.",
+    "Original ask premises and contribution factual support require separate manual review; neutral membership is not semantic verification."
+  ]
+}

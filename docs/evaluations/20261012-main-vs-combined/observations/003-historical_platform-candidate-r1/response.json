@@ -1,0 +1,44 @@
+{
+  "people": [
+    {
+      "person_id": "owen",
+      "primary_evidence_id": "github:campaign-scheduler-76",
+      "contribution": "Authored an update integrating the campaign scheduler with the platform API. This campaign-platform integration work could inform platform constraints or workflow implications for assessing the prior review approach. Scope is scheduler/API integration, not the review process itself.",
+      "role": "advisor",
+      "relevance": "weak",
+      "evidence_ids": [
+        "github:campaign-scheduler-76"
+      ],
+      "confidence": "medium",
+      "ask": "What did your work on the cited source cover, and could it inform the consultation need shown above?",
+      "unverified": "No evidence of involvement in campaign review workflow configuration."
+    },
+    {
+      "person_id": "priya",
+      "primary_evidence_id": "docs:campaign-review-2023",
+      "contribution": "Authored the retail campaign review and approval process document for the previous team. As author of the prior review approach whose applicability is being assessed, she could clarify what the process covered and how it operated. The document is dated 2023 and may not reflect current platform tool.",
+      "role": "direct_contact",
+      "relevance": "direct",
+      "evidence_ids": [
+        "docs:campaign-review-2023"
+      ],
+      "confidence": "high",
+      "ask": "What did your work on the cited source cover, and could it inform the consultation need shown above?",
+      "unverified": "Current applicability of the 2023 process is unknown."
+    },
+    {
+      "person_id": "nina",
+      "primary_evidence_id": "jira:MKT-482",
+      "contribution": "Assigned to finalize the retail campaign audience approval checklist before launch and stated she coordinates the retail campaign launch review with channel owners. This current launch-review coordination could help clarify how today's launch reviews run and where a prior review approach might apply",
+      "role": "advisor",
+      "relevance": "adjacent",
+      "evidence_ids": [
+        "jira:MKT-482",
+        "slack:retail-814"
+      ],
+      "confidence": "medium",
+      "ask": "What did your work on the cited source cover, and could it inform the consultation need shown above?",
+      "unverified": "No evidence of platform-side constraints or tooling ownership."
+    }
+  ]
+}

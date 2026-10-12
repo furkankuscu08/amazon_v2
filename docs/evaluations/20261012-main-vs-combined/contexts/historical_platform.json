@@ -1,0 +1,137 @@
+{
+  "payload": {
+    "idea": "We want to assess whether the previous retail campaign review process still applies to today's launches.",
+    "answers": [],
+    "area": {
+      "id": "platform",
+      "label": "Campaign Platform",
+      "rationale": "Fixed synthetic consultation context for a main-versus-combined-candidate comparison.",
+      "consultation_need": "What platform constraints or workflow implications would matter if the applicability of a prior campaign review approach were assessed for current launches?",
+      "search_intents": [
+        {
+          "keyword": "campaign review tooling configuration",
+          "semantic": "platform tooling for campaign review workflows"
+        },
+        {
+          "keyword": "launch workflow platform support",
+          "semantic": "platform support for launch review workflows"
+        },
+        {
+          "keyword": "review process automation constraints",
+          "semantic": "automation limits for campaign reviews"
+        }
+      ],
+      "mapping": "mapped",
+      "org_unit_id": "platform",
+      "mapping_reason": null
+    },
+    "candidates": [
+      {
+        "person_id": "owen",
+        "name": "Owen Blake",
+        "title": "Platform Engineer",
+        "org_id": "platform",
+        "evidence": [
+          {
+            "id": "github:campaign-scheduler-76",
+            "kind": "github",
+            "date": "2026-08-13",
+            "relation": "author",
+            "text": "Update integration between the campaign scheduler and the platform API."
+          }
+        ]
+      },
+      {
+        "person_id": "elena",
+        "name": "Elena Park",
+        "title": "Campaign Analyst",
+        "org_id": "growth",
+        "evidence": [
+          {
+            "id": "jira:MKT-483",
+            "kind": "jira",
+            "date": "2026-08-12",
+            "relation": "assignee",
+            "text": "Campaign performance report and post-launch metrics."
+          },
+          {
+            "id": "jira:MKT-482",
+            "kind": "jira",
+            "date": "2026-08-10",
+            "relation": "reporter",
+            "text": "Finalize the retail campaign audience approval checklist before launch."
+          },
+          {
+            "id": "slack:mention-55",
+            "kind": "slack",
+            "date": "2026-07-04",
+            "relation": "mention",
+            "text": "Someone mentioned Elena when discussing launch approval; no assignment was made."
+          }
+        ]
+      },
+      {
+        "person_id": "nina",
+        "name": "Nina Ellis",
+        "title": "Campaign Operations Specialist",
+        "org_id": "growth",
+        "evidence": [
+          {
+            "id": "jira:MKT-482",
+            "kind": "jira",
+            "date": "2026-08-10",
+            "relation": "assignee",
+            "text": "Finalize the retail campaign audience approval checklist before launch."
+          },
+          {
+            "id": "slack:retail-814",
+            "kind": "slack",
+            "date": "2026-08-11",
+            "relation": "author",
+            "text": "I will coordinate the retail campaign launch review with channel owners."
+          }
+        ]
+      },
+      {
+        "person_id": "tara",
+        "name": "Tara Reed",
+        "title": "Finance Analyst",
+        "org_id": "finance",
+        "evidence": [
+          {
+            "id": "docs:wallet-loyalty",
+            "kind": "document",
+            "date": "2026-06-01",
+            "relation": "author",
+            "text": "Wallet loyalty points campaign promotion, unrelated to checkout payment processing."
+          }
+        ]
+      },
+      {
+        "person_id": "priya",
+        "name": "Priya Singh",
+        "title": "Brand Review Lead",
+        "org_id": "brand",
+        "evidence": [
+          {
+            "id": "docs:campaign-review-2023",
+            "kind": "document",
+            "date": "2023-05-10",
+            "relation": "author",
+            "text": "Retail campaign review and approval process for the previous team."
+          }
+        ]
+      }
+    ]
+  },
+  "retrieved_ids": [
+    "jira:MKT-483",
+    "github:campaign-scheduler-76",
+    "docs:campaign-review-2023",
+    "jira:MKT-482",
+    "slack:retail-814",
+    "jira:old-employee",
+    "docs:wallet-loyalty",
+    "slack:mention-55"
+  ]
+}

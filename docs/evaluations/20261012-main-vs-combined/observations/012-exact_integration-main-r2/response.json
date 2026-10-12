@@ -1,0 +1,16 @@
+{
+  "people": [
+    {
+      "person_id": "owen",
+      "role": "direct_contact",
+      "primary_evidence_id": "github:campaign-scheduler-76",
+      "relevance": "direct",
+      "evidence_ids": [
+        "github:campaign-scheduler-76"
+      ],
+      "confidence": "high",
+      "ask": "What rate-limit, retry, or versioning constraints in the scheduler's platform API calls does your integration update need to respect?",
+      "unverified": "]} // waitJSON["
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "people": [
+    {
+      "person_id": "owen",
+      "role": "direct_contact",
+      "primary_evidence_id": "github:campaign-scheduler-76",
+      "relevance": "direct",
+      "evidence_ids": [
+        "github:campaign-scheduler-76"
+      ],
+      "confidence": "high",
+      "ask": "Which current scheduler workflows and timing behaviors should the integration update preserve?",
+      "unverified": ": none"
+    },
+    {
+      "person_id": "nina",
+      "role": "advisor",
+      "primary_evidence_id": "slack:retail-814",
+      "relevance": "adjacent",
+      "evidence_ids": [
+        "slack:retail-814",
+        "jira:MKT-482"
+      ],
+      "confidence": "medium",
+      "ask": "Does coordinating the retail campaign launch review depend on specific scheduler timing or platform API behavior?",
+      "unverified": "No evidence that she works directly on the scheduler or its integration"
+    },
+    {
+      "person_id": "jules",
+      "role": "advisor",
+      "primary_evidence_id": "directory:jules-approval",
+      "relevance": "adjacent",
+      "evidence_ids": [
+        "directory:jules-approval"
+      ],
+      "confidence": "medium",
+      "ask": "Does the campaign launch approval review rely on scheduler-generated timing or statuses?",
+      "unverified": "Scope limited to stated duty of reviewing campaign launch approvals; no scheduler-specific evidence"
+    }
+  ]
+}

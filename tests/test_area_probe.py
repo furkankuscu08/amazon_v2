@@ -27,6 +27,7 @@ def exchange(monkeypatch):
                 "people": [
                     {
                         "person_id": "owen",
+                        "contribution": "Authored the exact scheduler/API integration update and can explain its constraints; new initiative ownership is unknown.",
                         "role": "direct_contact",
                         "relevance": "direct",
                         "primary_evidence_id": "github:campaign-scheduler-76",
@@ -160,7 +161,7 @@ def test_success_records_are_written_in_phase_order(
     assert json.loads(exchange[1][0]["messages"][1]["content"]) == manifest["payload"]
     assert exchange[1][0]["model"] == "z-ai/glm-5.3-flash"
     assert exchange[1][0]["max_tokens"] == 8192
-    assert exchange[1][0]["reasoning"] == {"effort": "high"}
+    assert exchange[1][0]["reasoning"] == {"effort": "low"}
     assert exchange[1][0]["provider"] == {
         "only": ["open-inference/fp4"],
         "require_parameters": True,
@@ -422,13 +423,21 @@ def test_invalid_stale_or_restricted_manifest_fails_before_artifacts_or_calls(
 
 
 @pytest.mark.parametrize(
-    "mutation", ["restricted_name", "restricted_person", "restricted_source"]
+    "mutation",
+    [
+        "restricted_name",
+        "restricted_person",
+        "restricted_source",
+        "restricted_contribution",
+    ],
 )
 def test_unsafe_validated_output_is_not_saved(manifest, tmp_path, exchange, mutation):
     content = json.loads(exchange[0]["content"])
     person = content["people"][0]
     if mutation == "restricted_name":
         person["unverified"] = "Eve Restricted owns this initiative."
+    elif mutation == "restricted_contribution":
+        person["contribution"] = "Eve Restricted owns this initiative."
     elif mutation == "restricted_person":
         person["person_id"] = "eve"
     else:
@@ -453,6 +462,7 @@ def test_logger_configuration_is_restored_and_sensitive_values_do_not_escape(
     data["payload"]["idea"] = marker
     content = json.loads(exchange[0]["content"])
     content["people"][0]["unverified"] = marker
+    content["people"][0]["contribution"] = marker
     exchange[0]["content"] = json.dumps(content)
     output = tmp_path / "run"
     run(data, output)

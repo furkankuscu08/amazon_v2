@@ -1,0 +1,186 @@
+{
+  "approved_max_invocations": 12,
+  "approval": "User explicitly selected 12 calls: 3 contexts x 2 branches x 2 repetitions.",
+  "created_utc": "2026-10-12T16:49:43.265847+00:00",
+  "worktrees": {
+    "main": "/home/furkankuscu08/projects/amazon_v2",
+    "candidate": "/home/furkankuscu08/projects/workbot-area-low-candidate-20261008"
+  },
+  "commits": {
+    "main": "33ef28c360b4827b6229bd3764a9484fc11187c4",
+    "candidate": "e77bee647f5911be2b5aee964e62f031aeac7d11"
+  },
+  "contexts": [
+    {
+      "name": "growth_scheduling",
+      "trace": "quality_low_traces.json",
+      "run": "integration#1",
+      "area_id": "growth-campaign-operations",
+      "trace_sha256": "5b678d6f35c16509bb1d13cff3c48c3aeda1d71b67a1b9baeb56c7e51130b1e8",
+      "candidate_order": [
+        "owen",
+        "elena",
+        "nina",
+        "tara",
+        "priya",
+        "jules",
+        "marcus"
+      ],
+      "need": "What scheduling workflows, campaign timing, or operator expectations would need to keep working if the scheduler-to-platform integration changes?",
+      "answer_observation": "No clarification answers captured; both arms explicitly receive an empty answer list.",
+      "rationale": "New synthetic rationale; not an exact rerun of missing historical full payloads."
+    },
+    {
+      "name": "historical_platform",
+      "trace": "quality_live_traces.json",
+      "run": "historical#1",
+      "area_id": "platform",
+      "trace_sha256": "f1a638ee351234c07c12db0fe2836856e7f4b57c428fdbf038fe88803671422d",
+      "candidate_order": [
+        "owen",
+        "elena",
+        "nina",
+        "tara",
+        "priya"
+      ],
+      "need": "What platform constraints or workflow implications would matter if the applicability of a prior campaign review approach were assessed for current launches?",
+      "answer_observation": "No clarification answers captured; both arms explicitly receive an empty answer list.",
+      "rationale": "New synthetic rationale; not an exact rerun of missing historical full payloads."
+    },
+    {
+      "name": "exact_integration",
+      "trace": "quality_low_traces.json",
+      "run": "integration#1",
+      "area_id": "campaign-platform-api-integration",
+      "trace_sha256": "5b678d6f35c16509bb1d13cff3c48c3aeda1d71b67a1b9baeb56c7e51130b1e8",
+      "candidate_order": [
+        "owen",
+        "elena",
+        "nina",
+        "tara",
+        "priya"
+      ],
+      "need": "What API contract, versioning, rate-limit, retry, and data-sync constraints would matter for changing how the campaign scheduler calls the platform API?",
+      "answer_observation": "No clarification answers captured; both arms explicitly receive an empty answer list.",
+      "rationale": "New synthetic rationale; not an exact rerun of missing historical full payloads."
+    }
+  ],
+  "schedule": [
+    {
+      "ordinal": 1,
+      "context": "growth_scheduling",
+      "arm": "main",
+      "repetition": 1,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/001-growth_scheduling-main-r1",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/growth_scheduling-main.json"
+    },
+    {
+      "ordinal": 2,
+      "context": "growth_scheduling",
+      "arm": "candidate",
+      "repetition": 1,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/002-growth_scheduling-candidate-r1",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/growth_scheduling-candidate.json"
+    },
+    {
+      "ordinal": 3,
+      "context": "historical_platform",
+      "arm": "candidate",
+      "repetition": 1,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/003-historical_platform-candidate-r1",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/historical_platform-candidate.json"
+    },
+    {
+      "ordinal": 4,
+      "context": "historical_platform",
+      "arm": "main",
+      "repetition": 1,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/004-historical_platform-main-r1",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/historical_platform-main.json"
+    },
+    {
+      "ordinal": 5,
+      "context": "exact_integration",
+      "arm": "main",
+      "repetition": 1,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/005-exact_integration-main-r1",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/exact_integration-main.json"
+    },
+    {
+      "ordinal": 6,
+      "context": "exact_integration",
+      "arm": "candidate",
+      "repetition": 1,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/006-exact_integration-candidate-r1",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/exact_integration-candidate.json"
+    },
+    {
+      "ordinal": 7,
+      "context": "growth_scheduling",
+      "arm": "candidate",
+      "repetition": 2,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/007-growth_scheduling-candidate-r2",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/growth_scheduling-candidate.json"
+    },
+    {
+      "ordinal": 8,
+      "context": "growth_scheduling",
+      "arm": "main",
+      "repetition": 2,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/008-growth_scheduling-main-r2",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/growth_scheduling-main.json"
+    },
+    {
+      "ordinal": 9,
+      "context": "historical_platform",
+      "arm": "main",
+      "repetition": 2,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/009-historical_platform-main-r2",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/historical_platform-main.json"
+    },
+    {
+      "ordinal": 10,
+      "context": "historical_platform",
+      "arm": "candidate",
+      "repetition": 2,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/010-historical_platform-candidate-r2",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/historical_platform-candidate.json"
+    },
+    {
+      "ordinal": 11,
+      "context": "exact_integration",
+      "arm": "candidate",
+      "repetition": 2,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/011-exact_integration-candidate-r2",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/exact_integration-candidate.json"
+    },
+    {
+      "ordinal": 12,
+      "context": "exact_integration",
+      "arm": "main",
+      "repetition": 2,
+      "directory": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/observations/012-exact_integration-main-r2",
+      "manifest": "/home/furkankuscu08/projects/workbot-live-comparison-20261012/manifests/exact_integration-main.json"
+    }
+  ],
+  "execution": "Sequential observations; separate standalone child process and exclusive output directory per invocation; parent has no batch deadline; no retries or fallback.",
+  "unchanged_transport": {
+    "model": "z-ai/glm-5.3-flash",
+    "provider_only": [
+      "open-inference/fp4"
+    ],
+    "require_parameters": true,
+    "max_tokens": 8192,
+    "httpx_network_timeout_seconds": 90
+  },
+  "comparison": "Combined effect only; area effort, prompt and person schema differ intentionally. No impact/retrieval/priority calls; no isolated component causality.",
+  "manifest_file_sha256": {
+    "manifests/historical_platform-candidate.json": "9138f34679790fed6614d0c3ae455b11c9e634acd1f500c50fb73810ccf26a67",
+    "manifests/growth_scheduling-main.json": "e13aa653a6c6c2628c9ad5c54eba412ea50b7fbcc7ffcbdee39358d255899f4b",
+    "manifests/exact_integration-candidate.json": "deb1520c031ab40a24851fb8fceebec6f41faee52ba2b5e0fcd0a85f56d02f91",
+    "manifests/exact_integration-main.json": "e443ae3b9d9b16dbebe881a84729d4c4d001019d50bc1374ddeca5d7c6200d82",
+    "manifests/growth_scheduling-candidate.json": "ff95abbeac677cbf81ec160c64cf67564b17d1b6be386824fe75a748523084ef",
+    "manifests/historical_platform-main.json": "c4bfdfb7a15fc19722d560cd554f4cf116a6e66e2d3a7239bee5585ef7cf37db"
+  },
+  "start_budget": "Every attempt marker, including unknown provider outcome, consumes one approved invocation. Planned repetitions are separate observations, never replacements for failures."
+}
