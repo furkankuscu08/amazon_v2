@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Visible source · Workbot{% endblock %}
 {% block body %}
-<div class="bubble"><span class="who">Visible source</span><h2>{{ item.id }}</h2>
-{% if item.occurred_at %}<p>{{ item.kind }} · {{ item.occurred_at }} · version {{ item.version }}</p><blockquote>{{ item.text }}</blockquote>
-{% else %}<p>Visible directory record · version {{ item.version }}</p>{% for claim in claims %}<blockquote>{{ claim }}</blockquote>{% endfor %}{% endif %}
+<div class="bubble"><span class="who">Visible source</span>
+{% if item.occurred_at %}<h2>{{ item.kind | capitalize }} record · {{ item.occurred_at }}</h2><blockquote>{{ item.text }}</blockquote>
+{% else %}<h2>Directory record</h2>{% for claim in claims %}<blockquote>{{ claim }}</blockquote>{% endfor %}{% endif %}
 <p><small>Access checked on each view. Source visibility does not by itself establish ownership of a new idea.</small></p></div>
 {% endblock %}

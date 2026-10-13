@@ -202,10 +202,13 @@ def test_web_card_reload_and_source_visibility(web):
     assert card.status_code == 200
     assert "Nina Ellis" in card.text
     assert "Eve Restricted" not in card.text
-    assert "Proposed direct contact" in card.text
-    assert "Primary cited source:" in card.text
+    assert "Proposed" not in card.text
     assert f'href="{url}/sources/jira%3AMKT-482"' in card.text
-    assert "Ask to check the connection:" in card.text
+    # No raw source ID is shown as text, and no stock question or search trace.
+    assert "jira:MKT-482" not in card.text
+    assert "Ask:" not in card.text and "Ask to check" not in card.text
+    assert "what to find out:" in card.text
+    assert "Evaluation trace" not in card.text
     assert "Before you start, talk to one person." in card.text
     assert "Related work" in card.text
     assert "Assignee of a jira record:" in card.text
@@ -215,7 +218,11 @@ def test_web_card_reload_and_source_visibility(web):
     assert 'http-equiv="refresh"' not in card.text
     assert client.get(url).text == card.text
     assert client.get(url + "/sources/slack:restricted-plan").status_code == 404
-    assert client.get(url + "/sources/jira:MKT-482").status_code == 200
+    source_page = client.get(url + "/sources/jira:MKT-482")
+    assert source_page.status_code == 200
+    assert "<h2>Jira record · " in source_page.text
+    assert "jira:MKT-482" not in source_page.text
+    assert "version" not in source_page.text
     db = connect(web.path)
     saved = db.execute("SELECT card_json FROM sessions WHERE id=?", (sid,)).fetchone()
     old_card = json.loads(saved["card_json"])
@@ -228,8 +235,9 @@ def test_web_card_reload_and_source_visibility(web):
     db.close()
     previous = client.get(url)
     assert previous.status_code == 200
-    assert "Primary cited source:" not in previous.text
-    assert "Source IDs and dates" in previous.text
+    # An older card without a primary source lists its evidence without links.
+    assert "Assignee of jira record" in previous.text
+    assert "/sources/" not in previous.text
     db = connect(web.path)
     db.execute(
         """INSERT INTO sessions
@@ -240,7 +248,7 @@ def test_web_card_reload_and_source_visibility(web):
     db.close()
     # No run is working on it (a restart, say): it must not wait forever.
     running = client.get("/sessions/running")
-    assert "Unable to evaluate this request safely" in running.text
+    assert "I could not evaluate this idea" in running.text
     assert "Working on it" not in running.text
     home = client.get("/").text
     assert "Your earlier ideas" in home
@@ -273,8 +281,7 @@ def test_not_found_does_not_expose_retrieved_but_uncited_source(web):
     app.state.last_run.join(10)
     page = client.get(url)
     assert page.status_code == 200
-    assert "No verified contact found" in page.text
-    assert "Accessible records: 1" in page.text
+    assert "No contact found." in page.text
     assert "jira:MKT-482" not in page.text
     assert client.get(url + "/sources/jira:MKT-482").status_code == 404
 
@@ -405,11 +412,15 @@ def test_routing_line_and_directory_source_page(web):
     client, url = _submit(web, model)
     card = client.get(url).text
     # Search returned a record, so the line must not claim nothing was found.
-    assert "Accessible records: 1" in card
     assert "No one was identified from the visible work on this." in card
     assert "was found" not in card
     remit = client.get(url + "/sources/directory:growth-remit")
     assert remit.status_code == 200
+    assert "<h2>Directory record</h2>" in remit.text
+    assert "directory:growth-remit" not in remit.text
+    # Both routing sources stay reachable from the list without showing their IDs.
+    assert f'href="{url}/sources/directory%3Agrowth-manager"' in card
+    assert "directory:growth" not in card
     assert "team remit:" in remit.text and "Since " in remit.text
     manager = client.get(url + "/sources/directory:growth-manager").text
     assert "manages" in manager and "Since 2025-01-01." in manager
@@ -425,7 +436,7 @@ def test_incomplete_review_does_not_also_promise_remaining_people(web):
     client, url = _submit(web, model)
     card = client.get(url).text
     assert "Review incomplete." in card
-    assert "No partial person list" in card
+    assert "so no one is shown for it" in card
     assert "remaining verified people are shown" not in card
 
 
