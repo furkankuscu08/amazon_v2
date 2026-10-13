@@ -101,7 +101,7 @@ log = logging.getLogger(__name__)
 
 def _tokens(value: object) -> int | None:
     # Provider metadata is untrusted: log a count only when it is a plain integer.
-    return value if type(value) is int else None
+    return value if type(value) is int and value >= 0 else None
 
 
 class OpenRouter:
@@ -127,6 +127,7 @@ class OpenRouter:
         }
         try:
             if not self.api_key:
+                summary["error"] = "not_configured"
                 raise ModelError("OPENROUTER_API_KEY is not configured")
             schema = SCHEMAS[task]
             request = {
@@ -178,13 +179,13 @@ class OpenRouter:
             summary["truncated"] = finish_reason == "length"
             if finish_reason != "stop":
                 # A cut-off or filtered reply is never parsed as a partial result.
+                summary["error"] = "incomplete"
                 raise ModelError("Model response incomplete")
             result = schema.model_validate_json(choice["message"]["content"])
             summary["outcome"] = "success"
             return result
-        except ModelError as exc:
-            summary["error"] = str(exc)  # Our own fixed wording, safe to log.
-            raise
+        except ModelError:
+            raise  # Raised above with its own fixed error code.
         except Exception as exc:
             # Any other failure, including an unexpected provider response shape.
             # Only the class name is logged; the message may quote provider text.

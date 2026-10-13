@@ -97,7 +97,7 @@ Each area person proposal must include an English `contribution` string of 5-600
 
 ### Model call log
 
-`workbot.llm` writes one `model_call_summary` JSON log line per model call: `INFO` on success, `WARNING` on failure. It holds the task, the outcome, an `error` (the exception class name, or one of WorkBot's own fixed messages), `validation_error_types` (Pydantic's codes such as `missing` or `json_invalid` when a reply fails the schema), the HTTP status, whether the reply was cut off at the token cap, the duration, and the provider-reported prompt, completion, and reasoning token counts (`null` unless the provider sent a plain integer). It never holds prompts, answers, names, IDs, model or provider text, or keys, and nothing from it is stored in cards or passed to the priority call. It tells you how a call went, not why WorkBot proposed a person.
+`workbot.llm` writes one `model_call_summary` JSON log line per model call: `INFO` on success, `WARNING` on failure. It holds the task, the outcome, an `error` (the exception class name, or WorkBot's own `not_configured` or `incomplete`), `validation_error_types` (Pydantic's codes such as `missing` or `json_invalid` when a reply fails the schema), the HTTP status, whether the reply was cut off at the token cap, the duration, and the provider-reported prompt, completion, and reasoning token counts (`null` unless the provider sent a non-negative integer). It never holds prompts, answers, names, IDs, model or provider text, or keys, and nothing from it is stored in cards or passed to the priority call. It tells you how a call went, not why WorkBot proposed a person.
 
 To see successful calls, enable `INFO` for the `workbot.llm` logger, for example in a Python launcher:
 

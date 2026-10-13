@@ -763,10 +763,11 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
     assert len(summaries) == len(requests)
     failures = [s for s in summaries if s["outcome"] == "failure"]
     assert [s["task"] for s in failures] == ([failed_task] if failed_task else [])
-    for summary in failures:
-        assert summary["truncated"] is (failure_mode == "truncated")
+    for summary in summaries:
+        failed = summary["outcome"] == "failure"
+        assert summary["truncated"] is (failed and failure_mode == "truncated")
         assert summary["validation_error_types"] == (
-            ["missing"] if failure_mode == "schema" else None
+            ["missing"] if failed and failure_mode == "schema" else None
         )
     assert "SYNTHETIC_PRIVATE_CONTRIBUTION" not in caplog.text
     if failed_task == "impact":
@@ -801,9 +802,11 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
     ):
         serialized = json.dumps(value)
         for field in (
+            "outcome",
             "validation_error_types",
             "http_status",
             "truncated",
+            "duration_seconds",
             "prompt_tokens",
             "completion_tokens",
             "reasoning_tokens",
