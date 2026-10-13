@@ -109,3 +109,21 @@ def test_older_card_without_team_fields_still_builds_a_plan():
     plan = build_plan(old)
     assert plan["first"][0]["label"] == "Can advise"
     assert build_plan({"areas": []})["first"] == []
+
+
+def test_ended_duty_note_follows_the_person_to_their_home_area():
+    note = "An earlier responsibility ended on 2025-06-30: approver."
+    card = {
+        "areas": [
+            area(
+                "Finance",
+                "finance",
+                {**person("omar", "advisor", "finance"), "ended_duty": note},
+            ),
+            area("Data", "data", person("omar", "direct_contact", "finance")),
+        ]
+    }
+    plan = build_plan(card)
+    assert plan["first"][0]["area"] == "Data"
+    assert plan["first"][0]["ended_duty"] == note
+    assert plan["notes"] == {"omar": note}

@@ -307,6 +307,10 @@ def test_contribution_reaches_the_card_but_not_the_priority_model(db):
     assert model.calls[-1][0] == "priority"
     assert "contribution" not in priority_input
     assert "launch review steps" not in priority_input
+    # Search counts and rejection flags stay on the card, out of the priority call.
+    assert "retrieval" in card["areas"][0]
+    for diagnostic in ("retrieval", "direct_review_incomplete", "no_visible_work"):
+        assert diagnostic not in priority_input
 
 
 @pytest.mark.parametrize(
@@ -1257,3 +1261,33 @@ def test_extra_or_missing_first_conversations_keep_the_order(db):
     )
     assert card["priority_applied"] is True
     assert card["first_conversations"] == ["nina"]
+
+
+def test_advisor_needs_a_usable_tie_on_the_primary_source(db):
+    searcher = StubSearcher(ids=("jira:MKT-482", "slack:mention-55"))
+
+    def people(primary):
+        _, card = card_for(
+            db,
+            StubModel(
+                [impact(AREA)],
+                [
+                    evaluation(
+                        proposal(
+                            "elena",
+                            "advisor",
+                            ["jira:MKT-482", "slack:mention-55"],
+                            primary=primary,
+                        )
+                    )
+                ],
+                [priority("campaign_review")],
+            ),
+            searcher,
+            key=primary,
+        )
+        return [p["person_id"] for p in card["areas"][0]["people"]]
+
+    # The reporter link elsewhere cannot lend weight to a mention shown as the reason.
+    assert people("slack:mention-55") == []
+    assert people("jira:MKT-482") == ["elena"]

@@ -49,9 +49,16 @@ def placements(areas: list[dict]) -> dict[str, int]:
 def build_plan(card: dict) -> dict:
     areas = card["areas"]
     home = placements(areas)
+    # An ended-duty note is found per area; keep it wherever the person is shown.
+    notes: dict[str, str] = {}
+    for area in areas:
+        for person in area["people"]:
+            if person.get("ended_duty"):
+                notes.setdefault(person["person_id"], person["ended_duty"])
     entries = {
         person["person_id"]: {
             **person,
+            "ended_duty": notes.get(person["person_id"]),
             "label": _label(person),
             "area": area["label"],
             "need": area.get("consultation_need"),
@@ -77,6 +84,7 @@ def build_plan(card: dict) -> dict:
     return {
         "first": [entries[pid] for pid in chosen],
         "gaps": gaps,
+        "notes": notes,
         # Per area: where each listed person is shown in full (None = here).
         "elsewhere": [
             {

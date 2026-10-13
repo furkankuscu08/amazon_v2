@@ -385,12 +385,14 @@ def run(db, sid: str, model, searcher) -> None:
 
 
 def _priority_areas(areas: list[dict]) -> list[dict]:
-    """Keep text no model has audited or may see out of the priority call: the
-    unverified model summary and the expired-duty note with its source."""
+    """Keep out of the priority call what no model has audited or may see (the
+    unverified model summary, the expired-duty note with its source) and the
+    area's search counts and rejection flags."""
     hidden = {"contribution", "ended_duty", "context_ids"}
+    diagnostics = {"retrieval", "direct_review_incomplete", "no_visible_work_trace"}
     return [
         {
-            **area,
+            **{k: v for k, v in area.items() if k not in diagnostics},
             "people": [
                 {k: v for k, v in person.items() if k not in hidden}
                 for person in area["people"]
@@ -588,8 +590,9 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
             else:
                 rejected_direct = True
                 continue
-        elif role == "advisor" and not kinds & ADVISOR_KINDS:
-            # A mention-only mirror of a name is not a useful consultation contact.
+        elif role == "advisor" and primary_kind not in ADVISOR_KINDS:
+            # A mention or a manager line as the primary source is not a useful
+            # consultation tie, whatever the other citations are.
             continue
         elif role == "routing_contact" and not {"manager", "remit"} <= kinds:
             continue

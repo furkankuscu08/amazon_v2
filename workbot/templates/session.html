@@ -48,7 +48,7 @@
 {% if person.primary_evidence_id %}<p><strong>Primary cited source:</strong> <a href="/sessions/{{ session.id }}/sources/{{ person.primary_evidence_id | urlencode }}">{{ person.primary_evidence_id }}</a></p>{% endif %}
 {% if person.contribution %}<p><strong>Model summary (unverified):</strong> {{ person.contribution }}</p>{% endif %}
 <strong>Visible source and connection:</strong><ul>{% for fact in person.why %}<li>{{ fact }}</li>{% endfor %}</ul>
-{% if person.ended_duty %}<p class="note"><strong>Directory note:</strong> {{ person.ended_duty }}</p>{% endif %}
+{% if plan.notes[person.person_id] %}<p class="note"><strong>Directory note:</strong> {{ plan.notes[person.person_id] }}</p>{% endif %}
 <p><strong>Ask to check the connection:</strong> {{ person.ask }}</p><p><strong>Not established:</strong> {{ person.unverified }}</p>
 <details><summary>Source IDs and dates</summary><ul>{% for source_id in person.evidence_ids %}<li><a href="/sessions/{{ session.id }}/sources/{{ source_id | urlencode }}">{{ source_id }}</a></li>{% endfor %}</ul></details></section>{% endif %}{% endfor %}
 </article>{% endfor %}
