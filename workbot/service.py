@@ -6,7 +6,6 @@ import json
 import logging
 import re
 import sqlite3
-import time
 import uuid
 from collections.abc import Callable
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
@@ -19,10 +18,12 @@ from workbot.questions import NEUTRAL_QUESTIONS
 from workbot.search import candidate_pool, keywords
 from workbot.storage import (
     current,
+    current_and_visible,
     load_session,
     org_inventory,
     source,
     store_card,
+    today,
     visible_directory_source,
     visible_record,
 )
@@ -398,6 +399,10 @@ def _shown_contribution(text: str) -> str | None:
     return text if _COMPLETE.search(text) and len(text) >= 20 else None
 
 
+def _lower_first(text: str) -> str:
+    return text[0].lower() + text[1:]
+
+
 def _excerpt(text: str, limit: int = 220) -> str:
     if len(text) <= limit:
         return text
@@ -438,17 +443,13 @@ def _evidence(db, candidate: dict, evidence_id: str) -> tuple[str, str, str] | N
             ).fetchone()
         else:
             return None
-        if (
-            not row
-            or not current(dict(row))
-            or not visible_directory_source(db, evidence_id)
-        ):
+        if not row or not current_and_visible(db, row):
             return None
         if evidence["kind"] == "responsibility":
             return (
                 "responsibility",
                 f"Current {row['relation']}: {row['scope']} [{evidence_id}].",
-                f"Current {row['relation']} — {row['scope'][0].lower()}{row['scope'][1:]}.",
+                f"Current {row['relation']} — {_lower_first(row['scope'])}.",
             )
         if evidence["kind"] == "manager":
             return (
@@ -508,13 +509,11 @@ def _ended_duty(db, person_id: str, topic: set[str]) -> dict | None:
     ]
     if any(current(row) for row in rows):
         return None
-    today = time.strftime("%Y-%m-%d", time.gmtime())
     for row in rows:
-        if row["valid_to"] and row["valid_to"] < today:
-            scope = row["scope"][0].lower() + row["scope"][1:]
+        if row["valid_to"] and row["valid_to"] < today():
             return {
                 "source_id": row["source_id"],
-                "text": f"An earlier responsibility ended on {row['valid_to']}: {row['relation']} — {scope}.",
+                "text": f"An earlier responsibility ended on {row['valid_to']}: {row['relation']} — {_lower_first(row['scope'])}.",
             }
     return None
 
