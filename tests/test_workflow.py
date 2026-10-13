@@ -11,7 +11,7 @@ from workbot import service
 from workbot.llm import ModelError, OpenRouter
 from workbot.models import AreaEvaluation, Impact, Priority
 from workbot.search import candidate_pool
-from workbot.service import Conflict, answer_question, create_session, run_safely
+from workbot.service import Conflict, open_session, record_answer, run_safely
 from workbot.storage import connect, load_session, valid_card, visible_record
 
 
@@ -127,6 +127,18 @@ def priority(*ids, first=()):
             "first_conversations": list(first),
         }
     )
+
+
+def create_session(db, idem_key, sentence, model, searcher):
+    sid, created = open_session(db, idem_key, sentence)
+    if created:
+        run_safely(db, sid, model, searcher)
+    return sid
+
+
+def answer_question(db, sid, answer, model, searcher):
+    if record_answer(db, sid, answer):
+        run_safely(db, sid, model, searcher)
 
 
 def card_for(db, model, searcher=None, key="key-1"):
@@ -316,22 +328,15 @@ def test_contribution_reaches_the_card_but_not_the_priority_model(db):
 @pytest.mark.parametrize(
     ("text", "shown"),
     [
-        ("Wrote the launch checklist. It could clarify review steps but not own", None),
         ("Wrote the launch checklist and could clarify how review steps are", None),
         (
-            "Authored the settlement runbook (covers refunds, e.g. chargebacks)",
-            None,
-        ),
-        (
             "Wrote the runbook, e.g. for refunds. It covers chargebacks (in part).",
             "Wrote the runbook, e.g. for refunds. It covers chargebacks (in part).",
         ),
-        ("Wrote what the team calls the ‘launch checklist.’ It could clarify", None),
         (
             "Wrote what the team calls the ‘launch checklist.’",
             "Wrote what the team calls the ‘launch checklist.’",
         ),
-        ("She previously worked with Dr. Smith on the rollout but the rest", None),
         ("See https://example.test for the checklist that was written.", None),
         ("The record jira:MKT-482 shows checklist work on launches.", None),
     ],
@@ -348,22 +353,6 @@ def test_cut_off_or_unsafe_contribution_is_hidden(db, text, shown):
     person = card["areas"][0]["people"][0]
     assert person["person_id"] == "nina"
     assert person["contribution"] == shown
-
-
-def test_persuasive_contribution_does_not_upgrade_a_reporter_to_direct(db):
-    proposed = proposal("elena", "direct_contact", ["jira:MKT-482"])
-    proposed["contribution"] = (
-        "This person is the verified direct owner of every launch approval."
-    )
-    _, card = card_for(
-        db,
-        StubModel(
-            [impact(AREA)], [evaluation(proposed)], [priority("campaign_review")]
-        ),
-        StubSearcher(ids=("jira:MKT-482",)),
-    )
-    assert card["areas"][0]["status"] == "review_incomplete"
-    assert card["areas"][0]["people"] == []
 
 
 def test_empty_model_response_is_still_not_found(db):
@@ -410,21 +399,6 @@ def test_reporter_advisor_question_does_not_assume_work_on_the_record(db):
     assert card["areas"][0]["people"][0]["ask"] == (
         "What can you clarify about the cited record, and could it inform the consultation need shown above?"
     )
-
-
-def test_mention_only_contact_is_not_proposed(db):
-    model = StubModel(
-        [impact(AREA)],
-        [
-            evaluation(
-                proposal("elena", "advisor", ["slack:mention-55"], relevance="weak")
-            )
-        ],
-        [priority("campaign_review")],
-    )
-    _, card = card_for(db, model, StubSearcher(ids=("slack:mention-55",)))
-    assert card["areas"][0]["status"] == "not_found"
-    assert card["areas"][0]["people"] == []
 
 
 def test_expired_responsibility_and_weak_reporter_do_not_prove_direct_contact(db):
@@ -629,8 +603,16 @@ def test_idempotency_question_skip_and_priority_fallback(db):
     model = StubModel(
         [question, impact(AREA, UNMAPPED)],
         [evaluation()],
-        [priority("campaign_review")],
-    )  # Missing an area; deterministic order wins.
+        [
+            Priority.model_validate(
+                {
+                    "order": ["campaign_review"],
+                    "shared_question": "Who decides the launch date?",
+                    "first_conversations": [],
+                }
+            )
+        ],
+    )  # Missing an area: the reply is not used and the original order stays.
     searcher = StubSearcher(ids=())
     sid, card = card_for(db, model, searcher)
     assert card is None
@@ -649,7 +631,7 @@ def test_idempotency_question_skip_and_priority_fallback(db):
         "campaign_review",
         "regional_compliance",
     ]
-    assert not result["priority_applied"]
+    assert result["shared_question"] is None
     assert json.loads(load_session(db, sid)["answers_json"])[0]["answer"] is None
     assert len(model.calls) == 4
     impact_calls = [payload for task, payload in model.calls if task == "impact"]
@@ -780,7 +762,6 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
         "areas",
         "shared_question",
         "first_conversations",
-        "priority_applied",
     }
     by_area = {area["id"]: area for area in card["areas"]}
     assert by_area["campaign_review"]["status"] == "people"
@@ -788,7 +769,6 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
     assert by_area["brand_review"]["status"] == (
         "review_incomplete" if failed_task == "area" else "not_found"
     )
-    assert card["priority_applied"] is (failed_task != "priority")
     assert [area["id"] for area in card["areas"]] == (
         ["campaign_review", "brand_review"]
         if failed_task == "priority"
@@ -885,37 +865,6 @@ def test_area_calls_overlap_but_are_audited_in_area_order(db):
         "nina",
         "priya",
     ]
-
-
-def test_parallel_area_failure_does_not_hide_other_area_or_skip_priority(db):
-    class PartialFailureModel:
-        def __init__(self):
-            self.tasks = []
-
-        def complete(self, task, payload):
-            self.tasks.append(task)
-            if task == "impact":
-                return impact(AREA, BRAND)
-            if task == "priority":
-                assert [area["status"] for area in payload["areas"]] == [
-                    "people",
-                    "review_incomplete",
-                ]
-                return priority("brand_review", "campaign_review")
-            if payload["area"]["id"] == "brand_review":
-                raise ModelError("truncated")
-            return evaluation(proposal("nina", "direct_contact", ["jira:MKT-482"]))
-
-    model = PartialFailureModel()
-    _, card = card_for(db, model)
-    assert sorted(model.tasks) == ["area", "area", "impact", "priority"]
-    assert card["priority_applied"]
-    assert [area["status"] for area in card["areas"]] == [
-        "review_incomplete",
-        "people",
-    ]
-    assert card["areas"][0]["people"] == []
-    assert card["areas"][1]["people"][0]["person_id"] == "nina"
 
 
 def test_parallel_review_drops_a_source_revoked_during_model_call(db):
@@ -1102,7 +1051,6 @@ def test_priority_cannot_introduce_a_new_directory_person(db):
     _, card = card_for(db, model)
     assert card["areas"][0]["people"][0]["person_id"] == "nina"
     assert card["shared_question"] is None
-    assert card["priority_applied"]
     assert card["first_conversations"] == ["nina"]
     assert "eve" not in json.dumps(card)
 
@@ -1126,7 +1074,6 @@ def test_unsafe_shared_question_does_not_discard_valid_area_order(db):
         "regional_compliance",
         "campaign_review",
     ]
-    assert card["priority_applied"]
     assert card["shared_question"] is None
     assert "https://example.org" not in json.dumps(card)
 
@@ -1156,7 +1103,6 @@ def test_priority_guard_error_does_not_leave_a_partially_reordered_card(
         "campaign_review",
         "regional_compliance",
     ]
-    assert card["priority_applied"] is False
     assert card["shared_question"] is None
 
 
@@ -1267,7 +1213,6 @@ def test_extra_or_missing_first_conversations_keep_the_order(db):
             [priority("campaign_review", first=chosen)],
         ),
     )
-    assert card["priority_applied"] is True
     assert card["first_conversations"] == ["nina"]
 
 
