@@ -20,75 +20,39 @@ def load_fixture() -> tuple[dict, list[dict]]:
 def seed_db(db) -> None:
     initialize(db)
     directory, records = load_fixture()
-    db.executemany(
-        "INSERT OR IGNORE INTO org_units VALUES (?, ?)",
-        [(unit["id"], unit["name"]) for unit in directory["org_units"]],
-    )
-    db.executemany(
-        "INSERT OR IGNORE INTO people VALUES (?, ?, ?, ?, ?)",
-        [
-            (p["id"], p["name"], p["title"], int(p["active"]), p["org_id"])
-            for p in directory["people"]
-        ],
-    )
+
+    def insert(table: str, columns: str, rows: list[dict]) -> None:
+        # Fixture keys carry the column names; keys that are not columns are ignored.
+        values = ", ".join(":" + column for column in columns.split(", "))
+        db.executemany(f"INSERT OR IGNORE INTO {table} VALUES ({values})", rows)
+
+    insert("org_units", "id, name", directory["org_units"])
+    insert("people", "id, name, title, active, org_id", directory["people"])
     # Each directory claim carries its own source and visibility.
-    claims = (
-        directory["managers"] + directory["team_remits"] + directory["responsibilities"]
+    db.executemany(
+        "INSERT OR IGNORE INTO directory_sources VALUES (:source_id, 'v1', :visibility)",
+        directory["managers"]
+        + directory["team_remits"]
+        + directory["responsibilities"],
+    )
+    insert(
+        "managers",
+        "org_id, person_id, valid_from, valid_to, source_id",
+        directory["managers"],
+    )
+    insert(
+        "team_remits",
+        "id, org_id, scope, valid_from, valid_to, source_id",
+        directory["team_remits"],
+    )
+    insert(
+        "responsibilities",
+        "id, person_id, org_id, scope, relation, valid_from, valid_to, verified_at, source_id",
+        directory["responsibilities"],
     )
     db.executemany(
-        "INSERT OR IGNORE INTO directory_sources VALUES (?, 'v1', ?)",
-        [(claim["source_id"], claim["visibility"]) for claim in claims],
-    )
-    db.executemany(
-        "INSERT OR IGNORE INTO managers VALUES (?, ?, ?, ?, ?)",
-        [
-            (
-                m["org_id"],
-                m["person_id"],
-                m["valid_from"],
-                m["valid_to"],
-                m["source_id"],
-            )
-            for m in directory["managers"]
-        ],
-    )
-    db.executemany(
-        "INSERT OR IGNORE INTO team_remits VALUES (?, ?, ?, ?, ?, ?)",
-        [
-            (
-                r["id"],
-                r["org_id"],
-                r["scope"],
-                r["valid_from"],
-                r["valid_to"],
-                r["source_id"],
-            )
-            for r in directory["team_remits"]
-        ],
-    )
-    db.executemany(
-        "INSERT OR IGNORE INTO responsibilities VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [
-            (
-                r["id"],
-                r["person_id"],
-                r["org_id"],
-                r["scope"],
-                r["relation"],
-                r["valid_from"],
-                r["valid_to"],
-                r["verified_at"],
-                r["source_id"],
-            )
-            for r in directory["responsibilities"]
-        ],
-    )
-    db.executemany(
-        "INSERT OR IGNORE INTO work_records VALUES (?, ?, ?, ?, ?, 'v1')",
-        [
-            (r["id"], r["kind"], r["occurred_at"], r["text"], r["visibility"])
-            for r in records
-        ],
+        "INSERT OR IGNORE INTO work_records VALUES (:id, :kind, :occurred_at, :text, :visibility, 'v1')",
+        records,
     )
     db.executemany(
         "INSERT OR IGNORE INTO work_links VALUES (?, ?, ?)",
