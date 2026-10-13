@@ -8,7 +8,7 @@ from qdrant_client import QdrantClient
 from tests.unit_seed import seed_db
 from workbot.main import DemoRateLimiter, app
 from workbot.models import AreaEvaluation, Impact, Priority
-from workbot.search import Searcher, index_visible_records
+from workbot.search import Searcher, SetupError, index_visible_records
 from workbot.storage import connect
 
 
@@ -151,6 +151,9 @@ class WebModel:
 
 
 class WebSearch:
+    def check(self, db):
+        pass
+
     def records(self, db, intents):
         return [
             dict(
@@ -475,6 +478,62 @@ def test_repeated_answer_submit_returns_to_the_session(tmp_path, monkeypatch):
         assert "Before you start, talk to one person." in client.get(url).text
         missing = client.post("/sessions/nope/answer", data={"skip": "1"})
         assert missing.status_code == 404
+    finally:
+        del app.state.model
+        del app.state.searcher
+
+
+def test_search_check_reports_missing_index_and_unreachable_qdrant(tmp_path):
+    db = connect(str(tmp_path / "check.sqlite3"))
+    seed_db(db)
+    client = QdrantClient(location=":memory:")
+    try:
+        search = Searcher("unused", client=client, embed_fn=tiny_embedding)
+        with pytest.raises(SetupError, match="missing or out of date") as missing:
+            search.check(db)
+        assert missing.value.command == "python -m workbot.seed"
+        index_visible_records(db, "unused", client=client, embed_fn=tiny_embedding)
+        search.check(db)
+
+        class Unreachable:
+            def collection_exists(self, name):
+                raise ConnectionError("refused")
+
+        with pytest.raises(SetupError, match="did not answer") as down:
+            Searcher("unused", client=Unreachable()).check(db)
+        assert down.value.command == "docker compose up -d"
+    finally:
+        client.close()
+        db.close()
+
+
+def test_setup_problem_is_shown_before_anything_is_stored_or_sent(
+    tmp_path, monkeypatch
+):
+    class NotReady(WebSearch):
+        def check(self, db):
+            raise SetupError("Qdrant did not answer.", "docker compose up -d")
+
+    model = ScriptedModel([], question="Which market is this for?")
+    client, location = _submit(tmp_path, monkeypatch, model)
+    calls = model.calls
+    try:
+        app.state.searcher = NotReady()
+        response = client.post(
+            "/sessions", data={"idea": "Another idea", "idempotency_key": "setup"}
+        )
+        assert response.status_code == 503
+        assert "did not answer" in response.text
+        assert "<code>docker compose up -d</code>" in response.text
+        assert "Review incomplete" not in response.text
+        answer = client.post(f"{location}/answer", data={"answer": "Retail"})
+        assert answer.status_code == 503
+        missing = client.post("/sessions/nope/answer", data={"answer": "Retail"})
+        assert missing.status_code == 404
+        db = connect(str(tmp_path / "pages.sqlite3"))
+        assert db.execute("SELECT COUNT(*) FROM sessions").fetchone()[0] == 1
+        db.close()
+        assert model.calls == calls
     finally:
         del app.state.model
         del app.state.searcher

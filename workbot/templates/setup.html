@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Setup needed · Workbot{% endblock %}
+{% block body %}
+<div class="turn"><span class="ring"></span><div class="bubble card"><span class="who">Workbot</span>
+<div class="warning"><h2>Workbot is not ready to search</h2><p>{{ message }}</p><p><code>{{ command }}</code></p><p>Nothing was saved or sent to the model.</p></div>
+<p><a href="/" onclick="history.back();return false">Go back</a></p></div></div>
+{% endblock %}

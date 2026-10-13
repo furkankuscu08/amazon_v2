@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 import uuid
 from collections import defaultdict
@@ -16,6 +17,7 @@ from workbot.storage import (
     visible_record,
 )
 
+log = logging.getLogger(__name__)
 COLLECTION = "maya_visible_work"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 MIN_SEMANTIC_SCORE = 0.38  # Initial small-corpus threshold, not a measured one.
@@ -117,6 +119,25 @@ def keywords(text: str) -> list[str]:
     )[:12]
 
 
+class SetupError(RuntimeError):
+    """Search cannot run yet. Message and command are setup advice safe to show."""
+
+    def __init__(self, message: str, command: str):
+        super().__init__(message)
+        self.command = command
+
+
+def _index_is_current(db) -> bool:
+    version = db.execute(
+        "SELECT value FROM index_meta WHERE key='visible_vector'"
+    ).fetchone()
+    return bool(
+        version
+        and version["value"] == visible_index_version(db)
+        and visible_fts_matches(db)
+    )
+
+
 class Searcher:
     def __init__(self, url: str, client=None, embed_fn=None):
         self.url = url
@@ -124,23 +145,39 @@ class Searcher:
         self.embed_fn = embed_fn or embed
         self._client_lock = Lock()
 
-    def records(self, db, intents: list[dict], limit: int = 8) -> list[dict]:
-        from qdrant_client import QdrantClient, models
+    def _qdrant(self):
+        from qdrant_client import QdrantClient
 
-        version = db.execute(
-            "SELECT value FROM index_meta WHERE key='visible_vector'"
-        ).fetchone()
-        if (
-            not version
-            or version["value"] != visible_index_version(db)
-            or not visible_fts_matches(db)
-        ):
-            raise RuntimeError("Visible vector index needs reseeding")
         if self.client is None:
             with self._client_lock:
                 if self.client is None:
                     self.client = QdrantClient(url=self.url, timeout=15)
-        client = self.client
+        return self.client
+
+    def check(self, db) -> None:
+        """Raise SetupError before a request starts if search cannot answer it."""
+        reseed = SetupError(
+            "The search data is missing or out of date. Load it, then try again.",
+            "python -m workbot.seed",
+        )
+        # Qdrant first: seeding needs it too, so it is the first step to fix.
+        try:
+            indexed = self._qdrant().collection_exists(COLLECTION)
+        except Exception as exc:  # noqa: BLE001 — any client failure means Qdrant is unusable.
+            log.warning("search_setup_check_failed type=%s", type(exc).__name__)
+            raise SetupError(
+                "The Qdrant search service did not answer. Start it, then try again.",
+                "docker compose up -d",
+            ) from None
+        if not indexed or not _index_is_current(db):
+            raise reseed
+
+    def records(self, db, intents: list[dict], limit: int = 8) -> list[dict]:
+        from qdrant_client import models
+
+        if not _index_is_current(db):
+            raise RuntimeError("Visible vector index needs reseeding")
+        client = self._qdrant()
         scores: dict[str, float] = defaultdict(float)
         channels: dict[str, set[str]] = defaultdict(set)
         for intent in intents:
