@@ -21,6 +21,7 @@ EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 MIN_SEMANTIC_SCORE = (
     0.38  # Initial small-corpus threshold; tune against labeled hard negatives.
 )
+CHANNEL_TOP = 3  # Single-channel hits kept per search intent.
 _embedder = None
 _embedder_lock = Lock()
 _stop = {
@@ -125,7 +126,7 @@ class Searcher:
         self.embed_fn = embed_fn or embed
         self._client_lock = Lock()
 
-    def records(self, db, intents: list[dict], limit: int = 12) -> list[dict]:
+    def records(self, db, intents: list[dict], limit: int = 8) -> list[dict]:
         from qdrant_client import QdrantClient, models
 
         version = db.execute(
@@ -145,6 +146,7 @@ class Searcher:
         scores: dict[str, float] = defaultdict(float)
         channels: dict[str, set[str]] = defaultdict(set)
         for intent in intents:
+            ranked: dict[str, list[str]] = {"bm25": [], "qdrant": []}
             terms = keywords(intent["keyword"])
             if terms:
                 query = " OR ".join(f'"{term}"' for term in terms)
@@ -152,9 +154,7 @@ class Searcher:
                     "SELECT record_id FROM visible_fts WHERE visible_fts MATCH ? ORDER BY bm25(visible_fts), record_id LIMIT 12",
                     (query,),
                 ).fetchall()
-                for rank, row in enumerate(rows):
-                    scores[row["record_id"]] += 1 / (60 + rank + 1)
-                    channels[row["record_id"]].add("bm25")
+                ranked["bm25"] = [row["record_id"] for row in rows]
             result = client.query_points(
                 COLLECTION,
                 query=self.embed_fn(intent["semantic"]),
@@ -168,11 +168,24 @@ class Searcher:
                 ),
                 with_payload=True,
             )
-            for rank, point in enumerate(result.points):
-                if point.score < MIN_SEMANTIC_SCORE:
-                    continue
-                scores[point.payload["record_id"]] += 1 / (60 + rank + 1)
-                channels[point.payload["record_id"]].add("qdrant")
+            ranked["qdrant"] = [
+                point.payload["record_id"]
+                for point in result.points
+                if point.score >= MIN_SEMANTIC_SCORE
+            ]
+            # An OR keyword query matches on any single shared word, so its tail is
+            # mostly noise. Keep what both channels agree on plus each channel's
+            # best few, which protects a strong hit only one channel can see.
+            keep = (
+                set(ranked["bm25"]) & set(ranked["qdrant"])
+                | set(ranked["bm25"][:CHANNEL_TOP])
+                | set(ranked["qdrant"][:CHANNEL_TOP])
+            )
+            for channel, ids in ranked.items():
+                for rank, rid in enumerate(ids):
+                    if rid in keep:
+                        scores[rid] += 1 / (60 + rank + 1)
+                        channels[rid].add(channel)
         found = []
         for rid in sorted(scores, key=lambda item: (-scores[item], item)):
             # A revoked source must not be read, shown, or passed to the model.
@@ -188,7 +201,7 @@ class Searcher:
 def candidate_pool(db, area: dict, records: list[dict]) -> dict:
     """No vector similarity over directory people; keyword match grants candidacy only."""
     candidates: dict[str, dict] = {}
-    for record in records:
+    for rank, record in enumerate(records):
         # Re-read from the permissioned store, never trust a stale search payload.
         fresh = visible_record(db, record["id"])
         if (
@@ -224,6 +237,7 @@ def candidate_pool(db, area: dict, records: list[dict]) -> dict:
                         "date": record["occurred_at"],
                         "relation": link["relation"],
                         "text": record["text"],
+                        "rank": rank,
                     }
                 )
     strength = {
@@ -233,14 +247,22 @@ def candidate_pool(db, area: dict, records: list[dict]) -> dict:
         "reporter": 1,
         "mention": 2,
     }
+
+    # Records arrive in fused retrieval order. Keep the people tied most strongly
+    # to the best-ranked records; a mention alone can never support a role, so it
+    # does not take one of the ten places.
+    def best(item: dict) -> tuple[int, int]:
+        return min(
+            (strength.get(e["relation"], 3), e["rank"]) for e in item["evidence"]
+        )
+
     work = sorted(
-        candidates.values(),
-        key=lambda item: (
-            min(strength.get(e["relation"], 3) for e in item["evidence"]),
-            -max(int(e["date"].replace("-", "")) for e in item["evidence"]),
-            item["person_id"],
-        ),
+        (item for item in candidates.values() if best(item)[0] < 2),
+        key=lambda item: (*best(item), item["person_id"]),
     )[:10]
+    for item in work:
+        for evidence in item["evidence"]:
+            del evidence["rank"]
     people = {item["person_id"]: item for item in work}
     terms = set(keywords(" ".join(i["keyword"] for i in area["search_intents"])))
     org = area["org_unit_id"]

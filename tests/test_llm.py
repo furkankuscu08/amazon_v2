@@ -99,8 +99,6 @@ def area_exchange(monkeypatch):
                         "relevance": "adjacent",
                         "evidence_ids": [evidence["id"]],
                         "confidence": "medium",
-                        "ask": "Could your callback work help clarify staging release review?",
-                        "unverified": "Ownership of the new initiative is not established.",
                     }
                 ]
             }
@@ -223,7 +221,7 @@ def test_area_low_is_task_local_and_preserves_transport_contract(
     replies = {
         "impact": {"question": "Which staging release is in scope?", "areas": []},
         "area": {"people": []},
-        "priority": {"order": [], "shared_question": None},
+        "priority": {"order": [], "shared_question": None, "first_conversations": []},
     }
 
     def handle(request):
@@ -300,7 +298,7 @@ def test_area_prompt_sends_contribution_role_and_question_boundaries(area_exchan
         "primary-source facts -> personal link -> useful contribution",
         "A strong personal link alone does not establish direct work on the need",
         "Choose primary_evidence_id and write contribution BEFORE choosing the role",
-        "one short English factual summary (5-300 characters)",
+        "at most two complete sentences, under 250 characters, ending in a full stop",
         "derive the role from evidenced work scope",
         "neither supports expertise",
         "primary source itself establishes personal work ON this need",
@@ -313,8 +311,7 @@ def test_area_prompt_sends_contribution_role_and_question_boundaries(area_exchan
         "Never borrow a strong tie from another record to upgrade the primary",
         "Confidence does not replace evidence",
         "The source must support why consultation is useful, not already contain the answer",
-        "Do not assume undocumented controls, duties, findings, or source contents exist",
-        "End ask in '?', without URLs, email addresses, or source IDs",
+        "Do not draft questions or messages for the person",
         "No markdown, extra fields, or reasoning narrative",
     ):
         assert rule in prompt
@@ -350,14 +347,15 @@ def test_missing_contribution_is_not_repaired_in_a_live_reply(
         "type": "string",
         "title": "Contribution",
         "minLength": 5,
-        "maxLength": 300,
+        "maxLength": 600,
     }
+    assert not {"ask", "unverified"} & set(person_schema["properties"])
     order = list(person_schema["properties"])
     assert order.index("primary_evidence_id") < order.index("contribution")
     assert order.index("contribution") < order.index("role")
 
 
-@pytest.mark.parametrize("length", [5, 300])
+@pytest.mark.parametrize("length", [5, 600])
 def test_contribution_length_checks_do_not_claim_semantic_validation(
     area_exchange, length
 ):
@@ -515,7 +513,10 @@ def test_call_summary_success_has_only_safe_fields(
     [
         ("impact", '{"question":"Which release scope?","areas":[]}'),
         ("area", '{"people":[]}'),
-        ("priority", '{"order":["release_review"],"shared_question":null}'),
+        (
+            "priority",
+            '{"order":["release_review"],"shared_question":null,"first_conversations":[]}',
+        ),
     ],
 )
 def test_summary_supports_all_three_tasks_with_missing_usage(
@@ -916,7 +917,9 @@ def test_parallel_summaries_are_call_local(
                 "choices": [
                     {
                         "finish_reason": "stop",
-                        "message": {"content": '{"order":[],"shared_question":null}'},
+                        "message": {
+                            "content": '{"order":[],"shared_question":null,"first_conversations":[]}'
+                        },
                     }
                 ],
             },
@@ -963,7 +966,6 @@ def test_success_summary_does_not_copy_source_person_or_provider_text(
     payload["candidates"][0]["name"] = marker
     payload["candidates"][0]["evidence"][0]["text"] = marker
     content = json.loads(response["content"])
-    content["people"][0]["unverified"] = marker
     content["people"][0]["contribution"] = marker
     response["body"] = {
         "id": marker,
@@ -980,7 +982,6 @@ def test_success_summary_does_not_copy_source_person_or_provider_text(
         "debug": marker,
     }
     result = OpenRouter(marker).complete("area", payload)
-    assert result.people[0].unverified == marker
     assert result.people[0].contribution == marker
     [summary] = call_summaries(diagnostic_logs)
     assert summary["outcome"] == "success"
@@ -1014,12 +1015,9 @@ def test_summary_serialization_failure_does_not_change_model_outcome(
 @pytest.mark.parametrize(
     ("field", "value", "expected"),
     [
-        ("ask", 12, "string_type"),
-        ("ask", "abcd", "string_too_short"),
-        ("ask", "x" * 241, "string_too_long"),
         ("contribution", False, "string_type"),
         ("contribution", "abcd", "string_too_short"),
-        ("contribution", "x" * 301, "string_too_long"),
+        ("contribution", "x" * 601, "string_too_long"),
         ("role", "SYNTHETIC_PRIVATE_ROLE", "literal_error"),
         ("evidence_ids", False, "list_type"),
         ("evidence_ids", [], "too_short"),
@@ -1052,7 +1050,11 @@ def test_schema_constraint_types_preserve_errors_and_usage(
         ("area", "{}", "missing"),
         ("area", '{"people":[],"SYNTHETIC_PRIVATE_EXTRA":"secret"}', "extra_forbidden"),
         ("area", '{"people":[false]}', "model_type"),
-        ("priority", '{"order":false,"shared_question":null}', "list_type"),
+        (
+            "priority",
+            '{"order":false,"shared_question":null,"first_conversations":[]}',
+            "list_type",
+        ),
         ("impact", '{"question":null,"areas":[]}', "value_error"),
     ],
 )
@@ -1096,8 +1098,10 @@ def test_validation_types_are_sorted_unique_and_do_not_log_extra_field_names(
     payload, response, _ = area_exchange
     content = json.loads(response["content"])
     person = content["people"][0]
-    person.update(ask="x" * 241, role="SYNTHETIC_PRIVATE_ROLE", confidence=False)
-    del person["unverified"]
+    person.update(
+        contribution="x" * 601, role="SYNTHETIC_PRIVATE_ROLE", confidence=False
+    )
+    del person["relevance"]
     content["SYNTHETIC_PRIVATE_EXTRA"] = "SYNTHETIC_PRIVATE_INPUT"
     response["content"] = json.dumps(content)
     with pytest.raises(ModelError):

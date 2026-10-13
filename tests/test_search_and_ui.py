@@ -1,13 +1,14 @@
 import json
+from threading import Event
 
 import pytest
 from fastapi.testclient import TestClient
 from qdrant_client import QdrantClient
 
+from tests.unit_seed import seed_db
 from workbot.main import DemoRateLimiter, app
 from workbot.models import AreaEvaluation, Impact, Priority
 from workbot.search import Searcher, index_visible_records
-from workbot.seed import seed_db
 from workbot.storage import connect
 
 
@@ -140,13 +141,13 @@ class WebModel:
                             "relevance": "direct",
                             "evidence_ids": ["jira:MKT-482"],
                             "confidence": "high",
-                            "ask": "Who reviews campaign launches?",
-                            "unverified": "Ownership remains to be checked.",
                         }
                     ]
                 }
             )
-        return Priority.model_validate({"order": ["growth"], "shared_question": None})
+        return Priority.model_validate(
+            {"order": ["growth"], "shared_question": None, "first_conversations": []}
+        )
 
 
 class WebSearch:
@@ -179,6 +180,7 @@ def test_web_card_reload_and_source_visibility(tmp_path, monkeypatch):
         )
         assert response.status_code == 303
         url = response.headers["location"]
+        app.state.last_run.join(10)
         sid = url.rsplit("/", 1)[-1]
         card = client.get(url)
         assert card.status_code == 200
@@ -188,6 +190,15 @@ def test_web_card_reload_and_source_visibility(tmp_path, monkeypatch):
         assert "Primary cited source:" in card.text
         assert f'href="{url}/sources/jira%3AMKT-482"' in card.text
         assert "Ask to check the connection:" in card.text
+        assert "Before you start, talk to one person." in card.text
+        assert "Related work" in card.text
+        assert "Assignee of a jira record:" in card.text
+        assert "All 1 consultation areas and everyone considered" in card.text
+        assert "Model summary (unverified):" in card.text
+        assert (
+            "Checklist work can clarify pre-launch campaign review scope." in card.text
+        )
+        assert 'http-equiv="refresh"' not in card.text
         assert client.get(url).text == card.text
         assert client.get(url + "/sources/slack:restricted-plan").status_code == 404
         assert client.get(url + "/sources/jira:MKT-482").status_code == 200
@@ -207,6 +218,22 @@ def test_web_card_reload_and_source_visibility(tmp_path, monkeypatch):
         assert previous.status_code == 200
         assert "Primary cited source:" not in previous.text
         assert "Source IDs and dates" in previous.text
+        db = connect(path)
+        db.execute(
+            """INSERT INTO sessions
+            (id, actor, workspace, idem_key, sentence, answers_json, state)
+            VALUES ('running', 'maya', 'demo', 'running', 'An idea', '[]', 'processing')"""
+        )
+        db.commit()
+        db.close()
+        # No run is working on it (a restart, say): it must not wait forever.
+        running = client.get("/sessions/running")
+        assert "Unable to evaluate this request safely" in running.text
+        assert "Working on it" not in running.text
+        home = client.get("/").text
+        assert "Your earlier ideas" in home
+        assert "Help plan marketing campaigns" in home
+        assert "Plan ready" in home
         db = connect(path)
         db.execute("UPDATE people SET active=0 WHERE id='nina'")
         db.commit()
@@ -242,6 +269,7 @@ def test_not_found_does_not_expose_retrieved_but_uncited_source(tmp_path, monkey
         )
         assert response.status_code == 303
         url = response.headers["location"]
+        app.state.last_run.join(10)
         page = client.get(url)
         assert page.status_code == 200
         assert "No verified contact found" in page.text
@@ -288,3 +316,165 @@ def test_demo_rate_limit_resets_after_window():
     assert not limiter.allow("maya", now=2)
     assert limiter.allow("other", now=2)
     assert limiter.allow("maya", now=11)
+
+
+def test_waiting_page_shows_area_progress_without_people(tmp_path, monkeypatch):
+    path = str(tmp_path / "progress.sqlite3")
+    db = connect(path)
+    seed_db(db)
+    db.close()
+    monkeypatch.setenv("WORKBOT_DB_PATH", path)
+    reached_area, release = Event(), Event()
+
+    class SlowAreaModel(WebModel):
+        def complete(self, task, payload):
+            if task == "area":
+                reached_area.set()
+                assert release.wait(10)
+            return super().complete(task, payload)
+
+    app.state.model = SlowAreaModel()
+    app.state.searcher = WebSearch()
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/sessions",
+            data={"idea": "Help plan marketing campaigns", "idempotency_key": "slow"},
+            follow_redirects=False,
+        )
+        assert response.status_code == 303
+        url = response.headers["location"]
+        assert reached_area.wait(10)
+        waiting = client.get(url)
+        assert "Working on it" in waiting.text
+        assert "Checking " in waiting.text
+        assert "Nina Ellis" not in waiting.text
+        assert "jira:MKT-482" not in waiting.text
+        # Resubmitting the same request must not start a second run.
+        again = client.post(
+            "/sessions",
+            data={"idea": "Help plan marketing campaigns", "idempotency_key": "slow"},
+            follow_redirects=False,
+        )
+        assert again.headers["location"] == url
+        release.set()
+        app.state.last_run.join(10)
+        done = client.get(url)
+        assert "Before you start, talk to one person." in done.text
+        assert "Working on it" not in done.text
+        assert app.state.model.__class__ is SlowAreaModel
+    finally:
+        release.set()
+        del app.state.model
+        del app.state.searcher
+
+
+class ScriptedModel(WebModel):
+    """WebModel with a chosen area reply and an optional first clarification."""
+
+    def __init__(self, people, question=None):
+        self.people = people
+        self.question = question
+        self.calls = 0
+
+    def complete(self, task, payload):
+        self.calls += 1
+        reply = super().complete(task, payload)
+        if task == "impact" and self.question and not payload["answers"]:
+            return Impact.model_validate({"question": self.question, "areas": []})
+        if task == "area":
+            return AreaEvaluation.model_validate({"people": self.people})
+        return reply
+
+
+def _person(pid, role, evidence, relevance):
+    return {
+        "person_id": pid,
+        "contribution": "Synthetic summary used only by the page tests.",
+        "role": role,
+        "primary_evidence_id": evidence[0],
+        "relevance": relevance,
+        "evidence_ids": evidence,
+        "confidence": "medium",
+    }
+
+
+def _submit(tmp_path, monkeypatch, model):
+    path = str(tmp_path / "pages.sqlite3")
+    db = connect(path)
+    seed_db(db)
+    db.close()
+    monkeypatch.setenv("WORKBOT_DB_PATH", path)
+    app.state.model = model
+    app.state.searcher = WebSearch()
+    client = TestClient(app)
+    response = client.post(
+        "/sessions",
+        data={"idea": "Help plan marketing campaigns", "idempotency_key": "pages"},
+        follow_redirects=False,
+    )
+    app.state.last_run.join(10)
+    return client, response.headers["location"]
+
+
+def test_routing_line_and_directory_source_page(tmp_path, monkeypatch):
+    refs = ["directory:growth-manager", "directory:growth-remit"]
+    model = ScriptedModel([_person("marcus", "routing_contact", refs, "adjacent")])
+    try:
+        client, url = _submit(tmp_path, monkeypatch, model)
+        card = client.get(url).text
+        # Search returned a record, so the line must not claim nothing was found.
+        assert "Accessible records: 1" in card
+        assert "No one was identified from the visible work on this." in card
+        assert "was found" not in card
+        remit = client.get(url + "/sources/directory:growth-remit")
+        assert remit.status_code == 200
+        assert "team remit:" in remit.text and "Since " in remit.text
+        manager = client.get(url + "/sources/directory:growth-manager").text
+        assert "manages" in manager and "Since 2025-01-01." in manager
+        assert client.get(url + "/sources/directory:secret-duty").status_code == 404
+        assert "Eve Restricted" not in card + remit.text + manager
+    finally:
+        del app.state.model
+        del app.state.searcher
+
+
+def test_incomplete_review_does_not_also_promise_remaining_people(
+    tmp_path, monkeypatch
+):
+    # Elena is only the reporter of this record, so the direct proposal is rejected.
+    model = ScriptedModel(
+        [_person("elena", "direct_contact", ["jira:MKT-482"], "direct")]
+    )
+    try:
+        client, url = _submit(tmp_path, monkeypatch, model)
+        card = client.get(url).text
+        assert "Review incomplete." in card
+        assert "No partial person list" in card
+        assert "remaining verified people are shown" not in card
+    finally:
+        del app.state.model
+        del app.state.searcher
+
+
+def test_repeated_answer_submit_returns_to_the_session(tmp_path, monkeypatch):
+    model = ScriptedModel(
+        [_person("nina", "direct_contact", ["jira:MKT-482"], "direct")],
+        question="Which campaigns are in scope?",
+    )
+    try:
+        client, url = _submit(tmp_path, monkeypatch, model)
+        assert "Which campaigns are in scope?" in client.get(url).text
+        first = client.post(url + "/answer", data={"skip": "1"}, follow_redirects=False)
+        app.state.last_run.join(10)
+        calls = model.calls
+        again = client.post(url + "/answer", data={"skip": "1"}, follow_redirects=False)
+        assert (first.status_code, again.status_code) == (303, 303)
+        assert again.headers["location"] == url
+        assert model.calls == calls
+        assert "Before you start, talk to one person." in client.get(url).text
+        missing = client.post("/sessions/nope/answer", data={"skip": "1"})
+        assert missing.status_code == 404
+    finally:
+        del app.state.model
+        del app.state.searcher

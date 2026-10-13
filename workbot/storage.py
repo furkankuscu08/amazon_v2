@@ -95,6 +95,47 @@ def visible_directory_source(db: sqlite3.Connection, source_id: str) -> dict | N
     return dict(row) if row else None
 
 
+def directory_claims(db: sqlite3.Connection, source_id: str) -> list[str]:
+    """What a visible directory source records, as plain statements for its page."""
+    if not visible_directory_source(db, source_id):
+        return []
+    teams = {row["id"]: row["name"] for row in db.execute("SELECT * FROM org_units")}
+    people = {
+        row["id"]: row["name"]
+        for row in db.execute("SELECT id, name FROM people WHERE active=1")
+    }
+
+    def period(row) -> str:
+        if row["valid_to"]:
+            return f"From {row['valid_from']} to {row['valid_to']}."
+        return f"Since {row['valid_from']}."
+
+    claims = []
+    for row in db.execute(
+        "SELECT * FROM responsibilities WHERE source_id=? ORDER BY id", (source_id,)
+    ):
+        if row["person_id"] in people:
+            claims.append(
+                f"{people[row['person_id']]} — {row['relation']} in "
+                f"{teams[row['org_id']]}: {row['scope']}. {period(row)}"
+            )
+    for row in db.execute(
+        "SELECT * FROM team_remits WHERE source_id=? ORDER BY id", (source_id,)
+    ):
+        claims.append(
+            f"{teams[row['org_id']]} team remit: {row['scope']}. {period(row)}"
+        )
+    for row in db.execute(
+        "SELECT * FROM managers WHERE source_id=? ORDER BY org_id, person_id",
+        (source_id,),
+    ):
+        if row["person_id"] in people:
+            claims.append(
+                f"{people[row['person_id']]} manages {teams[row['org_id']]}. {period(row)}"
+            )
+    return claims
+
+
 def source(db: sqlite3.Connection, source_id: str) -> dict | None:
     if source_id.startswith("directory:"):
         return visible_directory_source(db, source_id)
@@ -177,7 +218,14 @@ def dependency_snapshot(db: sqlite3.Connection, card: dict) -> dict | None:
         sid
         for area in card["areas"]
         for p in area["people"]
-        for sid in p["evidence_ids"]
+        for sid in [*p["evidence_ids"], *p.get("context_ids", [])]
+    }
+    # Shown as ended duties, so they must stay visible and unchanged, not current.
+    context_ids = {
+        sid
+        for area in card["areas"]
+        for p in area["people"]
+        for sid in p.get("context_ids", [])
     }
     people = {}
     for pid in sorted(people_ids):
@@ -221,7 +269,9 @@ def dependency_snapshot(db: sqlite3.Connection, card: dict) -> dict | None:
                         (sid,),
                     )
                 )
-            if not related or any(not current(item) for item in related):
+            if not related or (
+                sid not in context_ids and any(not current(item) for item in related)
+            ):
                 return None
             relations[sid] = _digest(related)
         else:
@@ -271,6 +321,22 @@ def load_session(db: sqlite3.Connection, session_id: str) -> dict | None:
         (session_id,),
     ).fetchone()
     return dict(row) if row else None
+
+
+def recent_sessions(db: sqlite3.Connection, limit: int = 6) -> list[dict]:
+    """The demo user's latest requests, newest first.
+
+    Only the stored state: whether a card's evidence still holds is checked when
+    the card is opened, not for every row on every visit to the home page.
+    """
+    return [
+        {"id": row["id"], "idea": row["sentence"], "status": row["state"]}
+        for row in db.execute(
+            """SELECT id, sentence, state FROM sessions
+            WHERE actor='maya' AND workspace='demo' ORDER BY rowid DESC LIMIT ?""",
+            (limit,),
+        )
+    ]
 
 
 def valid_card(db: sqlite3.Connection, session: dict) -> dict | None:

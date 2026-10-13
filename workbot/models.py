@@ -59,14 +59,14 @@ class PersonProposal(StrictModel):
     # enforced in the deterministic audit, not this schema, so an inconsistent
     # role/link does not void a whole area review.
     primary_evidence_id: str
-    # Bounded, unverified source-to-need summary, not an independent semantic audit.
-    contribution: str = Field(min_length=5, max_length=300)
+    # Unverified source-to-need summary, not an independent semantic audit. The
+    # schema cap is well above the prompt's requested length so a provider that
+    # enforces it does not cut a sentence short.
+    contribution: str = Field(min_length=5, max_length=600)
     role: Literal["direct_contact", "advisor", "routing_contact"]
     relevance: Literal["direct", "adjacent", "weak"]
     evidence_ids: list[str] = Field(min_length=1, max_length=8)
     confidence: Literal["high", "medium", "low"]
-    ask: str = Field(min_length=5, max_length=240)
-    unverified: str = Field(min_length=3, max_length=300)
 
     @model_validator(mode="after")
     def primary_is_cited(self) -> PersonProposal:
@@ -88,3 +88,15 @@ class AreaEvaluation(StrictModel):
 class Priority(StrictModel):
     order: list[str]
     shared_question: str | None
+    # Person IDs already on the audited card, most important first. The service
+    # keeps only IDs that are shown; this can neither add a person nor change a role.
+    # No length cap here, and a missing list is read as empty: the plan keeps the
+    # first four, and neither slip may discard a valid order and shared question.
+    first_conversations: list[str]
+
+    @model_validator(mode="before")
+    @classmethod
+    def missing_choice_is_empty(cls, data):
+        if isinstance(data, dict) and "first_conversations" not in data:
+            return {**data, "first_conversations": []}
+        return data

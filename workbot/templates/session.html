@@ -1,36 +1,58 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Workbot · stakeholder areas</title><style>
-body{font:16px/1.5 system-ui,sans-serif;max-width:1000px;margin:2rem auto;padding:0 1.2rem;color:#192536;background:#f6f8fa}
-article,.panel{background:white;padding:1.3rem;margin:1rem 0;border-radius:10px;box-shadow:0 1px 5px #ccd2db}section.person{border-top:1px solid #ddd;padding:.8rem 0}
-.badge{display:inline-block;background:#e6edf9;padding:.15rem .5rem;border-radius:4px}.warning{border-left:4px solid #ae7620;padding-left:1rem}
-button{background:#22549b;color:white;border:0;border-radius:6px;padding:.65rem 1rem;font:inherit}textarea{width:100%;box-sizing:border-box;min-height:5rem;font:inherit}
-a{color:#22549b}small{color:#555}ul{padding-left:1.4rem}
-</style></head><body>
-<p><a href="/">← New idea</a> · <small>Workbot · simulated Alexa+ experience · synthetic data</small></p>
-<header class="panel"><h1>Consultation areas</h1><p><strong>Idea:</strong> {{ session.sentence }}</p></header>
-{% if stale %}<article class="warning"><h2>Card no longer available</h2><p>Its access, source, directory evidence or org inventory has changed. Start a new request; this old card will not be rebuilt on reload.</p></article>
+{% extends "base.html" %}
+{% block title %}Workbot · who to talk to first{% endblock %}
+{% block body %}
+<div class="turn user"><div class="bubble"><span class="who">Maya</span>{{ session.sentence }}</div></div>
+{% for turn in answers %}
+<div class="turn"><span class="ring"></span><div class="bubble"><span class="who">Workbot</span>{{ turn.question }}</div></div>
+<div class="turn user"><div class="bubble"><span class="who">Maya</span>{% if turn.answer %}{{ turn.answer }}{% else %}<small>Continued without answering</small>{% endif %}</div></div>
+{% endfor %}
+<div class="turn"><span class="ring"></span><div class="bubble card"><span class="who">Workbot</span>
+{% if stale %}<div class="warning"><h2>Card no longer available</h2><p>Its access, source, directory evidence or org inventory has changed since I prepared it. Start a new request; this old card will not be rebuilt on reload.</p></div>
 {% elif session.state == 'question' %}
-<article><h2>One clarification before searching</h2><p>{{ session.question }}</p>
+<h2>One clarification before searching</h2><p>{{ session.question }}</p>
 <form method="post" action="/sessions/{{ session.id }}/answer"><textarea name="answer" maxlength="500" required></textarea><p><button type="submit">Continue</button></p></form>
-<form method="post" action="/sessions/{{ session.id }}/answer"><input type="hidden" name="skip" value="1"><button type="submit">Continue without answering</button></form></article>
-{% elif session.state == 'refusal' %}<article class="warning"><h2>Unable to evaluate this request safely</h2><p>No stakeholder card was produced. Check the model setup or try a new idea.</p></article>
-{% elif session.state == 'processing' %}<article><p>Processing was interrupted. Start a new request; no partial card is shown.</p></article>
+<form method="post" action="/sessions/{{ session.id }}/answer"><input type="hidden" name="skip" value="1"><button type="submit" class="quiet">Continue without answering</button></form>
+{% elif session.state == 'refusal' %}<div class="warning"><h2>Unable to evaluate this request safely</h2><p>No stakeholder card was produced. Check the model setup or try a new idea.</p></div>
+{% elif session.state == 'processing' %}<div id="progress">
+{% if progress %}<h2>Working on it…</h2><ul class="steps">
+<li class="{{ 'now' if progress.stage == 'impact' else 'done' }}">Understanding the idea and who it could affect</li>
+{% for area in progress.areas %}<li class="{{ 'done' if area.done else 'now' }}">{{ 'Checked' if area.done else 'Checking' }} {{ area.label }}</li>{% endfor %}
+{% if progress.stage == 'priority' %}<li class="now">Choosing who to talk to first</li>{% endif %}</ul>
+<p><small>People are shown only once every area has been checked.</small></p>
+{% else %}<h2>Working on it…</h2><p>This page refreshes every few seconds. No partial card is shown.</p>{% endif %}</div>
+<script>setInterval(async () => { try { const page = await fetch(location.href, {cache: 'no-store'}); const next = new DOMParser().parseFromString(await page.text(), 'text/html'); const now = next.getElementById('progress'); if (now) { document.getElementById('progress').replaceWith(now); } else { location.reload(); } } catch (error) {} }, 2000);</script>
+<noscript><meta http-equiv="refresh" content="5"></noscript>
 {% elif card %}
-{% if card.shared_question %}<article><h2>Open question across areas</h2><p>{{ card.shared_question }}</p></article>{% endif %}
-{% for area in card.areas %}<article><h2>{{ area.label }}</h2><p>{{ area.rationale }}</p>{% if area.consultation_need %}<p><strong>Consultation need:</strong> {{ area.consultation_need }}</p>{% endif %}
+{% set count = plan.first | length %}
+<h2>{% if count == 0 %}I found no one to point you to from the work I can see.{% elif count == 1 %}Before you start, talk to one person.{% else %}Before you start, talk to {{ ['two', 'three', 'four'][count - 2] }} people.{% endif %}</h2>
+{% if count %}<ol class="people">{% for person in plan.first %}<li><h3>{{ person.name }} <small>· {{ person.team or person.area }}</small> <span class="badge">{{ person.label }}</span></h3>
+<p>{{ person.headline or person.why[0] }}{% if person.primary_evidence_id and not person.primary_evidence_id.startswith('directory:') %} <a href="/sessions/{{ session.id }}/sources/{{ person.primary_evidence_id | urlencode }}">source</a>{% endif %}</p>
+{% if person.ended_duty %}<p class="note">{{ person.ended_duty }}</p>{% endif %}
+<p><small><strong>{{ person.area }}</strong>{% if person.need %} — consultation need: {{ person.need }}{% endif %}<br>Ask: {{ person.ask }}</small></p></li>{% endfor %}</ol>{% endif %}
+{% if plan.gaps.no_contact %}<p class="warning"><strong>No contact found for:</strong> {{ plan.gaps.no_contact | join('; ') }}.</p>{% endif %}
+{% if plan.gaps.team_unresolved %}<p class="warning"><strong>Team not identified for:</strong> {{ plan.gaps.team_unresolved | join('; ') }}.</p>{% endif %}
+{% if plan.gaps.review_incomplete %}<p class="warning"><strong>Review incomplete for:</strong> {{ plan.gaps.review_incomplete | join('; ') }}.</p>{% endif %}
+{% if card.shared_question %}<p><strong>Open question across areas:</strong> {{ card.shared_question }}</p>{% endif %}
+<p><small>These are proposals from the work traces and directory you can see, not verified ownership. I send no messages or invitations.</small></p>
+<details class="all"><summary>All {{ card.areas | length }} consultation areas and everyone considered</summary>
+{% for area in card.areas %}{% set elsewhere = plan.elsewhere[loop.index0] %}<article><h3>{{ area.label }}</h3><p>{{ area.rationale }}</p>{% if area.consultation_need %}<p><strong>Consultation need:</strong> {{ area.consultation_need }}</p>{% endif %}
 {% if area.mapping == 'mapped' %}<details><summary>Evaluation trace</summary><p>Accessible records: {{ area.retrieval.visible_records }} (BM25: {{ area.retrieval.bm25 }}, Qdrant: {{ area.retrieval.qdrant }}); candidates considered: {{ area.retrieval.candidates }}. These are search signals, not proof of ownership.</p></details>{% endif %}
 {% if area.status == 'mapping_unresolved' %}<div class="warning"><strong>Team mapping unresolved.</strong> {{ area.mapping_reason }} No person was evaluated for this area. Manual organization routing is needed.</div>
 {% elif area.status == 'review_incomplete' %}<div class="warning"><strong>Review incomplete.</strong> No partial person list or automatic manager fallback is shown.</div>
 {% elif area.status == 'not_found' %}<div class="warning"><strong>No verified contact found in this review.</strong> Manual organization routing is needed; this does not mean nobody suitable exists.</div>
 {% endif %}
-{% if area.direct_review_incomplete %}<p class="warning">The direct-contact review could not be completed; remaining verified people are shown without a manager fallback.</p>{% endif %}
+{% if area.direct_review_incomplete and area.status == 'people' %}<p class="warning">The direct-contact review could not be completed; remaining verified people are shown without a manager fallback.</p>{% endif %}
 {% if area.no_visible_work_trace and area.mapping == 'mapped' %}<p><small>No relevant accessible work trace was found in this search; other evidence may still exist.</small></p>{% endif %}
-{% for person in area.people %}<section class="person"><h3>{{ person.name }} <span class="badge">Proposed {{ person.role.replace('_', ' ') }}</span></h3>
+{% for person in area.people %}{% if elsewhere[person.person_id] %}<p class="person"><small>Also relevant: {{ person.name }} — see {{ elsewhere[person.person_id] }}.</small></p>
+{% else %}<section class="person"><h3>{{ person.name }} <span class="badge">Proposed {{ person.role.replace('_', ' ') }}</span></h3>
 {% if person.primary_evidence_id %}<p><strong>Primary cited source:</strong> <a href="/sessions/{{ session.id }}/sources/{{ person.primary_evidence_id | urlencode }}">{{ person.primary_evidence_id }}</a></p>{% endif %}
+{% if person.contribution %}<p><strong>Model summary (unverified):</strong> {{ person.contribution }}</p>{% endif %}
 <strong>Visible source and connection:</strong><ul>{% for fact in person.why %}<li>{{ fact }}</li>{% endfor %}</ul>
+{% if plan.notes[person.person_id] %}<p class="note"><strong>Directory note:</strong> {{ plan.notes[person.person_id] }}</p>{% endif %}
 <p><strong>Ask to check the connection:</strong> {{ person.ask }}</p><p><strong>Not established:</strong> {{ person.unverified }}</p>
-<details><summary>Source IDs and dates</summary><ul>{% for source_id in person.evidence_ids %}<li><a href="/sessions/{{ session.id }}/sources/{{ source_id | urlencode }}">{{ source_id }}</a></li>{% endfor %}</ul></details></section>{% endfor %}
+<details><summary>Source IDs and dates</summary><ul>{% for source_id in person.evidence_ids %}<li><a href="/sessions/{{ session.id }}/sources/{{ source_id | urlencode }}">{{ source_id }}</a></li>{% endfor %}</ul></details></section>{% endif %}{% endfor %}
 </article>{% endfor %}
-<p><small>All shown people were proposed by the model and checked against this synthetic directory. Workbot sends no messages or invitations. Reloading does not call the model again.</small></p>
-{% endif %}</body></html>
+<p><small>All shown people were proposed by the model and their cited links were checked against this synthetic directory. Model summaries are the model's own reading of a source and were not checked against it. Reloading does not call the model again.</small></p></details>
+{% endif %}</div></div>
+{% if session.state in ('card', 'refusal') or stale %}<p><a href="/">Ask about another idea</a></p>{% endif %}
+{% endblock %}

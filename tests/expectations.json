@@ -1,0 +1,50 @@
+{
+  "purpose": "Answer key for end-to-end checks on the shipped fixture. It lists only obvious outcomes; anything not listed is not scored.",
+  "never_show": ["eve", "zoe", "dana", "stefan"],
+  "never_cite": ["slack:restricted-plan", "docs:restricted-budget", "docs:restricted-digital-assets", "docs:restricted-scoring-dpia", "slack:restricted-scoring-7", "directory:secret-duty", "directory:zoe-scoring"],
+  "ideas": [
+    {
+      "id": "campaign-ai",
+      "idea": "Let AI prepare retail campaign audiences and launch plans, with a person approving every launch.",
+      "must_show": ["nina"],
+      "must_not_be_direct": ["leo", "tara"],
+      "why": "Nina is assigned the audience approval checklist and coordinates the launch review. Leo's work is lifecycle email. Tara's loyalty costing is unrelated."
+    },
+    {
+      "id": "stablecoin",
+      "idea": "We should accept stablecoin payments in the Northgate app.",
+      "must_show": ["grace"],
+      "must_show_any": [["ibrahim", "diego"]],
+      "must_not_be_direct": ["tara", "paul"],
+      "why": "Grace wrote the payment-method runbook and owns settlement. Ibrahim and Diego built app checkout payment work. Loyalty points and supplier payment runs are adjacent topics only."
+    },
+    {
+      "id": "refund-assistant",
+      "idea": "Use an AI assistant to answer customers who ask about the status of their refund.",
+      "must_show": ["sam"],
+      "must_not_be_direct": ["kim", "paul"],
+      "why": "Sam currently runs the returns and refund escalation queue. Ticket macro migration and supplier payments are not refund handling."
+    },
+    {
+      "id": "pickup-lockers",
+      "idea": "Install self-service pickup lockers in our stores for online orders.",
+      "expected_routing": ["daniel"],
+      "must_not_be_direct": ["ivan", "chloe", "nina"],
+      "why": "No visible record concerns pickup lockers. Daniel manages Commerce Operations, whose remit covers store pickup, so he is at most a routing contact."
+    },
+    {
+      "id": "customer-scoring",
+      "idea": "Score customers on their purchase history to decide who is offered store credit.",
+      "must_show_any": [["noah", "sara"]],
+      "must_not_be_direct": ["lucy"],
+      "why": "Noah built the purchase-history table and Sara exports segments from it. The privacy assessment of scoring exists only in restricted sources, so Zoe must not appear. Lucy's work is staff laptop access."
+    },
+    {
+      "id": "spend-threshold",
+      "idea": "Raise the approval threshold for marketing spend requests so small changes need no review.",
+      "must_show": ["tara"],
+      "must_not_be_direct": ["ben"],
+      "why": "Tara currently reviews marketing spend requests above the threshold. Omar's approval duty expired in 2025, so only his 2024 policy document can support him. Ben has moved to Payments and his old work was invoice matching."
+    }
+  ]
+}

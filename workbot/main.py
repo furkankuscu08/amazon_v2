@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import os
 import time
 import uuid
 from collections import defaultdict, deque
 from functools import lru_cache
-from threading import Lock
+from threading import Lock, Thread
 from urllib.parse import parse_qs
 
 from dotenv import load_dotenv
@@ -17,12 +18,23 @@ from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 
 from workbot.llm import OpenRouter
+from workbot.plan import build_plan
 from workbot.search import Searcher
-from workbot.service import Conflict, answer_question, create_session
+from workbot.service import (
+    Conflict,
+    end_progress,
+    fail_if_abandoned,
+    open_session,
+    progress,
+    record_answer,
+    run_safely,
+)
 from workbot.storage import (
     connect,
+    directory_claims,
     initialize,
     load_session,
+    recent_sessions,
     source,
     valid_card,
 )
@@ -109,19 +121,48 @@ async def _form(request: Request) -> dict[str, str]:
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return templates.TemplateResponse(request, "home.html", {"key": str(uuid.uuid4())})
+    db = _db()
+    try:
+        recent = recent_sessions(db)
+    finally:
+        db.close()
+    return templates.TemplateResponse(
+        request, "home.html", {"key": str(uuid.uuid4()), "recent": recent}
+    )
+
+
+def _run(sid: str, model, searcher) -> None:
+    try:
+        db = _db()
+        try:
+            run_safely(db, sid, model, searcher)
+        finally:
+            db.close()
+    finally:
+        # Whatever went wrong, the session page must stop reporting a live run.
+        end_progress(sid)
+
+
+def _start(sid: str) -> None:
+    """Run the workflow off the request so the page can show progress meanwhile."""
+    thread = Thread(target=_run, args=(sid, _model(), _searcher()), daemon=True)
+    app.state.last_run = thread
+    thread.start()
 
 
 def _create(key: str, idea: str) -> str:
     db = _db()
     try:
-        return create_session(db, key, idea, _model(), _searcher())
+        sid, created = open_session(db, key, idea)
     finally:
         db.close()
+    if created:
+        _start(sid)
+    return sid
 
 
 @app.post("/sessions")
-async def open_session(request: Request):
+async def post_session(request: Request):
     form = await _form(request)
     _guard_model_request(request)
     try:
@@ -139,12 +180,24 @@ def _get_session(sid: str):
     db = _db()
     try:
         session = load_session(db, sid)
+        if session and session["state"] == "processing" and fail_if_abandoned(db, sid):
+            session = load_session(db, sid)
         card = (
             valid_card(db, session) if session and session["state"] == "card" else None
         )
         return session, card
     finally:
         db.close()
+
+
+def _answers(session: dict) -> list[dict]:
+    try:
+        answers = json.loads(session["answers_json"])
+        return [
+            {"question": str(a["question"]), "answer": a["answer"]} for a in answers
+        ]
+    except (ValueError, TypeError, KeyError):
+        return []
 
 
 @app.get("/sessions/{sid}", response_class=HTMLResponse)
@@ -156,20 +209,41 @@ def show_session(request: Request, sid: str):
         return templates.TemplateResponse(
             request,
             "session.html",
-            {"session": session, "stale": True, "card": None},
+            {
+                "session": session,
+                "stale": True,
+                "card": None,
+                "answers": _answers(session),
+            },
             status_code=410,
         )
     return templates.TemplateResponse(
-        request, "session.html", {"session": session, "card": card, "stale": False}
+        request,
+        "session.html",
+        {
+            "session": session,
+            "card": card,
+            "stale": False,
+            "answers": _answers(session),
+            "plan": build_plan(card) if card else None,
+            "progress": progress(sid) if session["state"] == "processing" else None,
+        },
     )
 
 
 def _answer(sid: str, answer: str | None):
     db = _db()
     try:
-        answer_question(db, sid, answer, _model(), _searcher())
+        recorded = record_answer(db, sid, answer)
+    except Conflict:
+        # A repeated submit: nothing is pending, so show the session as it is now.
+        if not load_session(db, sid):
+            raise HTTPException(404, "Session not found") from None
+        recorded = False
     finally:
         db.close()
+    if recorded:
+        _start(sid)
 
 
 @app.post("/sessions/{sid}/answer")
@@ -183,8 +257,6 @@ async def answer(request: Request, sid: str):
         )
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from None
-    except Conflict as exc:
-        raise HTTPException(409, str(exc)) from None
     return RedirectResponse(f"/sessions/{sid}", status_code=303)
 
 
@@ -209,7 +281,11 @@ def show_source(request: Request, sid: str, source_id: str):
         item = source(db, source_id)
         if not item:
             raise HTTPException(404, "Source not available")
-        # Work records can be inspected; directory claims are shown on the card itself.
-        return templates.TemplateResponse(request, "source.html", {"item": item})
+        # A work record shows its text; a directory source shows what it records.
+        return templates.TemplateResponse(
+            request,
+            "source.html",
+            {"item": item, "claims": directory_claims(db, source_id)},
+        )
     finally:
         db.close()
