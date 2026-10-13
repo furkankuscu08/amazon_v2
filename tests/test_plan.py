@@ -135,7 +135,11 @@ def test_everyone_gets_the_plan_label_and_evidence_linked_to_its_source():
         "primary_evidence_id": "slack:b",
         "evidence_ids": ["jira:a", "slack:b", "docs:c"],
         # The audit writes the primary line first; an older card ends with the ID.
-        "why": ["Author: ‘Text.’ [slack:b].", "Current owner: Duty [jira:a].", "Doc."],
+        "why": [
+            "Author: ‘Text.’ [slack:b].",
+            "Current owner: Duty [jira:a].",
+            "Remit [EMEA].",
+        ],
     }
     old = {**person("leo", "advisor", "growth"), "evidence_ids": ["x"], "why": ["W."]}
     plan = build_plan({"areas": [area("Growth", "growth", nina, old)]})
@@ -143,8 +147,12 @@ def test_everyone_gets_the_plan_label_and_evidence_linked_to_its_source():
     assert plan["people"]["nina"]["evidence"] == [
         {"text": "Author: ‘Text.’", "source_id": "slack:b"},
         {"text": "Current owner: Duty.", "source_id": "jira:a"},
-        {"text": "Doc.", "source_id": "docs:c"},
+        {"text": "Remit [EMEA].", "source_id": "docs:c"},
     ]
     # Without a recorded primary source the order is unknown, so nothing is linked.
     assert plan["people"]["leo"]["label"] == "Can advise"
     assert plan["people"]["leo"]["evidence"] == [{"text": "W.", "source_id": None}]
+    # Lines and citations that do not match one to one are shown without links.
+    nina["why"] = nina["why"][:2]
+    plan = build_plan({"areas": [area("Growth", "growth", nina)]})
+    assert [e["source_id"] for e in plan["people"]["nina"]["evidence"]] == [None, None]

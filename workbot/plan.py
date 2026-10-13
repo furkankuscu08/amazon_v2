@@ -16,8 +16,9 @@ _GAPS = {
     "mapping_unresolved": "team_unresolved",
     "review_incomplete": "review_incomplete",
 }
-# Cards stored before the list linked each line ended a line with its source ID.
-_OLD_SOURCE_ID = re.compile(r" \[[^\]]+\]\.$")
+# Cards stored before the list linked each line ended a line with its source ID,
+# such as " [jira:MKT-482]."; other bracketed text is left alone.
+_OLD_SOURCE_ID = re.compile(r" \[[a-z]+:[^\]\s]+\]\.$")
 
 
 def _label(person: dict) -> str:
@@ -39,15 +40,19 @@ def _line(text: str) -> str:
 def _evidence(person: dict) -> list[dict]:
     """Each audited evidence line with the source it cites, the primary one first."""
     primary = person.get("primary_evidence_id")
-    # The audit writes the lines in this order; without a primary it is unknown.
+    lines = person.get("why", [])
+    # The audit writes one line per citation in this order. Without a primary the
+    # order is unknown, and a line must never link to a source it does not describe.
     ids = (
         [primary, *(sid for sid in person["evidence_ids"] if sid != primary)]
         if primary
         else []
     )
+    if len(ids) != len(lines):
+        ids = [None] * len(lines)
     return [
-        {"text": _line(text), "source_id": ids[index] if index < len(ids) else None}
-        for index, text in enumerate(person.get("why", []))
+        {"text": _line(text), "source_id": sid}
+        for text, sid in zip(lines, ids, strict=True)
     ]
 
 
