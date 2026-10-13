@@ -282,12 +282,17 @@ def _review_areas(
                     db, [intent.model_dump() for intent in area.search_intents]
                 )
                 item["retrieval"] = {
-                    channel: sum(
-                        channel in record.get("retrieval_channels", [])
+                    "bm25": sum(
+                        "bm25" in record.get("retrieval_channels", [])
                         for record in records
-                    )
-                    for channel in ("bm25", "qdrant")
-                } | {"visible_records": len(records), "candidates": 0}
+                    ),
+                    "qdrant": sum(
+                        "qdrant" in record.get("retrieval_channels", [])
+                        for record in records
+                    ),
+                    "visible_records": len(records),
+                    "candidates": 0,
+                }
                 pool = candidate_pool(db, area.model_dump(), records)
                 item["retrieval"]["candidates"] = len(pool["people"])
                 item["no_visible_work_trace"] = pool["no_visible_work_trace"]
@@ -508,8 +513,9 @@ def _ended_duty(db, person_id: str, topic: set[str]) -> dict | None:
     ]
     if any(current(row) for row in rows):
         return None
+    now = today()
     for row in rows:
-        if row["valid_to"] and row["valid_to"] < today():
+        if row["valid_to"] and row["valid_to"] < now:
             return {
                 "source_id": row["source_id"],
                 "text": f"An earlier responsibility ended on {row['valid_to']}: {row['relation']} — {_lower_first(row['scope'])}.",

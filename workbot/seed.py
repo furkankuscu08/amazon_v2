@@ -24,10 +24,17 @@ def seed_db(db) -> None:
     def insert(table: str, columns: str, rows: list[dict]) -> None:
         # Fixture keys carry the column names; keys that are not columns are ignored.
         values = ", ".join(":" + column for column in columns.split(", "))
-        db.executemany(f"INSERT OR IGNORE INTO {table} VALUES ({values})", rows)
+        db.executemany(
+            f"INSERT OR IGNORE INTO {table} ({columns}) VALUES ({values})", rows
+        )
 
     insert("org_units", "id, name", directory["org_units"])
-    insert("people", "id, name, title, active, org_id", directory["people"])
+    insert(
+        "people",
+        "id, name, title, active, org_id",
+        # int() rejects anything but a real boolean or number in the fixture.
+        [{**person, "active": int(person["active"])} for person in directory["people"]],
+    )
     # Each directory claim carries its own source and visibility.
     db.executemany(
         "INSERT OR IGNORE INTO directory_sources VALUES (:source_id, 'v1', :visibility)",

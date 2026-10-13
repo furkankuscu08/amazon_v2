@@ -233,6 +233,8 @@ class Searcher:
 
 
 def _candidate(person) -> dict:
+    # Every caller reads the person within the area's own unit or by work link, so
+    # the person's unit is the one the audit later looks their evidence up in.
     return {
         "person_id": person["id"],
         "name": person["name"],
