@@ -781,7 +781,7 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
         assert card is None
         assert requests == ["impact"]
         return
-    assert card["calls"] == {"impact": 1, "area": 2, "priority": 1}
+    assert sorted(requests) == ["area", "area", "impact", "priority"]
     by_area = {area["id"]: area for area in card["areas"]}
     assert by_area["campaign_review"]["status"] == "people"
     assert by_area["campaign_review"]["people"][0]["person_id"] == "nina"
@@ -871,7 +871,6 @@ def test_area_calls_overlap_but_are_audited_in_area_order(db):
     assert model.peak >= 2
     assert model.priority_after_areas
     assert searcher.calls == 3
-    assert card["calls"] == {"impact": 1, "area": 3, "priority": 1}
     assert [a["id"] for a in card["areas"]] == [
         "platform_review",
         "campaign_review",
@@ -900,7 +899,6 @@ def test_parallel_area_failure_does_not_hide_other_area_or_skip_priority(db):
             return evaluation(proposal("nina", "direct_contact", ["jira:MKT-482"]))
 
     _, card = card_for(db, PartialFailureModel())
-    assert card["calls"] == {"impact": 1, "area": 2, "priority": 1}
     assert card["priority_applied"]
     assert [area["status"] for area in card["areas"]] == [
         "review_incomplete",

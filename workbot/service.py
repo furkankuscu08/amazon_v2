@@ -28,7 +28,7 @@ from workbot.storage import (
 )
 
 log = logging.getLogger(__name__)
-MAX_PARALLEL_AREA_CALLS = 6  # Worker threads; more areas than this simply queue.
+MAX_PARALLEL_AREA_CALLS = 6  # Worker threads; an idea has at most six areas.
 
 # What a running request is doing, for the waiting page only: a stage and area
 # labels with a done flag. Never people, sources, counts, or model diagnostics.
@@ -86,10 +86,10 @@ class Conflict(Exception):
     pass
 
 
-def _state(db, sid: str, state: str, question: str | None = None) -> None:
+def _state(db, sid: str, state: str) -> None:
     db.execute(
-        "UPDATE sessions SET state=?, question=?, card_json=NULL, snapshot_json=NULL WHERE id=?",
-        (state, question, sid),
+        "UPDATE sessions SET state=?, question=NULL, card_json=NULL, snapshot_json=NULL WHERE id=?",
+        (state, sid),
     )
     db.commit()
 
@@ -181,12 +181,12 @@ def run_safely(db, sid: str, model, searcher) -> None:
 def _collect_area_reviews(
     db,
     card: dict,
-    pending: dict[Future, tuple[dict, dict, float]],
+    pending: dict[Future, tuple[dict, dict]],
     finished: Callable[[str], None],
 ) -> None:
     done, _ = wait(pending, return_when=FIRST_COMPLETED)
     for future in done:
-        item, pool, started = pending.pop(future)
+        item, pool = pending.pop(future)
         try:
             evaluation = future.result()
             if not isinstance(evaluation, AreaEvaluation):
@@ -197,7 +197,6 @@ def _collect_area_reviews(
             item["status"] = "review_incomplete"
             item["people"] = []
         finally:
-            card["duration_seconds"][item["id"]] = round(time.monotonic() - started, 3)
             finished(item["id"])
 
 
@@ -210,7 +209,6 @@ def run(db, sid: str, model, searcher) -> None:
         _state(db, sid, "refusal")
         return
     _report(sid, "impact")
-    impact_started = time.monotonic()
     answers = json.loads(session["answers_json"])
     # Skipping a clarification ends the question budget; say so to the model.
     skipped = any(a["answer"] is None for a in answers)
@@ -249,15 +247,12 @@ def run(db, sid: str, model, searcher) -> None:
         return
 
     card = {
-        "idea": session["sentence"],
         "areas": [],
         "shared_question": None,
         "first_conversations": [],
         "priority_applied": False,
-        "calls": {"impact": 1, "area": 0, "priority": 0},
-        "duration_seconds": {"impact": round(time.monotonic() - impact_started, 3)},
     }
-    pending: dict[Future, tuple[dict, dict, float]] = {}
+    pending: dict[Future, tuple[dict, dict]] = {}
     _report(
         sid,
         "areas",
@@ -296,7 +291,6 @@ def run(db, sid: str, model, searcher) -> None:
             card["areas"].append(item)
             if area.mapping == "mapping_unresolved":
                 continue
-            started = time.monotonic()
             submitted = False
             try:
                 # Search and all permissioned directory reads stay on this thread.
@@ -330,27 +324,21 @@ def run(db, sid: str, model, searcher) -> None:
                     item["status"] = "review_incomplete"
                     continue
                 future = executor.submit(model.complete, "area", prompt)
-                pending[future] = (item, pool, started)
+                pending[future] = (item, pool)
                 submitted = True
-                card["calls"]["area"] += 1
             except Exception as exc:  # noqa: BLE001 — search/preparation must fail closed.
                 log.warning("area_review_incomplete type=%s", type(exc).__name__)
                 item["status"] = "review_incomplete"
                 item["people"] = []
             finally:
                 if not submitted:
-                    card["duration_seconds"][area.id] = round(
-                        time.monotonic() - started, 3
-                    )
                     finished(area.id)
         while pending:
             _collect_area_reviews(db, card, pending, finished)
 
     _report(sid, "priority")
 
-    priority_started = time.monotonic()
     try:
-        card["calls"]["priority"] = 1
         priority = model.complete(
             "priority",
             {"idea": session["sentence"], "areas": _priority_areas(card["areas"])},
@@ -377,7 +365,6 @@ def run(db, sid: str, model, searcher) -> None:
             card["priority_applied"] = True
     except Exception as exc:  # noqa: BLE001 — no raw model errors may reach user/logs.
         log.warning("priority_fallback type=%s", type(exc).__name__)
-    card["duration_seconds"]["priority"] = round(time.monotonic() - priority_started, 3)
     try:
         store_card(db, sid, card)
     except ValueError:

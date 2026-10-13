@@ -65,9 +65,6 @@ def initialize(db: sqlite3.Connection) -> None:
             INSERT INTO visible_fts(record_id, text)
                 SELECT NEW.id, NEW.text WHERE NEW.visibility='maya';
         END;
-        CREATE TRIGGER IF NOT EXISTS work_fts_delete AFTER DELETE ON work_records BEGIN
-            DELETE FROM visible_fts WHERE record_id=OLD.id;
-        END;
         CREATE TABLE IF NOT EXISTS sessions (
             id TEXT PRIMARY KEY, actor TEXT NOT NULL, workspace TEXT NOT NULL,
             idem_key TEXT NOT NULL, sentence TEXT NOT NULL, answers_json TEXT NOT NULL,
@@ -142,8 +139,8 @@ def source(db: sqlite3.Connection, source_id: str) -> dict | None:
     return visible_record(db, source_id)
 
 
-def current(row: dict, today: str | None = None) -> bool:
-    today = today or datetime.now(timezone.utc).date().isoformat()
+def current(row: dict) -> bool:
+    today = datetime.now(timezone.utc).date().isoformat()
     return row["valid_from"] <= today and (
         row["valid_to"] is None or today <= row["valid_to"]
     )

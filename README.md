@@ -6,13 +6,10 @@ WorkBot is a simulated Alexa+ experience: Maya describes a project idea and gets
 
 > ⚠️ **Disclaimer:** This is **not** an official Alexa integration or Amazon API integration. Use **synthetic project ideas only**: prompts are sent to OpenRouter. The directory and work traces are fictional. No messages or invitations are sent to anyone. WorkBot's input and output language is **English**: enter ideas and clarification answers in English; synthetic records, search intents, prompts, and displayed questions/cards are written in English. This is a product convention, not automatic detection or rejection of other languages at runtime.
 
-> **Current development baseline:** Continue from `main`. Area evaluations request low reasoning; impact and priority remain high. Proposals require an unverified `contribution`, which the card shows labelled as a model summary; the question shown for each person is a fixed neutral one chosen by WorkBot, not written by the model. The audit verifies visibility and personal evidence links, not source-to-need semantics, so unsupported direct roles remain possible. The earlier evaluation scripts, captured observations and their reports were removed from the tree on 12 October 2026 and remain available at the `archive/pre-cleanup-20261012` tag. New paid observations require explicit approval.
-
 ## Documentation
 
 - This `README.md` is the human guide to the current prototype and its limits.
 - [`AGENTS.md`](AGENTS.md) guides coding agents working in this repository.
-- [`docs/handoff.md`](docs/handoff.md) gives the next agent the current baseline, known issues, and agreed next steps.
 - [`docs/archive/`](docs/archive/) preserves the original non-binding Turkish design proposal; it is not current behavior or an active implementation plan.
 - [`docs/competition.md`](docs/competition.md) is a dated working brief for the hackathon; recheck the [live official rules](https://amazonappdev2026.devpost.com/rules) before submitting.
 - [`docs/competition-winner-patterns.md`](docs/competition-winner-patterns.md) compares other competition winners for inspiration, not requirements or proof of what wins.
@@ -90,7 +87,7 @@ In the full list, the model's primary cited source is linked and its evidence is
 
 A clarification can be skipped. Skipping ends the question budget: the model is told no questions remain, and a further question refuses the request. Submitting an answer again when nothing is pending returns to the session page and starts nothing. Submitting an idea or an answer returns at once and the work continues in the background. Meanwhile the session page lists the steps: understanding the idea, each consultation area as it is being checked or has been checked, and choosing who to talk to first. It shows only area names, never people or sources, and people appear only when the whole card is ready. This progress lives in the memory of the single app process; a request that no run is working on any more, for example after a restart, is closed as a refusal the next time its page is opened, so it does not wait forever. The list of earlier ideas on the home page shows each request's stored state; whether a plan's evidence still holds is checked when the plan is opened.
 
-After the impact model returns areas, all per-area model calls of the idea run concurrently, six at a time (an idea has at most six areas). Search and permissioned database reads stay on the thread that runs the workflow; completed areas are audited there before the final priority call. Card area order does not depend on completion order. Per-area durations can overlap and should not be summed to estimate total request time. This per-request limit does not guarantee a global provider concurrency limit across simultaneous demo sessions.
+After the impact model returns areas, all per-area model calls of the idea run concurrently, six at a time (an idea has at most six areas). Search and permissioned database reads stay on the thread that runs the workflow; completed areas are audited there before the final priority call. Card area order does not depend on completion order. This per-request limit does not guarantee a global provider concurrency limit across simultaneous demo sessions.
 
 ### Area output contract
 

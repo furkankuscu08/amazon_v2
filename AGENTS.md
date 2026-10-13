@@ -2,13 +2,12 @@
 
 ## Start here
 
-Read this file for working rules, then [`docs/handoff.md`](docs/handoff.md) for the current baseline, known issues, and agreed next steps, then the code/tests relevant to the task. Use [`README.md`](README.md) for setup and current behavior. Establish implemented behavior from code and tests, not from proposals.
+Read this file for working rules, then the code/tests relevant to the task. Use [`README.md`](README.md) for setup and current behavior. Establish implemented behavior from code and tests, not from proposals.
 
 ## Document roles
 
 - [`README.md`](README.md) is the human-facing guide to current setup, behavior, and limitations.
 - This file is for coding agents: how to work here and keep documentation accurate.
-- [`docs/handoff.md`](docs/handoff.md) records the current state, known issues, and the plan agreed with the user. Keep it short and current; do not turn it into an experiment log.
 - [`docs/archive/proposed-stakeholder-routing-design.md`](docs/archive/proposed-stakeholder-routing-design.md) is the user's original Turkish design draft. It is a **non-binding idea guide**, not a specification of current behavior or an implementation checklist. Confirm proposed product changes with the user before treating them as requirements.
 - [`opencode.jsonc`](opencode.jsonc) configures OpenCode subagent models. Do not duplicate model IDs here.
 
@@ -32,7 +31,7 @@ On 12 October 2026 the user decided to remove the earlier evaluation apparatus (
 
 ## Repository map
 
-`workbot/` is the application package, `tests/` contains offline regression tests, and `docs/` holds the handoff, the design draft, and competition research.
+`workbot/` is the application package, `tests/` contains offline regression tests, and `docs/` holds the design draft and competition research.
 
 - `compose.yaml` runs local Qdrant and, optionally, the app; `.env.example` is the configuration template. `requirements.in` lists direct dependencies; `requirements.txt` is the compiled Python 3.12 lock.
 - `workbot/main.py`: FastAPI routes and the server-rendered flow. `POST /sessions` and `POST /sessions/{sid}/answer` store the request, start the workflow on a background thread with its own database connection, and redirect at once; the session page shows progress while the state is `processing`. Only a newly created session starts a run, so a repeated idempotency key cannot start a second one.
@@ -53,11 +52,11 @@ On 12 October 2026 the user decided to remove the earlier evaluation apparatus (
 - Inspect the working tree and relevant tests before editing; preserve existing user changes.
 - If the request, scope, or intended behavior is unclear, **ask the user before proceeding rather than guessing**. Do not silently turn a design-draft idea into current behavior.
 - The user's quality goal is **no obvious errors**, not resolving every edge case, and the aim is to win the competition. Prefer fixes that remove visible mistakes over further calibration of debatable cases.
-- Keep the repository small. Do not add experiment logs, dated reports, or preserved artifacts to the tree unless the user asks; delete superseded material instead of archiving it in place.
+- Keep the repository small. Do not add experiment logs, dated reports, or preserved artifacts to the tree unless the user asks; delete superseded material instead of archiving it in place (the design draft in `docs/archive/` is kept on purpose).
 - Delegation is optional. Communicate with subagents in English and integrate and verify their findings yourself.
 
 ## Validation and documentation upkeep
 
 - Start with tests relevant to the change. For Python changes, use `ruff check workbot tests` and `ruff format --check workbot tests`; if formatting is needed, run `ruff format` only on the affected files. Run these from an activated Python 3.12 environment with `requirements.txt` installed, or prefix them with `uv run --python 3.12 --no-project --with-requirements requirements.txt`, for example `uv run --python 3.12 --no-project --with-requirements requirements.txt python -m pytest -q`. Run `git diff --check` after edits. Offline stub tests do not certify live model quality.
-- **With every relevant code change, review `README.md`, this file, and `docs/handoff.md` and update them in the same change when needed.** Keep human setup, behavior, and limitations in README; keep agent workflow and code guidance here. Do not make unrelated documentation edits merely to touch these files.
+- **With every relevant code change, review `README.md` and this file and update them in the same change when needed.** Keep human setup, behavior, and limitations in README; keep agent workflow and code guidance here. Do not make unrelated documentation edits merely to touch these files.
 - Write Markdown as one logical line per bullet or paragraph; do not manually hard-wrap prose at a fixed column.
