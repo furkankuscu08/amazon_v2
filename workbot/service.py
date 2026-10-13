@@ -7,8 +7,7 @@ import logging
 import re
 import sqlite3
 import uuid
-from collections.abc import Callable
-from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from threading import Lock
 
 from workbot.llm import ModelError
@@ -87,10 +86,10 @@ class Conflict(Exception):
     pass
 
 
-def _state(db, sid: str, state: str) -> None:
+def _refuse(db, sid: str) -> None:
     db.execute(
-        "UPDATE sessions SET state=?, question=NULL, card_json=NULL, snapshot_json=NULL WHERE id=?",
-        (state, sid),
+        "UPDATE sessions SET state='refusal', question=NULL, card_json=NULL, snapshot_json=NULL WHERE id=?",
+        (sid,),
     )
     db.commit()
 
@@ -139,7 +138,7 @@ def record_answer(db, sid: str, answer: str | None) -> bool:
         if not isinstance(answers, list):
             raise TypeError("Invalid saved answers")
     except (ValueError, TypeError):
-        _state(db, sid, "refusal")
+        _refuse(db, sid)
         return False
     answers.append(
         {"question": session["question"], "answer": answer.strip() if answer else None}
@@ -162,43 +161,36 @@ def run_safely(db, sid: str, model, searcher) -> None:
         run(db, sid, model, searcher)
     except Exception as exc:  # noqa: BLE001 — no raw model or document text in logs.
         log.warning("workflow_failed type=%s", type(exc).__name__)
-        _state(db, sid, "refusal")
+        _refuse(db, sid)
     finally:
         end_progress(sid)
-
-
-def _collect_area_reviews(
-    db,
-    card: dict,
-    pending: dict[Future, tuple[dict, dict]],
-    finished: Callable[[str], None],
-) -> None:
-    done, _ = wait(pending, return_when=FIRST_COMPLETED)
-    for future in done:
-        item, pool = pending.pop(future)
-        try:
-            evaluation = future.result()
-            if not isinstance(evaluation, AreaEvaluation):
-                raise ModelError("Invalid area contract")
-            audit_area(db, item, pool, evaluation)
-        except Exception as exc:  # noqa: BLE001 — each area must fail closed independently.
-            log.warning("area_review_incomplete type=%s", type(exc).__name__)
-            item["status"] = "review_incomplete"
-            item["people"] = []
-        finally:
-            finished(item["id"])
 
 
 def run(db, sid: str, model, searcher) -> None:
     session = load_session(db, sid)
     if not session or session["state"] != "processing":
         return
-    inventory = org_inventory(db)
-    if not inventory:
-        _state(db, sid, "refusal")
-        return
     _report(sid, "impact")
     answers = json.loads(session["answers_json"])
+    impact = _ask_impact(db, sid, session, answers, model)
+    if impact is None:
+        return
+    card = {"areas": [], "shared_question": None, "first_conversations": []}
+    _review_areas(db, sid, session, answers, impact, card, model, searcher)
+    _report(sid, "priority")
+    _apply_priority(db, session, card, model)
+    try:
+        store_card(db, sid, card)
+    except ValueError:
+        _refuse(db, sid)
+
+
+def _ask_impact(db, sid: str, session: dict, answers: list, model) -> Impact | None:
+    """First model task. None when the request was refused or a question was asked."""
+    inventory = org_inventory(db)
+    if not inventory:
+        _refuse(db, sid)
+        return None
     # Skipping a clarification ends the question budget; say so to the model.
     skipped = any(a["answer"] is None for a in answers)
     payload = {
@@ -208,8 +200,8 @@ def run(db, sid: str, model, searcher) -> None:
         "remaining_questions": 0 if skipped else max(0, 2 - session["questions_asked"]),
     }
     if len(json.dumps(payload)) > 12000:
-        _state(db, sid, "refusal")
-        return
+        _refuse(db, sid)
+        return None
     try:
         impact = model.complete("impact", payload)
         if not isinstance(impact, Impact):
@@ -225,21 +217,29 @@ def run(db, sid: str, model, searcher) -> None:
                 (impact.question, sid),
             )
             db.commit()
-            return
+            return None
         org_ids = {item["id"] for item in inventory}
         if any(
             a.mapping == "mapped" and a.org_unit_id not in org_ids for a in impact.areas
         ):
             raise ModelError("Unknown org unit")
     except (ModelError, ValueError):
-        _state(db, sid, "refusal")
-        return
+        _refuse(db, sid)
+        return None
+    return impact
 
-    card = {
-        "areas": [],
-        "shared_question": None,
-        "first_conversations": [],
-    }
+
+def _review_areas(
+    db,
+    sid: str,
+    session: dict,
+    answers: list,
+    impact: Impact,
+    card: dict,
+    model,
+    searcher,
+) -> None:
+    """Second model task, once per mapped area and all at once; each area fails alone."""
     pending: dict[Future, tuple[dict, dict]] = {}
     _report(
         sid,
@@ -249,10 +249,6 @@ def run(db, sid: str, model, searcher) -> None:
             for a in impact.areas
         ],
     )
-
-    def finished(area_id: str) -> None:
-        _report(sid, done=area_id)
-
     with ThreadPoolExecutor(max_workers=MAX_PARALLEL_AREA_CALLS) as executor:
         for area in impact.areas:
             item = {
@@ -286,17 +282,12 @@ def run(db, sid: str, model, searcher) -> None:
                     db, [intent.model_dump() for intent in area.search_intents]
                 )
                 item["retrieval"] = {
-                    "bm25": sum(
-                        "bm25" in record.get("retrieval_channels", [])
+                    channel: sum(
+                        channel in record.get("retrieval_channels", [])
                         for record in records
-                    ),
-                    "qdrant": sum(
-                        "qdrant" in record.get("retrieval_channels", [])
-                        for record in records
-                    ),
-                    "visible_records": len(records),
-                    "candidates": 0,
-                }
+                    )
+                    for channel in ("bm25", "qdrant")
+                } | {"visible_records": len(records), "candidates": 0}
                 pool = candidate_pool(db, area.model_dump(), records)
                 item["retrieval"]["candidates"] = len(pool["people"])
                 item["no_visible_work_trace"] = pool["no_visible_work_trace"]
@@ -304,15 +295,14 @@ def run(db, sid: str, model, searcher) -> None:
                     continue
                 prompt = {
                     "idea": session["sentence"],
-                    "answers": payload["answers"],
+                    "answers": answers,
                     "area": area.model_dump(),
                     "candidates": pool["people"],
                 }
                 if len(json.dumps(prompt)) > 18000:
                     item["status"] = "review_incomplete"
                     continue
-                future = executor.submit(model.complete, "area", prompt)
-                pending[future] = (item, pool)
+                pending[executor.submit(model.complete, "area", prompt)] = (item, pool)
                 submitted = True
             except Exception as exc:  # noqa: BLE001 — search/preparation must fail closed.
                 log.warning("area_review_incomplete type=%s", type(exc).__name__)
@@ -320,12 +310,25 @@ def run(db, sid: str, model, searcher) -> None:
                 item["people"] = []
             finally:
                 if not submitted:
-                    finished(area.id)
-        while pending:
-            _collect_area_reviews(db, card, pending, finished)
+                    _report(sid, done=area.id)
+        # Audits run here, on the workflow thread, as each model reply arrives.
+        for future in as_completed(pending):
+            item, pool = pending[future]
+            try:
+                evaluation = future.result()
+                if not isinstance(evaluation, AreaEvaluation):
+                    raise ModelError("Invalid area contract")
+                audit_area(db, item, pool, evaluation)
+            except Exception as exc:  # noqa: BLE001 — each area must fail closed independently.
+                log.warning("area_review_incomplete type=%s", type(exc).__name__)
+                item["status"] = "review_incomplete"
+                item["people"] = []
+            finally:
+                _report(sid, done=item["id"])
 
-    _report(sid, "priority")
 
+def _apply_priority(db, session: dict, card: dict, model) -> None:
+    """Third model task. Any failure leaves the card in its original order."""
     try:
         priority = model.complete(
             "priority",
@@ -352,10 +355,6 @@ def run(db, sid: str, model, searcher) -> None:
                 card["shared_question"] = priority.shared_question
     except Exception as exc:  # noqa: BLE001 — no raw model errors may reach user/logs.
         log.warning("priority_fallback type=%s", type(exc).__name__)
-    try:
-        store_card(db, sid, card)
-    except ValueError:
-        _state(db, sid, "refusal")
 
 
 def _priority_areas(areas: list[dict]) -> list[dict]:
