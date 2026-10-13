@@ -32,7 +32,7 @@ def seed_db(db) -> None:
     insert(
         "people",
         "id, name, title, active, org_id",
-        # int() rejects anything but a real boolean or number in the fixture.
+        # Stored as 0 or 1; int() fails on a non-numeric value such as "yes".
         [{**person, "active": int(person["active"])} for person in directory["people"]],
     )
     # Each directory claim carries its own source and visibility.
