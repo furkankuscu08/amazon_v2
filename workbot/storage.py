@@ -139,11 +139,20 @@ def source(db: sqlite3.Connection, source_id: str) -> dict | None:
     return visible_record(db, source_id)
 
 
-def current(row: dict) -> bool:
-    today = datetime.now(timezone.utc).date().isoformat()
-    return row["valid_from"] <= today and (
-        row["valid_to"] is None or today <= row["valid_to"]
+def today() -> str:
+    return datetime.now(timezone.utc).date().isoformat()
+
+
+def current(row) -> bool:
+    now = today()
+    return row["valid_from"] <= now and (
+        row["valid_to"] is None or now <= row["valid_to"]
     )
+
+
+def current_and_visible(db: sqlite3.Connection, row) -> bool:
+    """A dated directory claim that holds today and whose source is visible."""
+    return current(row) and visible_directory_source(db, row["source_id"]) is not None
 
 
 def current_managers(db: sqlite3.Connection, org_id: str) -> list[tuple[dict, dict]]:
@@ -156,11 +165,7 @@ def current_managers(db: sqlite3.Connection, org_id: str) -> list[tuple[dict, di
             "SELECT * FROM people WHERE id=? AND org_id=? AND active=1",
             (relation["person_id"], org_id),
         ).fetchone()
-        if (
-            person
-            and current(dict(relation))
-            and visible_directory_source(db, relation["source_id"])
-        ):
+        if person and current_and_visible(db, relation):
             managers.append((dict(relation), dict(person)))
     return managers
 

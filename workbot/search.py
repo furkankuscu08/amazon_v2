@@ -9,9 +9,8 @@ from collections import defaultdict
 from threading import Lock
 
 from workbot.storage import (
-    current,
+    current_and_visible,
     current_managers,
-    visible_directory_source,
     visible_fts_matches,
     visible_index_version,
     visible_record,
@@ -233,6 +232,18 @@ class Searcher:
         return found
 
 
+def _candidate(person) -> dict:
+    # Every caller reads the person within the area's own unit or by work link, so
+    # the person's unit is the one the audit later looks their evidence up in.
+    return {
+        "person_id": person["id"],
+        "name": person["name"],
+        "title": person["title"],
+        "org_id": person["org_id"],
+        "evidence": [],
+    }
+
+
 def candidate_pool(db, area: dict, records: list[dict]) -> dict:
     """No vector similarity over directory people; keyword match grants candidacy only."""
     candidates: dict[str, dict] = {}
@@ -255,17 +266,7 @@ def candidate_pool(db, area: dict, records: list[dict]) -> dict:
                 "SELECT * FROM people WHERE id=? AND active=1", (link["person_id"],)
             ).fetchone()
             if row:
-                person = candidates.setdefault(
-                    row["id"],
-                    {
-                        "person_id": row["id"],
-                        "name": row["name"],
-                        "title": row["title"],
-                        "org_id": row["org_id"],
-                        "evidence": [],
-                    },
-                )
-                person["evidence"].append(
+                candidates.setdefault(row["id"], _candidate(row))["evidence"].append(
                     {
                         "id": record["id"],
                         "kind": record["kind"],
@@ -310,8 +311,7 @@ def candidate_pool(db, area: dict, records: list[dict]) -> dict:
             "SELECT * FROM responsibilities WHERE person_id=? AND org_id=? ORDER BY id",
             (row["id"], org),
         ):
-            resp = dict(resp)
-            if current(resp) and visible_directory_source(db, resp["source_id"]):
+            if current_and_visible(db, resp):
                 responsibility_evidence.append(
                     {
                         "id": resp["source_id"],
@@ -332,16 +332,7 @@ def candidate_pool(db, area: dict, records: list[dict]) -> dict:
                 (0 if duty_match else 1, row["id"], dict(row), responsibility_evidence)
             )
     for _, pid, row, evidence in sorted(org_options)[:11]:
-        item = people.setdefault(
-            pid,
-            {
-                "person_id": pid,
-                "name": row["name"],
-                "title": row["title"],
-                "org_id": org,
-                "evidence": [],
-            },
-        )
+        item = people.setdefault(pid, _candidate(row))
         item["evidence"].extend(
             e
             for e in evidence
@@ -353,23 +344,12 @@ def candidate_pool(db, area: dict, records: list[dict]) -> dict:
         for row in db.execute(
             "SELECT * FROM team_remits WHERE org_id=? ORDER BY id", (org,)
         )
-        if current(dict(row))
-        and visible_directory_source(db, row["source_id"])
-        and terms & set(keywords(row["scope"]))
+        if current_and_visible(db, row) and terms & set(keywords(row["scope"]))
     ]
     managers = current_managers(db, org)
     if remits and len({row["id"] for _, row in managers}) == 1:
         manager, row = managers[0]
-        item = people.setdefault(
-            row["id"],
-            {
-                "person_id": row["id"],
-                "name": row["name"],
-                "title": row["title"],
-                "org_id": org,
-                "evidence": [],
-            },
-        )
+        item = people.setdefault(row["id"], _candidate(row))
         item["evidence"].extend(
             [
                 {
