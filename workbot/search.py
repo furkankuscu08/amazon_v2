@@ -18,9 +18,7 @@ from workbot.storage import (
 
 COLLECTION = "maya_visible_work"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-MIN_SEMANTIC_SCORE = (
-    0.38  # Initial small-corpus threshold; tune against labeled hard negatives.
-)
+MIN_SEMANTIC_SCORE = 0.38  # Initial small-corpus threshold, not a measured one.
 CHANNEL_TOP = 3  # Single-channel hits kept per search intent.
 _embedder = None
 _embedder_lock = Lock()
