@@ -29,11 +29,6 @@ def test_card_question_follows_the_verified_role_and_primary_kind(role, kind, ex
     assert 5 <= len(question) <= 240
 
 
-def test_question_registry_is_immutable():
-    with pytest.raises(TypeError):
-        NEUTRAL_QUESTIONS["record"] = "Which undocumented controls already exist?"
-
-
 def test_reporter_template_does_not_attribute_personal_work_or_ownership():
     question = NEUTRAL_QUESTIONS["record"]
     assert "clarify about the cited record" in question

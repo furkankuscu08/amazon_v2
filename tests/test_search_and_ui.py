@@ -1,5 +1,6 @@
 import json
 from threading import Event
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -164,96 +165,96 @@ class WebSearch:
         ]
 
 
-def test_web_card_reload_and_source_visibility(tmp_path, monkeypatch):
+@pytest.fixture
+def web(tmp_path, monkeypatch):
+    """A seeded database behind the app; `use(model)` installs a stub and returns a client."""
     path = str(tmp_path / "web.sqlite3")
     db = connect(path)
     seed_db(db)
     db.close()
     monkeypatch.setenv("WORKBOT_DB_PATH", path)
-    app.state.model = WebModel()
-    app.state.searcher = WebSearch()
-    try:
-        client = TestClient(app)
-        response = client.get("/")
-        assert "simulated Alexa+ experience" in response.text
-        response = client.post(
-            "/sessions",
-            data={"idea": "Help plan marketing campaigns", "idempotency_key": "abc"},
-            follow_redirects=False,
-        )
-        assert response.status_code == 303
-        url = response.headers["location"]
-        app.state.last_run.join(10)
-        sid = url.rsplit("/", 1)[-1]
-        card = client.get(url)
-        assert card.status_code == 200
-        assert "Nina Ellis" in card.text
-        assert "Eve Restricted" not in card.text
-        assert "Proposed direct contact" in card.text
-        assert "Primary cited source:" in card.text
-        assert f'href="{url}/sources/jira%3AMKT-482"' in card.text
-        assert "Ask to check the connection:" in card.text
-        assert "Before you start, talk to one person." in card.text
-        assert "Related work" in card.text
-        assert "Assignee of a jira record:" in card.text
-        assert "All 1 consultation areas and everyone considered" in card.text
-        assert "Model summary (unverified):" in card.text
-        assert (
-            "Checklist work can clarify pre-launch campaign review scope." in card.text
-        )
-        assert 'http-equiv="refresh"' not in card.text
-        assert client.get(url).text == card.text
-        assert client.get(url + "/sources/slack:restricted-plan").status_code == 404
-        assert client.get(url + "/sources/jira:MKT-482").status_code == 200
-        db = connect(path)
-        saved = db.execute(
-            "SELECT card_json FROM sessions WHERE id=?", (sid,)
-        ).fetchone()
-        old_card = json.loads(saved["card_json"])
-        del old_card["areas"][0]["people"][0]["primary_evidence_id"]
-        db.execute(
-            "UPDATE sessions SET card_json=? WHERE id=?",
-            (json.dumps(old_card), sid),
-        )
-        db.commit()
-        db.close()
-        previous = client.get(url)
-        assert previous.status_code == 200
-        assert "Primary cited source:" not in previous.text
-        assert "Source IDs and dates" in previous.text
-        db = connect(path)
-        db.execute(
-            """INSERT INTO sessions
-            (id, actor, workspace, idem_key, sentence, answers_json, state)
-            VALUES ('running', 'maya', 'demo', 'running', 'An idea', '[]', 'processing')"""
-        )
-        db.commit()
-        db.close()
-        # No run is working on it (a restart, say): it must not wait forever.
-        running = client.get("/sessions/running")
-        assert "Unable to evaluate this request safely" in running.text
-        assert "Working on it" not in running.text
-        home = client.get("/").text
-        assert "Your earlier ideas" in home
-        assert "Help plan marketing campaigns" in home
-        assert "Plan ready" in home
-        db = connect(path)
-        db.execute("UPDATE people SET active=0 WHERE id='nina'")
-        db.commit()
-        db.close()
-        assert client.get(url).status_code == 410
-        assert client.get(url + "/sources/jira:MKT-482").status_code == 410
-    finally:
-        del app.state.model
-        del app.state.searcher
+    monkeypatch.setattr(app.state, "searcher", WebSearch(), raising=False)
+
+    def use(model):
+        monkeypatch.setattr(app.state, "model", model, raising=False)
+        return TestClient(app)
+
+    def search_with(searcher):
+        monkeypatch.setattr(app.state, "searcher", searcher)
+
+    return SimpleNamespace(path=path, use=use, search_with=search_with)
 
 
-def test_not_found_does_not_expose_retrieved_but_uncited_source(tmp_path, monkeypatch):
-    path = str(tmp_path / "no_contact.sqlite3")
-    db = connect(path)
-    seed_db(db)
+def test_web_card_reload_and_source_visibility(web):
+    client = web.use(WebModel())
+    response = client.get("/")
+    assert "simulated Alexa+ experience" in response.text
+    response = client.post(
+        "/sessions",
+        data={"idea": "Help plan marketing campaigns", "idempotency_key": "abc"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    url = response.headers["location"]
+    app.state.last_run.join(10)
+    sid = url.rsplit("/", 1)[-1]
+    card = client.get(url)
+    assert card.status_code == 200
+    assert "Nina Ellis" in card.text
+    assert "Eve Restricted" not in card.text
+    assert "Proposed direct contact" in card.text
+    assert "Primary cited source:" in card.text
+    assert f'href="{url}/sources/jira%3AMKT-482"' in card.text
+    assert "Ask to check the connection:" in card.text
+    assert "Before you start, talk to one person." in card.text
+    assert "Related work" in card.text
+    assert "Assignee of a jira record:" in card.text
+    assert "All 1 consultation areas and everyone considered" in card.text
+    assert "Model summary (unverified):" in card.text
+    assert "Checklist work can clarify pre-launch campaign review scope." in card.text
+    assert 'http-equiv="refresh"' not in card.text
+    assert client.get(url).text == card.text
+    assert client.get(url + "/sources/slack:restricted-plan").status_code == 404
+    assert client.get(url + "/sources/jira:MKT-482").status_code == 200
+    db = connect(web.path)
+    saved = db.execute("SELECT card_json FROM sessions WHERE id=?", (sid,)).fetchone()
+    old_card = json.loads(saved["card_json"])
+    del old_card["areas"][0]["people"][0]["primary_evidence_id"]
+    db.execute(
+        "UPDATE sessions SET card_json=? WHERE id=?",
+        (json.dumps(old_card), sid),
+    )
+    db.commit()
     db.close()
-    monkeypatch.setenv("WORKBOT_DB_PATH", path)
+    previous = client.get(url)
+    assert previous.status_code == 200
+    assert "Primary cited source:" not in previous.text
+    assert "Source IDs and dates" in previous.text
+    db = connect(web.path)
+    db.execute(
+        """INSERT INTO sessions
+        (id, actor, workspace, idem_key, sentence, answers_json, state)
+        VALUES ('running', 'maya', 'demo', 'running', 'An idea', '[]', 'processing')"""
+    )
+    db.commit()
+    db.close()
+    # No run is working on it (a restart, say): it must not wait forever.
+    running = client.get("/sessions/running")
+    assert "Unable to evaluate this request safely" in running.text
+    assert "Working on it" not in running.text
+    home = client.get("/").text
+    assert "Your earlier ideas" in home
+    assert "Help plan marketing campaigns" in home
+    assert "Plan ready" in home
+    db = connect(web.path)
+    db.execute("UPDATE people SET active=0 WHERE id='nina'")
+    db.commit()
+    db.close()
+    assert client.get(url).status_code == 410
+    assert client.get(url + "/sources/jira:MKT-482").status_code == 410
+
+
+def test_not_found_does_not_expose_retrieved_but_uncited_source(web):
 
     class EmptyAreaModel(WebModel):
         def complete(self, task, payload):
@@ -261,27 +262,21 @@ def test_not_found_does_not_expose_retrieved_but_uncited_source(tmp_path, monkey
                 return AreaEvaluation.model_validate({"people": []})
             return super().complete(task, payload)
 
-    app.state.model = EmptyAreaModel()
-    app.state.searcher = WebSearch()
-    try:
-        client = TestClient(app)
-        response = client.post(
-            "/sessions",
-            data={"idea": "Help plan marketing campaigns", "idempotency_key": "empty"},
-            follow_redirects=False,
-        )
-        assert response.status_code == 303
-        url = response.headers["location"]
-        app.state.last_run.join(10)
-        page = client.get(url)
-        assert page.status_code == 200
-        assert "No verified contact found" in page.text
-        assert "Accessible records: 1" in page.text
-        assert "jira:MKT-482" not in page.text
-        assert client.get(url + "/sources/jira:MKT-482").status_code == 404
-    finally:
-        del app.state.model
-        del app.state.searcher
+    client = web.use(EmptyAreaModel())
+    response = client.post(
+        "/sessions",
+        data={"idea": "Help plan marketing campaigns", "idempotency_key": "empty"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    url = response.headers["location"]
+    app.state.last_run.join(10)
+    page = client.get(url)
+    assert page.status_code == 200
+    assert "No verified contact found" in page.text
+    assert "Accessible records: 1" in page.text
+    assert "jira:MKT-482" not in page.text
+    assert client.get(url + "/sources/jira:MKT-482").status_code == 404
 
 
 def test_invalid_or_oversized_form_is_rejected_before_model_call():
@@ -321,12 +316,7 @@ def test_demo_rate_limit_resets_after_window():
     assert limiter.allow("maya", now=11)
 
 
-def test_waiting_page_shows_area_progress_without_people(tmp_path, monkeypatch):
-    path = str(tmp_path / "progress.sqlite3")
-    db = connect(path)
-    seed_db(db)
-    db.close()
-    monkeypatch.setenv("WORKBOT_DB_PATH", path)
+def test_waiting_page_shows_area_progress_without_people(web):
     reached_area, release = Event(), Event()
 
     class SlowAreaModel(WebModel):
@@ -336,10 +326,8 @@ def test_waiting_page_shows_area_progress_without_people(tmp_path, monkeypatch):
                 assert release.wait(10)
             return super().complete(task, payload)
 
-    app.state.model = SlowAreaModel()
-    app.state.searcher = WebSearch()
+    client = web.use(SlowAreaModel())
     try:
-        client = TestClient(app)
         response = client.post(
             "/sessions",
             data={"idea": "Help plan marketing campaigns", "idempotency_key": "slow"},
@@ -368,8 +356,6 @@ def test_waiting_page_shows_area_progress_without_people(tmp_path, monkeypatch):
         assert app.state.model.__class__ is SlowAreaModel
     finally:
         release.set()
-        del app.state.model
-        del app.state.searcher
 
 
 class ScriptedModel(WebModel):
@@ -402,15 +388,8 @@ def _person(pid, role, evidence, relevance):
     }
 
 
-def _submit(tmp_path, monkeypatch, model):
-    path = str(tmp_path / "pages.sqlite3")
-    db = connect(path)
-    seed_db(db)
-    db.close()
-    monkeypatch.setenv("WORKBOT_DB_PATH", path)
-    app.state.model = model
-    app.state.searcher = WebSearch()
-    client = TestClient(app)
+def _submit(web, model):
+    client = web.use(model)
     response = client.post(
         "/sessions",
         data={"idea": "Help plan marketing campaigns", "idempotency_key": "pages"},
@@ -420,67 +399,53 @@ def _submit(tmp_path, monkeypatch, model):
     return client, response.headers["location"]
 
 
-def test_routing_line_and_directory_source_page(tmp_path, monkeypatch):
+def test_routing_line_and_directory_source_page(web):
     refs = ["directory:growth-manager", "directory:growth-remit"]
     model = ScriptedModel([_person("marcus", "routing_contact", refs, "adjacent")])
-    try:
-        client, url = _submit(tmp_path, monkeypatch, model)
-        card = client.get(url).text
-        # Search returned a record, so the line must not claim nothing was found.
-        assert "Accessible records: 1" in card
-        assert "No one was identified from the visible work on this." in card
-        assert "was found" not in card
-        remit = client.get(url + "/sources/directory:growth-remit")
-        assert remit.status_code == 200
-        assert "team remit:" in remit.text and "Since " in remit.text
-        manager = client.get(url + "/sources/directory:growth-manager").text
-        assert "manages" in manager and "Since 2025-01-01." in manager
-        assert client.get(url + "/sources/directory:secret-duty").status_code == 404
-        assert "Eve Restricted" not in card + remit.text + manager
-    finally:
-        del app.state.model
-        del app.state.searcher
+    client, url = _submit(web, model)
+    card = client.get(url).text
+    # Search returned a record, so the line must not claim nothing was found.
+    assert "Accessible records: 1" in card
+    assert "No one was identified from the visible work on this." in card
+    assert "was found" not in card
+    remit = client.get(url + "/sources/directory:growth-remit")
+    assert remit.status_code == 200
+    assert "team remit:" in remit.text and "Since " in remit.text
+    manager = client.get(url + "/sources/directory:growth-manager").text
+    assert "manages" in manager and "Since 2025-01-01." in manager
+    assert client.get(url + "/sources/directory:secret-duty").status_code == 404
+    assert "Eve Restricted" not in card + remit.text + manager
 
 
-def test_incomplete_review_does_not_also_promise_remaining_people(
-    tmp_path, monkeypatch
-):
+def test_incomplete_review_does_not_also_promise_remaining_people(web):
     # Elena is only the reporter of this record, so the direct proposal is rejected.
     model = ScriptedModel(
         [_person("elena", "direct_contact", ["jira:MKT-482"], "direct")]
     )
-    try:
-        client, url = _submit(tmp_path, monkeypatch, model)
-        card = client.get(url).text
-        assert "Review incomplete." in card
-        assert "No partial person list" in card
-        assert "remaining verified people are shown" not in card
-    finally:
-        del app.state.model
-        del app.state.searcher
+    client, url = _submit(web, model)
+    card = client.get(url).text
+    assert "Review incomplete." in card
+    assert "No partial person list" in card
+    assert "remaining verified people are shown" not in card
 
 
-def test_repeated_answer_submit_returns_to_the_session(tmp_path, monkeypatch):
+def test_repeated_answer_submit_returns_to_the_session(web):
     model = ScriptedModel(
         [_person("nina", "direct_contact", ["jira:MKT-482"], "direct")],
         question="Which campaigns are in scope?",
     )
-    try:
-        client, url = _submit(tmp_path, monkeypatch, model)
-        assert "Which campaigns are in scope?" in client.get(url).text
-        first = client.post(url + "/answer", data={"skip": "1"}, follow_redirects=False)
-        app.state.last_run.join(10)
-        calls = model.calls
-        again = client.post(url + "/answer", data={"skip": "1"}, follow_redirects=False)
-        assert (first.status_code, again.status_code) == (303, 303)
-        assert again.headers["location"] == url
-        assert model.calls == calls
-        assert "Before you start, talk to one person." in client.get(url).text
-        missing = client.post("/sessions/nope/answer", data={"skip": "1"})
-        assert missing.status_code == 404
-    finally:
-        del app.state.model
-        del app.state.searcher
+    client, url = _submit(web, model)
+    assert "Which campaigns are in scope?" in client.get(url).text
+    first = client.post(url + "/answer", data={"skip": "1"}, follow_redirects=False)
+    app.state.last_run.join(10)
+    calls = model.calls
+    again = client.post(url + "/answer", data={"skip": "1"}, follow_redirects=False)
+    assert (first.status_code, again.status_code) == (303, 303)
+    assert again.headers["location"] == url
+    assert model.calls == calls
+    assert "Before you start, talk to one person." in client.get(url).text
+    missing = client.post("/sessions/nope/answer", data={"skip": "1"})
+    assert missing.status_code == 404
 
 
 def test_search_check_reports_missing_index_and_unreachable_qdrant(tmp_path):
@@ -507,33 +472,27 @@ def test_search_check_reports_missing_index_and_unreachable_qdrant(tmp_path):
         db.close()
 
 
-def test_setup_problem_is_shown_before_anything_is_stored_or_sent(
-    tmp_path, monkeypatch
-):
+def test_setup_problem_is_shown_before_anything_is_stored_or_sent(web):
     class NotReady(WebSearch):
         def check(self, db):
             raise SetupError("Qdrant did not answer.", "docker compose up -d")
 
     model = ScriptedModel([], question="Which market is this for?")
-    client, location = _submit(tmp_path, monkeypatch, model)
+    client, location = _submit(web, model)
     calls = model.calls
-    try:
-        app.state.searcher = NotReady()
-        response = client.post(
-            "/sessions", data={"idea": "Another idea", "idempotency_key": "setup"}
-        )
-        assert response.status_code == 503
-        assert "did not answer" in response.text
-        assert "<code>docker compose up -d</code>" in response.text
-        assert "Review incomplete" not in response.text
-        answer = client.post(f"{location}/answer", data={"answer": "Retail"})
-        assert answer.status_code == 503
-        missing = client.post("/sessions/nope/answer", data={"answer": "Retail"})
-        assert missing.status_code == 404
-        db = connect(str(tmp_path / "pages.sqlite3"))
-        assert db.execute("SELECT COUNT(*) FROM sessions").fetchone()[0] == 1
-        db.close()
-        assert model.calls == calls
-    finally:
-        del app.state.model
-        del app.state.searcher
+    web.search_with(NotReady())
+    response = client.post(
+        "/sessions", data={"idea": "Another idea", "idempotency_key": "setup"}
+    )
+    assert response.status_code == 503
+    assert "did not answer" in response.text
+    assert "<code>docker compose up -d</code>" in response.text
+    assert "Review incomplete" not in response.text
+    answer = client.post(f"{location}/answer", data={"answer": "Retail"})
+    assert answer.status_code == 503
+    missing = client.post("/sessions/nope/answer", data={"answer": "Retail"})
+    assert missing.status_code == 404
+    db = connect(web.path)
+    assert db.execute("SELECT COUNT(*) FROM sessions").fetchone()[0] == 1
+    db.close()
+    assert model.calls == calls

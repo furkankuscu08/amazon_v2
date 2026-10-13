@@ -126,13 +126,6 @@ def open_session(db, idem_key: str, sentence: str) -> tuple[str, bool]:
     return sid, True
 
 
-def create_session(db, idem_key: str, sentence: str, model, searcher) -> str:
-    sid, created = open_session(db, idem_key, sentence)
-    if created:
-        run_safely(db, sid, model, searcher)
-    return sid
-
-
 def record_answer(db, sid: str, answer: str | None) -> bool:
     """Store a clarification answer; False when the saved session is unusable."""
     session = load_session(db, sid)
@@ -161,11 +154,6 @@ def record_answer(db, sid: str, answer: str | None) -> bool:
         # Before the commit: a visible `processing` row always has progress.
         _report(sid, "impact")
     return True
-
-
-def answer_question(db, sid: str, answer: str | None, model, searcher) -> None:
-    if record_answer(db, sid, answer):
-        run_safely(db, sid, model, searcher)
 
 
 def run_safely(db, sid: str, model, searcher) -> None:
@@ -250,7 +238,6 @@ def run(db, sid: str, model, searcher) -> None:
         "areas": [],
         "shared_question": None,
         "first_conversations": [],
-        "priority_applied": False,
     }
     pending: dict[Future, tuple[dict, dict]] = {}
     _report(
@@ -362,7 +349,6 @@ def run(db, sid: str, model, searcher) -> None:
             ]
             if safe_shared_question:
                 card["shared_question"] = priority.shared_question
-            card["priority_applied"] = True
     except Exception as exc:  # noqa: BLE001 — no raw model errors may reach user/logs.
         log.warning("priority_fallback type=%s", type(exc).__name__)
     try:

@@ -118,12 +118,12 @@ Run these offline checks from the repository root; the `uv run` prefix provides 
 
 ```bash
 uv run --python 3.12 --no-project --with-requirements requirements.txt python -m pytest -q
-uv run --python 3.12 --no-project --with-requirements requirements.txt ruff check workbot tests
-uv run --python 3.12 --no-project --with-requirements requirements.txt ruff format --check workbot tests
+uv run --python 3.12 --no-project --with-requirements requirements.txt ruff check workbot tests conftest.py
+uv run --python 3.12 --no-project --with-requirements requirements.txt ruff format --check workbot tests conftest.py
 git diff --check
 ```
 
-The formatting command above only checks files; use `ruff format` on affected files when an edit is needed. The same checks can run without the `uv run` prefix in an activated Python 3.12 environment with `requirements.txt` installed. Tests use offline stubs/local fixtures, including a local in-memory Qdrant client for search tests. A live run additionally requires Docker/Qdrant, an OpenRouter key, and explicit approval of the test scope/budget: submitting a synthetic idea in the web UI makes paid model calls. After approval, inspect its area/source card and reload without regenerating it. Keep this guide current when setup, behavior, or limitations change. Review `AGENTS.md` alongside relevant code changes and update agent instructions when needed; neither file requires an unrelated edit just for the sake of touching it.
+The formatting command above only checks files; use `ruff format` on affected files when an edit is needed. The same checks can run without the `uv run` prefix in an activated Python 3.12 environment with `requirements.txt` installed. Tests use offline stubs/local fixtures, including a local in-memory Qdrant client for search tests; `conftest.py` blanks the OpenRouter key and points the database and Qdrant settings away from your real ones for every test. A live run additionally requires Docker/Qdrant, an OpenRouter key, and explicit approval of the test scope/budget: submitting a synthetic idea in the web UI makes paid model calls. After approval, inspect its area/source card and reload without regenerating it. Keep this guide current when setup, behavior, or limitations change. Review `AGENTS.md` alongside relevant code changes and update agent instructions when needed; neither file requires an unrelated edit just for the sake of touching it.
 
 `requirements.in` lists direct dependencies (lightweight ONNX/CPU embeddings); `requirements.txt` is the compiled lock file. After changing dependencies:
 
