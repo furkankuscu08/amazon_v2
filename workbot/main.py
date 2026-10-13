@@ -19,7 +19,7 @@ from starlette.concurrency import run_in_threadpool
 
 from workbot.llm import OpenRouter
 from workbot.plan import build_plan
-from workbot.search import Searcher
+from workbot.search import Searcher, SetupError
 from workbot.service import (
     Conflict,
     end_progress,
@@ -150,9 +150,17 @@ def _start(sid: str) -> None:
     thread.start()
 
 
+def _setup_page(request: Request, exc: SetupError):
+    return templates.TemplateResponse(
+        request, "setup.html", {"message": str(exc)}, status_code=503
+    )
+
+
 def _create(key: str, idea: str) -> str:
     db = _db()
     try:
+        # Checked before anything is stored or sent to the model.
+        _searcher().check(db)
         sid, created = open_session(db, key, idea)
     finally:
         db.close()
@@ -173,6 +181,8 @@ async def post_session(request: Request):
         raise HTTPException(400, str(exc)) from None
     except Conflict as exc:
         raise HTTPException(409, str(exc)) from None
+    except SetupError as exc:
+        return _setup_page(request, exc)
     return RedirectResponse(f"/sessions/{sid}", status_code=303)
 
 
@@ -234,6 +244,7 @@ def show_session(request: Request, sid: str):
 def _answer(sid: str, answer: str | None):
     db = _db()
     try:
+        _searcher().check(db)
         recorded = record_answer(db, sid, answer)
     except Conflict:
         # A repeated submit: nothing is pending, so show the session as it is now.
@@ -257,6 +268,8 @@ async def answer(request: Request, sid: str):
         )
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from None
+    except SetupError as exc:
+        return _setup_page(request, exc)
     return RedirectResponse(f"/sessions/{sid}", status_code=303)
 
 
