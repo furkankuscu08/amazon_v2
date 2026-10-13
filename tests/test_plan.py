@@ -62,7 +62,7 @@ def test_each_person_is_placed_once_where_their_role_is_strongest():
     assert plan["elsewhere"][6] == {"omar": None}
 
 
-def test_fallback_takes_the_strongest_person_of_each_area_in_card_order():
+def test_fallback_takes_the_strongest_person_of_each_area_strongest_first():
     plan = build_plan(CARD)
     assert [p["person_id"] for p in plan["first"]] == ["omar", "nina", "tara", "dan"]
     assert [p["label"] for p in plan["first"]] == [

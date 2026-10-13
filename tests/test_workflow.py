@@ -312,10 +312,7 @@ def test_contribution_reaches_the_card_but_not_the_priority_model(db):
 @pytest.mark.parametrize(
     ("text", "shown"),
     [
-        (
-            "Wrote the launch checklist. It could clarify review steps but not own",
-            "Wrote the launch checklist.",
-        ),
+        ("Wrote the launch checklist. It could clarify review steps but not own", None),
         ("Wrote the launch checklist and could clarify how review steps are", None),
         (
             "Authored the settlement runbook (covers refunds, e.g. chargebacks)",
@@ -325,15 +322,17 @@ def test_contribution_reaches_the_card_but_not_the_priority_model(db):
             "Wrote the runbook, e.g. for refunds. It covers chargebacks (in part).",
             "Wrote the runbook, e.g. for refunds. It covers chargebacks (in part).",
         ),
+        ("Wrote what the team calls the ‘launch checklist.’ It could clarify", None),
         (
-            "Wrote what the team calls the ‘launch checklist.’ It could clarify",
+            "Wrote what the team calls the ‘launch checklist.’",
             "Wrote what the team calls the ‘launch checklist.’",
         ),
+        ("She previously worked with Dr. Smith on the rollout but the rest", None),
         ("See https://example.test for the checklist that was written.", None),
         ("The record jira:MKT-482 shows checklist work on launches.", None),
     ],
 )
-def test_cut_off_or_unsafe_contribution_is_trimmed_or_hidden(db, text, shown):
+def test_cut_off_or_unsafe_contribution_is_hidden(db, text, shown):
     proposed = proposal("nina", "advisor", ["jira:MKT-482"])
     proposed["contribution"] = text
     _, card = card_for(
@@ -459,7 +458,7 @@ def test_manager_needs_explicit_proposal_current_remit_and_no_direct(db):
     _, card = card_for(db, model, StubSearcher(ids=()))
     assert card["areas"][0]["people"][0]["role"] == "routing_contact"
     assert card["areas"][0]["people"][0]["headline"].startswith(
-        "No one with visible work on this was found. Manages the team. Team remit:"
+        "No one was identified from the visible work on this. Manages the team. Team remit:"
     )
     db.execute("UPDATE team_remits SET valid_to='2025-12-31' WHERE id='growth-remit'")
     db.commit()
@@ -1237,7 +1236,7 @@ def test_routing_line_does_not_deny_an_advisor_shown_beside_it(db):
     assert people["marcus"]["headline"].startswith(
         "No direct contact for this was established. Manages the team. Team remit:"
     )
-    assert "No one with visible work" not in json.dumps(card)
+    assert "No one was identified" not in json.dumps(card)
 
 
 def test_extra_or_missing_first_conversations_keep_the_order(db):

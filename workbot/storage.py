@@ -95,6 +95,47 @@ def visible_directory_source(db: sqlite3.Connection, source_id: str) -> dict | N
     return dict(row) if row else None
 
 
+def directory_claims(db: sqlite3.Connection, source_id: str) -> list[str]:
+    """What a visible directory source records, as plain statements for its page."""
+    if not visible_directory_source(db, source_id):
+        return []
+    teams = {row["id"]: row["name"] for row in db.execute("SELECT * FROM org_units")}
+    people = {
+        row["id"]: row["name"]
+        for row in db.execute("SELECT id, name FROM people WHERE active=1")
+    }
+
+    def period(row) -> str:
+        if row["valid_to"]:
+            return f"From {row['valid_from']} to {row['valid_to']}."
+        return f"Since {row['valid_from']}."
+
+    claims = []
+    for row in db.execute(
+        "SELECT * FROM responsibilities WHERE source_id=? ORDER BY id", (source_id,)
+    ):
+        if row["person_id"] in people:
+            claims.append(
+                f"{people[row['person_id']]} — {row['relation']} in "
+                f"{teams[row['org_id']]}: {row['scope']}. {period(row)}"
+            )
+    for row in db.execute(
+        "SELECT * FROM team_remits WHERE source_id=? ORDER BY id", (source_id,)
+    ):
+        claims.append(
+            f"{teams[row['org_id']]} team remit: {row['scope']}. {period(row)}"
+        )
+    for row in db.execute(
+        "SELECT * FROM managers WHERE source_id=? ORDER BY org_id, person_id",
+        (source_id,),
+    ):
+        if row["person_id"] in people:
+            claims.append(
+                f"{people[row['person_id']]} manages {teams[row['org_id']]}. {period(row)}"
+            )
+    return claims
+
+
 def source(db: sqlite3.Connection, source_id: str) -> dict | None:
     if source_id.startswith("directory:"):
         return visible_directory_source(db, source_id)

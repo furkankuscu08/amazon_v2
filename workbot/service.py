@@ -410,19 +410,17 @@ def _safe_question(text: str) -> bool:
     return 0 < len(text) <= 300 and text.endswith("?") and not _UNSAFE_TEXT.search(text)
 
 
-# Closing punctuation, optionally inside a quote or bracket; not "e.g." or "i.e.".
-_SENTENCE_END = re.compile(r"(?<!\be\.g)(?<!\bi\.e)[.!][)\]'\"’”]*(?=\s|$)")
+# A finished statement: closing punctuation, optionally inside a quote or bracket.
+_COMPLETE = re.compile(r"[.!][)\]'\"’”]*$")
 
 
 def _shown_contribution(text: str) -> str | None:
-    """Show the model's summary only as complete sentences; never repair or verify it."""
+    """Show the model's summary only when it ends as a complete sentence; a
+    cut-off one is hidden rather than repaired, and it is never verified."""
     text = " ".join(text.split())
     if _UNSAFE_TEXT.search(text):
         return None
-    # Keep the complete sentences before a cut-off tail, if there are any.
-    ends = [match.end() for match in _SENTENCE_END.finditer(text)]
-    text = text[: ends[-1]] if ends else ""
-    return text if len(text) >= 20 else None
+    return text if _COMPLETE.search(text) and len(text) >= 20 else None
 
 
 def _excerpt(text: str, limit: int = 220) -> str:
@@ -646,7 +644,7 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
     reason = (
         "No direct contact for this was established."
         if any(p["role"] == "advisor" for p in accepted)
-        else "No one with visible work on this was found."
+        else "No one was identified from the visible work on this."
     )
     for person in accepted:
         if person["role"] == "routing_contact":

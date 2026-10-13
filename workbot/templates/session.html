@@ -19,7 +19,7 @@
 {% for area in progress.areas %}<li class="{{ 'done' if area.done else 'now' }}">{{ 'Checked' if area.done else 'Checking' }} {{ area.label }}</li>{% endfor %}
 {% if progress.stage == 'priority' %}<li class="now">Choosing who to talk to first</li>{% endif %}</ul>
 <p><small>People are shown only once every area has been checked.</small></p>
-{% else %}<p>This request is still being processed, or it was interrupted. This page refreshes every few seconds; if nothing changes after a couple of minutes, start a new request. No partial card is shown.</p>{% endif %}</div>
+{% else %}<h2>Working on it…</h2><p>This page refreshes every few seconds. No partial card is shown.</p>{% endif %}</div>
 <script>setInterval(async () => { try { const page = await fetch(location.href, {cache: 'no-store'}); const next = new DOMParser().parseFromString(await page.text(), 'text/html'); const now = next.getElementById('progress'); if (now) { document.getElementById('progress').replaceWith(now); } else { location.reload(); } } catch (error) {} }, 2000);</script>
 <noscript><meta http-equiv="refresh" content="5"></noscript>
 {% elif card %}
@@ -41,7 +41,7 @@
 {% elif area.status == 'review_incomplete' %}<div class="warning"><strong>Review incomplete.</strong> No partial person list or automatic manager fallback is shown.</div>
 {% elif area.status == 'not_found' %}<div class="warning"><strong>No verified contact found in this review.</strong> Manual organization routing is needed; this does not mean nobody suitable exists.</div>
 {% endif %}
-{% if area.direct_review_incomplete %}<p class="warning">The direct-contact review could not be completed; remaining verified people are shown without a manager fallback.</p>{% endif %}
+{% if area.direct_review_incomplete and area.status == 'people' %}<p class="warning">The direct-contact review could not be completed; remaining verified people are shown without a manager fallback.</p>{% endif %}
 {% if area.no_visible_work_trace and area.mapping == 'mapped' %}<p><small>No relevant accessible work trace was found in this search; other evidence may still exist.</small></p>{% endif %}
 {% for person in area.people %}{% if elsewhere[person.person_id] %}<p class="person"><small>Also relevant: {{ person.name }} — see {{ elsewhere[person.person_id] }}.</small></p>
 {% else %}<section class="person"><h3>{{ person.name }} <span class="badge">Proposed {{ person.role.replace('_', ' ') }}</span></h3>

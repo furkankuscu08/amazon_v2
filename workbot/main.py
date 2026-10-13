@@ -31,6 +31,7 @@ from workbot.service import (
 )
 from workbot.storage import (
     connect,
+    directory_claims,
     initialize,
     load_session,
     recent_sessions,
@@ -234,6 +235,11 @@ def _answer(sid: str, answer: str | None):
     db = _db()
     try:
         recorded = record_answer(db, sid, answer)
+    except Conflict:
+        # A repeated submit: nothing is pending, so show the session as it is now.
+        if not load_session(db, sid):
+            raise HTTPException(404, "Session not found") from None
+        recorded = False
     finally:
         db.close()
     if recorded:
@@ -251,8 +257,6 @@ async def answer(request: Request, sid: str):
         )
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from None
-    except Conflict as exc:
-        raise HTTPException(409, str(exc)) from None
     return RedirectResponse(f"/sessions/{sid}", status_code=303)
 
 
@@ -277,7 +281,11 @@ def show_source(request: Request, sid: str, source_id: str):
         item = source(db, source_id)
         if not item:
             raise HTTPException(404, "Source not available")
-        # Work records can be inspected; directory claims are shown on the card itself.
-        return templates.TemplateResponse(request, "source.html", {"item": item})
+        # A work record shows its text; a directory source shows what it records.
+        return templates.TemplateResponse(
+            request,
+            "source.html",
+            {"item": item, "claims": directory_claims(db, source_id)},
+        )
     finally:
         db.close()
