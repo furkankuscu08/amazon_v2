@@ -782,6 +782,12 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
         assert requests == ["impact"]
         return
     assert sorted(requests) == ["area", "area", "impact", "priority"]
+    assert set(card) == {
+        "areas",
+        "shared_question",
+        "first_conversations",
+        "priority_applied",
+    }
     by_area = {area["id"]: area for area in card["areas"]}
     assert by_area["campaign_review"]["status"] == "people"
     assert by_area["campaign_review"]["people"][0]["person_id"] == "nina"
@@ -827,8 +833,11 @@ def test_area_calls_overlap_but_are_audited_in_area_order(db):
             self.third_started = Event()
             self.release_first = Event()
             self.priority_after_areas = False
+            self.tasks = []
 
         def complete(self, task, payload):
+            with self.lock:
+                self.tasks.append(task)
             if task == "impact":
                 return impact(AREA, BRAND, PLATFORM)
             if task == "priority":
@@ -871,6 +880,7 @@ def test_area_calls_overlap_but_are_audited_in_area_order(db):
     assert model.peak >= 2
     assert model.priority_after_areas
     assert searcher.calls == 3
+    assert sorted(model.tasks) == ["area", "area", "area", "impact", "priority"]
     assert [a["id"] for a in card["areas"]] == [
         "platform_review",
         "campaign_review",
@@ -885,7 +895,11 @@ def test_area_calls_overlap_but_are_audited_in_area_order(db):
 
 def test_parallel_area_failure_does_not_hide_other_area_or_skip_priority(db):
     class PartialFailureModel:
+        def __init__(self):
+            self.tasks = []
+
         def complete(self, task, payload):
+            self.tasks.append(task)
             if task == "impact":
                 return impact(AREA, BRAND)
             if task == "priority":
@@ -898,7 +912,9 @@ def test_parallel_area_failure_does_not_hide_other_area_or_skip_priority(db):
                 raise ModelError("truncated")
             return evaluation(proposal("nina", "direct_contact", ["jira:MKT-482"]))
 
-    _, card = card_for(db, PartialFailureModel())
+    model = PartialFailureModel()
+    _, card = card_for(db, model)
+    assert sorted(model.tasks) == ["area", "area", "impact", "priority"]
     assert card["priority_applied"]
     assert [area["status"] for area in card["areas"]] == [
         "review_incomplete",
