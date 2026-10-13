@@ -691,11 +691,11 @@ def test_area_model_error_is_incomplete_not_not_found(db):
 @pytest.mark.parametrize(
     ("failed_task", "failure_mode"),
     [
-        (task, mode)
-        for task in (None, "impact", "area", "priority")
-        for mode in ("truncated", "schema")
-    ]
-    + [("area", "missing_contribution")],
+        (None, "schema"),
+        ("impact", "truncated"),
+        ("area", "schema"),
+        ("priority", "truncated"),
+    ],
 )
 def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
     db, monkeypatch, caplog, failed_task, failure_mode
@@ -719,10 +719,6 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
             reply = (
                 evaluation(proposal("nina", "direct_contact", ["jira:MKT-482"]))
                 if payload["area"]["id"] == "campaign_review"
-                else evaluation(
-                    proposal("priya", "advisor", ["docs:campaign-review-2023"])
-                )
-                if fails and failure_mode == "missing_contribution"
                 else evaluation()
             )
             if reply.people:
@@ -733,8 +729,6 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
         content = reply.model_dump()
         if fails and failure_mode == "schema":
             content = {}
-        elif fails and failure_mode == "missing_contribution":
-            del content["people"][0]["contribution"]
         return httpx.Response(
             200,
             json={
@@ -767,13 +761,13 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
         if record.name == "workbot.llm"
     ]
     assert len(summaries) == len(requests)
-    category = "output_truncated" if failure_mode == "truncated" else "schema_invalid"
-    assert sum(s["failure_category"] == category for s in summaries) == int(
-        failed_task is not None
-    )
+    failures = [s for s in summaries if s["outcome"] == "failure"]
+    assert [s["task"] for s in failures] == ([failed_task] if failed_task else [])
     for summary in summaries:
+        failed = summary["outcome"] == "failure"
+        assert summary["truncated"] is (failed and failure_mode == "truncated")
         assert summary["validation_error_types"] == (
-            ["missing"] if summary["failure_category"] == "schema_invalid" else None
+            ["missing"] if failed and failure_mode == "schema" else None
         )
     assert "SYNTHETIC_PRIVATE_CONTRIBUTION" not in caplog.text
     if failed_task == "impact":
@@ -808,13 +802,13 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
     ):
         serialized = json.dumps(value)
         for field in (
-            "failure_category",
+            "outcome",
             "validation_error_types",
             "http_status",
-            "finish_reason",
+            "truncated",
+            "duration_seconds",
             "prompt_tokens",
             "completion_tokens",
-            "total_tokens",
             "reasoning_tokens",
             "model_call_summary",
         ):

@@ -95,11 +95,11 @@ Each area person proposal must include an English `contribution` string of 5-600
 
 `workbot/questions.py` holds the four English neutral questions for routing, current responsibility, work, and record clarification. WorkBot picks one from the verified role and primary-source relationship. Neither the neutral wording nor the contribution field verifies that a cited source actually addresses the specific need.
 
-### Model call diagnostics
+### Model call log
 
-`workbot.llm` emits one best-effort `model_call_summary` JSON log event per supported model invocation: `INFO` for a locally validated response, `WARNING` for a failure. The event contains only task, outcome, failure category, allowlisted validation error types, monotonic duration, HTTP status, an allowlisted finish reason, and provider-reported prompt/completion/total/reasoning token counts. It does not contain prompts, answers, names, area/session/source IDs, model text, headers, API keys, exception messages, or tracebacks. Service logs still report separate workflow outcomes. No diagnostic metadata is stored in cards or passed to priority.
+`workbot.llm` writes one `model_call_summary` JSON log line per model call: `INFO` on success, `WARNING` on failure. It holds the task, the outcome, an `error` (the exception class name, or WorkBot's own `not_configured` or `incomplete`), `validation_error_types` (Pydantic's codes such as `missing` or `json_invalid` when a reply fails the schema), the HTTP status, whether the reply was cut off at the token cap, the duration, and the provider-reported prompt, completion, and reasoning token counts (`null` unless the provider sent a non-negative integer). It never holds prompts, answers, names, IDs, model or provider text, or keys, and nothing from it is stored in cards or passed to the priority call. It tells you how a call went, not why WorkBot proposed a person.
 
-To see successful events, enable `INFO` for the `workbot.llm` logger and allow it through your logging handlers. For example, in a Python launcher before starting the server:
+To see successful calls, enable `INFO` for the `workbot.llm` logger, for example in a Python launcher:
 
 ```python
 import logging
@@ -110,13 +110,7 @@ logging.getLogger("workbot.llm").setLevel(logging.INFO)
 uvicorn.run("workbot.main:app", host="127.0.0.1", port=8000)
 ```
 
-If logging is already configured, adjust its handlers as well; Uvicorn's `--log-level` alone does not guarantee that the WorkBot logger emits `INFO`. Duration covers request preparation, HTTP, and local validation, not retrieval or the whole workflow. Logging/serialization failures are suppressed without changing the model result or error, so these events are not a guaranteed complete or persistent trace.
-
-Failures distinguish configuration, timeout, transport, HTTP, invalid provider response, token truncation, other incomplete responses, non-text responses, invalid model JSON, and schema violations. A schema-valid empty review is a successful model response, not a transport failure. Missing or invalid usage is `null`, not zero; genuine zero is retained. Only non-negative signed-64-bit integer counts are accepted, without coercion or recomputing totals. Reasoning usage comes only from `usage.completion_tokens_details.reasoning_tokens` when supplied; it is not proof of the requested reasoning setting's effect. Counts are independent provider observations, not an assumed decomposition of the completion budget. Error HTTP bodies are not parsed for usage.
-
-`validation_error_types` is a sorted, deduplicated list of fixed Pydantic codes on local validation failure: `json_invalid`, `missing`, `extra_forbidden`, `literal_error`, `string_type`, `string_too_short`, `string_too_long`, `string_pattern_mismatch`, `list_type`, `too_short`, `too_long`, `model_type`, and `value_error`. Unknown types become `other`; field paths, indices, messages, inputs, and validator context are never emitted. Its length is bounded by this vocabulary plus `other`, not by the number of errors. The field is `null` on success, other failure stages, or diagnostic extraction failure; if extraction fails, validation still raises the same safe `ModelError` with the generic `schema_invalid` category. These are error families, not exact field diagnoses: custom rules such as primary-citation consistency and unique people share `value_error`.
-
-Diagnostics are observational: they do not tune prompts, schemas, audit, retrieval, model/provider settings, retries, or card states, and do not establish a token-cap fix or semantic improvement. `httpx.Client(timeout=90)` sets network-operation timeouts, not a hard whole-call deadline. A new live observation requires separate approval.
+Uvicorn's `--log-level` alone does not make this logger emit `INFO`. `httpx.Client(timeout=90)` sets network-operation timeouts, not a hard whole-call deadline.
 
 ## Development
 
