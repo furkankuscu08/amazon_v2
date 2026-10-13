@@ -489,8 +489,9 @@ def test_search_check_reports_missing_index_and_unreachable_qdrant(tmp_path):
     client = QdrantClient(location=":memory:")
     try:
         search = Searcher("unused", client=client, embed_fn=tiny_embedding)
-        with pytest.raises(SetupError, match="workbot.seed"):
+        with pytest.raises(SetupError, match="missing or out of date") as missing:
             search.check(db)
+        assert missing.value.command == "python -m workbot.seed"
         index_visible_records(db, "unused", client=client, embed_fn=tiny_embedding)
         search.check(db)
 
@@ -498,8 +499,9 @@ def test_search_check_reports_missing_index_and_unreachable_qdrant(tmp_path):
             def collection_exists(self, name):
                 raise ConnectionError("refused")
 
-        with pytest.raises(SetupError, match="not reachable"):
+        with pytest.raises(SetupError, match="did not answer") as down:
             Searcher("unused", client=Unreachable()).check(db)
+        assert down.value.command == "docker compose up -d"
     finally:
         client.close()
         db.close()
@@ -510,9 +512,9 @@ def test_setup_problem_is_shown_before_anything_is_stored_or_sent(
 ):
     class NotReady(WebSearch):
         def check(self, db):
-            raise SetupError("The Qdrant search service is not reachable.")
+            raise SetupError("Qdrant did not answer.", "docker compose up -d")
 
-    model = ScriptedModel([])
+    model = ScriptedModel([], question="Which market is this for?")
     client, location = _submit(tmp_path, monkeypatch, model)
     calls = model.calls
     try:
@@ -521,10 +523,13 @@ def test_setup_problem_is_shown_before_anything_is_stored_or_sent(
             "/sessions", data={"idea": "Another idea", "idempotency_key": "setup"}
         )
         assert response.status_code == 503
-        assert "not reachable" in response.text
+        assert "did not answer" in response.text
+        assert "<code>docker compose up -d</code>" in response.text
         assert "Review incomplete" not in response.text
         answer = client.post(f"{location}/answer", data={"answer": "Retail"})
         assert answer.status_code == 503
+        missing = client.post("/sessions/nope/answer", data={"answer": "Retail"})
+        assert missing.status_code == 404
         db = connect(str(tmp_path / "pages.sqlite3"))
         assert db.execute("SELECT COUNT(*) FROM sessions").fetchone()[0] == 1
         db.close()

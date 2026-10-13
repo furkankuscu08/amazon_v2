@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 import uuid
 from collections import defaultdict
@@ -16,6 +17,7 @@ from workbot.storage import (
     visible_record,
 )
 
+log = logging.getLogger(__name__)
 COLLECTION = "maya_visible_work"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 MIN_SEMANTIC_SCORE = 0.38  # Initial small-corpus threshold, not a measured one.
@@ -118,7 +120,11 @@ def keywords(text: str) -> list[str]:
 
 
 class SetupError(RuntimeError):
-    """Search cannot run yet; the message is plain setup advice safe to show."""
+    """Search cannot run yet. Message and command are setup advice safe to show."""
+
+    def __init__(self, message: str, command: str):
+        super().__init__(message)
+        self.command = command
 
 
 def _index_is_current(db) -> bool:
@@ -151,19 +157,19 @@ class Searcher:
     def check(self, db) -> None:
         """Raise SetupError before a request starts if search cannot answer it."""
         reseed = SetupError(
-            "The search data is missing or out of date. "
-            "Run `python -m workbot.seed`, then try again."
+            "The search data is missing or out of date. Load it, then try again.",
+            "python -m workbot.seed",
         )
-        if not _index_is_current(db):
-            raise reseed
+        # Qdrant first: seeding needs it too, so it is the first step to fix.
         try:
             indexed = self._qdrant().collection_exists(COLLECTION)
-        except Exception:  # noqa: BLE001 — any client failure means Qdrant is unusable.
+        except Exception as exc:  # noqa: BLE001 — any client failure means Qdrant is unusable.
+            log.warning("search_setup_check_failed type=%s", type(exc).__name__)
             raise SetupError(
-                "The Qdrant search service is not reachable. "
-                "Start it with `docker compose up -d`, then try again."
+                "The Qdrant search service did not answer. Start it, then try again.",
+                "docker compose up -d",
             ) from None
-        if not indexed:
+        if not indexed or not _index_is_current(db):
             raise reseed
 
     def records(self, db, intents: list[dict], limit: int = 8) -> list[dict]:
