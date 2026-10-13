@@ -4,8 +4,11 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def offline_test_environment(tmp_path, monkeypatch):
-    # workbot.main loads .env on import, so the real key can be in the environment:
-    # remove it, and keep the default database out of reach, for every test.
-    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
-    monkeypatch.setenv("WORKBOT_DB_PATH", str(tmp_path / "unset.sqlite3"))
+def offline_test_environment(tmp_path_factory, monkeypatch):
+    # workbot.main loads .env on import, so real settings can be in the environment.
+    # An empty key, unlike a removed one, also survives a later load_dotenv().
+    monkeypatch.setenv("OPENROUTER_API_KEY", "")
+    monkeypatch.setenv("QDRANT_URL", "http://127.0.0.1:9")
+    monkeypatch.setenv(
+        "WORKBOT_DB_PATH", str(tmp_path_factory.getbasetemp() / "unset.sqlite3")
+    )

@@ -329,6 +329,10 @@ def test_contribution_reaches_the_card_but_not_the_priority_model(db):
     ("text", "shown"),
     [
         ("Wrote the launch checklist and could clarify how review steps are", None),
+        # A complete first sentence is not shown on its own: there is no trimming.
+        ("Wrote the launch checklist. It could clarify review steps but not own", None),
+        # A closing bracket without a full stop does not end a sentence.
+        ("Authored the settlement runbook (covers refunds, e.g. chargebacks)", None),
         (
             "Wrote the runbook, e.g. for refunds. It covers chargebacks (in part).",
             "Wrote the runbook, e.g. for refunds. It covers chargebacks (in part).",
@@ -769,6 +773,12 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
     assert by_area["brand_review"]["status"] == (
         "review_incomplete" if failed_task == "area" else "not_found"
     )
+    assert by_area["brand_review"]["people"] == []
+    # Priority still sees every area, with the failed one marked as such.
+    assert [area["status"] for area in priority_payloads[0]["areas"]] == [
+        "people",
+        by_area["brand_review"]["status"],
+    ]
     assert [area["id"] for area in card["areas"]] == (
         ["campaign_review", "brand_review"]
         if failed_task == "priority"
@@ -1204,16 +1214,24 @@ def test_extra_or_missing_first_conversations_keep_the_order(db):
         ).first_conversations
         == []
     )
-    chosen = ["nina", "elena", "marcus", "leo", "jules", "nina"]
-    _, card = card_for(
-        db,
-        StubModel(
-            [impact(AREA)],
-            [evaluation(proposal("nina", "direct_contact", ["jira:MKT-482"]))],
-            [priority("campaign_review", first=chosen)],
-        ),
-    )
-    assert card["first_conversations"] == ["nina"]
+    for key, chosen, kept in (
+        ("extra", ["nina", "elena", "marcus", "leo", "jules", "nina"], ["nina"]),
+        ("missing", [], []),
+    ):
+        _, card = card_for(
+            db,
+            StubModel(
+                [impact(AREA, UNMAPPED)],
+                [evaluation(proposal("nina", "direct_contact", ["jira:MKT-482"]))],
+                [priority("regional_compliance", "campaign_review", first=chosen)],
+            ),
+            key=key,
+        )
+        assert card["first_conversations"] == kept
+        assert [a["id"] for a in card["areas"]] == [
+            "regional_compliance",
+            "campaign_review",
+        ]
 
 
 def test_advisor_needs_a_usable_tie_on_the_primary_source(db):
@@ -1239,8 +1257,10 @@ def test_advisor_needs_a_usable_tie_on_the_primary_source(db):
             searcher,
             key=primary,
         )
-        return [p["person_id"] for p in card["areas"][0]["people"]]
+        area = card["areas"][0]
+        return area["status"], [p["person_id"] for p in area["people"]]
 
-    # The reporter link elsewhere cannot lend weight to a mention shown as the reason.
-    assert people("slack:mention-55") == []
-    assert people("jira:MKT-482") == ["elena"]
+    # The reporter link elsewhere cannot lend weight to a mention shown as the reason,
+    # and a rejected advisor leaves a completed review, not an incomplete one.
+    assert people("slack:mention-55") == ("not_found", [])
+    assert people("jira:MKT-482") == ("people", ["elena"])

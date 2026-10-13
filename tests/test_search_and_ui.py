@@ -179,7 +179,10 @@ def web(tmp_path, monkeypatch):
         monkeypatch.setattr(app.state, "model", model, raising=False)
         return TestClient(app)
 
-    return SimpleNamespace(path=path, use=use)
+    def search_with(searcher):
+        monkeypatch.setattr(app.state, "searcher", searcher)
+
+    return SimpleNamespace(path=path, use=use, search_with=search_with)
 
 
 def test_web_card_reload_and_source_visibility(web):
@@ -477,7 +480,7 @@ def test_setup_problem_is_shown_before_anything_is_stored_or_sent(web):
     model = ScriptedModel([], question="Which market is this for?")
     client, location = _submit(web, model)
     calls = model.calls
-    app.state.searcher = NotReady()
+    web.search_with(NotReady())
     response = client.post(
         "/sessions", data={"idea": "Another idea", "idempotency_key": "setup"}
     )
