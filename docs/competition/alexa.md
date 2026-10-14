@@ -1,6 +1,6 @@
 # Alexa+ track: both eligible routes
 
-Checked 2026-09-26. The [Official Rules §4](rules.md#4-how-to-enter) govern eligibility; the [Devpost FAQs](https://amazonappdev2026.devpost.com/details/faqs) clarify practical access but cannot override the Rules. **Choose the route you actually implement and make it unambiguous in the repo, description, and demo.** Neither route requires a physical Alexa device.
+Checked 2026-09-26 and rechecked 2026-10-14. The [Official Rules §4](rules.md#4-how-to-enter) govern eligibility; the [Devpost FAQs](https://amazonappdev2026.devpost.com/details/faqs) clarify practical access but cannot override the Rules. **Choose the route you actually implement and make it unambiguous in the repo, description, and demo.** Neither route requires a physical Alexa device.
 
 | | Working Agent Skill or self-hosted MCP server | Simulated Alexa+ web experience |
 | --- | --- | --- |
@@ -20,6 +20,7 @@ The Rules' “How To Enter” line says to start by developing an MCP, but their
 ## Simulated-web-experience route
 
 - The [Rules §4](rules.md#4-how-to-enter) expressly allow a **simulated Alexa+ experience instead**, built with any AI/agentic tool, with no required framework, SDK, or MCP-shaped surface. This route does **not** have to ship an MCP server or obtain partner-preview access. Its **source code** must be in the repo and the video must **clearly demonstrate** the experience.
+- **FAQ wording conflict (seen 2026-10-14):** an FAQ answer says a web page acting as a real MCP client for a self-hosted MCP server “is the simulated-experience path the Resources page points to”. That describes the real MCP route demonstrated through a web client; it does not narrow the Rules' separate simulation alternative, which still needs no MCP-shaped surface (Rules §4, which prevail under §11.4). If the difference matters for a submission, ask in writing (§11.6).
 - **Recommendation, not a rule:** label it “simulated Alexa+ experience” in the UI, README, video, and submission; demonstrate a real end-to-end interaction rather than implying access to Amazon's official client. If useful for future portability, design your own backend tools and structured UI payloads so an MCP adapter could be added later. A later adapter is **not** a competition requirement.
 - Amazon's own [add-on web simulator](https://developer.amazon.com/docs/alexaplus/add-ons/test-with-web-simulator.html) requires a **deployed add-on** and preview access. It is **not** the independently built web simulation allowed by the hackathon Rules. See the [FAQ access answer](https://amazonappdev2026.devpost.com/details/faqs).
 
