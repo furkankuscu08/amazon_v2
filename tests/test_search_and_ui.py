@@ -212,7 +212,7 @@ def test_web_card_reload_and_source_visibility(web):
     assert "Before you start, talk to one person." in card.text
     assert "Related work" in card.text
     assert "Assignee of a jira record:" in card.text
-    assert "All 1 consultation areas and everyone considered" in card.text
+    assert "Full list: 1 consultation area and each person's evidence" in card.text
     assert "Model summary (unverified):" in card.text
     assert "Checklist work can clarify pre-launch campaign review scope." in card.text
     assert 'http-equiv="refresh"' not in card.text

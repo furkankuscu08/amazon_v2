@@ -33,7 +33,7 @@
 {% if plan.gaps.review_incomplete %}<p class="warning"><strong>Review incomplete for:</strong> {{ plan.gaps.review_incomplete | join('; ') }}.</p>{% endif %}
 {% if card.shared_question %}<p><strong>Open question across areas:</strong> {{ card.shared_question }}</p>{% endif %}
 <p><small>These are proposals from the work traces and directory you can see, not verified ownership. I send no messages or invitations.</small></p>
-<details class="all"><summary>All {{ card.areas | length }} consultation areas and everyone considered</summary>
+<details class="all"><summary>Full list: {{ card.areas | length }} consultation area{{ '' if card.areas | length == 1 else 's' }} and each person's evidence</summary>
 {% for area in card.areas %}{% set elsewhere = plan.elsewhere[loop.index0] %}<article><h3>{{ area.label }}</h3><p>{{ area.rationale }}</p>{% if area.consultation_need %}<p><strong>What to find out:</strong> {{ area.consultation_need }}</p>{% endif %}
 {% if area.status == 'mapping_unresolved' %}<div class="warning"><strong>Team not identified.</strong> {{ area.mapping_reason }} No one was reviewed for this area.</div>
 {% elif area.status == 'review_incomplete' %}<div class="warning"><strong>Review incomplete.</strong> The review of this area did not finish, so no one is shown for it.</div>

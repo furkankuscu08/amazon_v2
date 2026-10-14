@@ -12,6 +12,7 @@ WorkBot is a simulated Alexa+ experience: Maya describes a project idea and gets
 - [`AGENTS.md`](AGENTS.md) guides coding agents working in this repository.
 - [`docs/archive/`](docs/archive/) preserves the original non-binding Turkish design proposal; it is not current behavior or an active implementation plan.
 - [`docs/competition.md`](docs/competition.md) is a dated working brief for the hackathon; recheck the [live official rules](https://amazonappdev2026.devpost.com/rules) before submitting.
+- [`docs/demo-video.md`](docs/demo-video.md) is a working draft of the demo-video script; it is not final and will change.
 - [`docs/competition-winner-patterns.md`](docs/competition-winner-patterns.md) compares other competition winners for inspiration, not requirements or proof of what wins.
 - [`opencode.jsonc`](opencode.jsonc) holds OpenCode configuration, including optional built-in subagent model preferences.
 
