@@ -14,6 +14,7 @@ Read this file for working rules, then the code/tests relevant to the task. Use 
 ## Competition context
 
 - [`docs/competition.md`](docs/competition.md) is a dated working brief for the hackathon. WorkBot follows the **simulated Alexa+ web experience** route; do not impose the separate Agent Skill/MCP route's requirements on this prototype.
+- [`docs/demo-video.md`](docs/demo-video.md) is a **working draft** of the demo-video script, not a final version; the user will revisit it. Do not treat its lines or timings as settled, and keep its claims within what the code does. After the Bedrock migration, recheck the demo card's people, roles, model name, and run time against a fresh, user-approved live run before the script is used.
 - [`docs/competition-winner-patterns.md`](docs/competition-winner-patterns.md) compares winners from other competitions. Treat its examples as possible inspiration, not contest rules, WorkBot requirements, or proof of what wins.
 - For submission or eligibility decisions, recheck the [live official rules](https://amazonappdev2026.devpost.com/rules). They take precedence over the local extract and working briefs. Ask the user about unclear or conflicting requirements. Do not copy dates, prizes, or other changeable rules into agent instructions. Do not modify `docs/competition/` unless the user explicitly asks.
 
