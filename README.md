@@ -2,7 +2,11 @@
 
 **Amazon Developer Hackathon — Alexa+ track (simulated web experience route)**
 
+Before you change how something works at a company, you need to know who to involve. Job titles and org charts do not say who handles a decision today or who only used to.
+
 WorkBot is a simulated Alexa+ experience: Maya describes a project idea and gets, as a short conversation, a plan of who to talk to first, with evidence-backed contacts, what to find out from each, and explicit gaps. The home page lists her earlier ideas; a plan whose evidence or access has changed since is not shown when opened and is reported as no longer valid instead. It searches synthetic work traces and a structured directory; it does not make project decisions or contact people.
+
+For example, Maya asks: *"Raise the approval threshold for marketing spend requests so small changes need no review."* WorkBot answers with "Before you start, talk to four people." In a stored run, these were the Finance reviewer who currently handles such requests, the author of the 2024 approval policy (shown with a directory note that this person's approver duty has ended), the marketer who requested the Q4 budget reforecast, and a Legal colleague who documented signature limits for supplier agreements. Each comes with a linked source record and what to find out from that area. The people and wording vary from run to run.
 
 > ⚠️ **Disclaimer:** This is **not** an official Alexa integration or Amazon API integration. Use **synthetic project ideas only**: prompts are sent to OpenRouter. The directory and work traces are fictional. No messages or invitations are sent to anyone. WorkBot's input and output language is **English**: enter ideas and clarification answers in English; synthetic records, search intents, prompts, and displayed questions/cards are written in English. This is a product convention, not automatic detection or rejection of other languages at runtime.
 
@@ -142,4 +146,9 @@ requirements.in/txt # dependency pinning
 workbot/            # application package (app entrypoint: workbot.main:app)
 tests/              # pytest suite
 docs/               # hackathon brief & design notes
+LICENSE             # MIT
 ```
+
+## License
+
+MIT; see [`LICENSE`](LICENSE). The company, people, and records in `workbot/fixture/` are fictional.
