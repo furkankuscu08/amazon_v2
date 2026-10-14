@@ -6,6 +6,8 @@ plan only reorders and groups people the audit already accepted.
 
 from __future__ import annotations
 
+import re
+
 MAX_FIRST_CONVERSATIONS = 4
 ROLE_ORDER = {"direct_contact": 0, "advisor": 1, "routing_contact": 2}
 _CONFIDENCE = {"high": 0, "medium": 1, "low": 2}
@@ -14,6 +16,9 @@ _GAPS = {
     "mapping_unresolved": "team_unresolved",
     "review_incomplete": "review_incomplete",
 }
+# Cards stored before the list linked each line ended a line with its source ID,
+# such as " [jira:MKT-482]."; other bracketed text is left alone.
+_OLD_SOURCE_ID = re.compile(r" \[[a-z]+:[^\]\s]+\]\.$")
 
 
 def _label(person: dict) -> str:
@@ -24,6 +29,31 @@ def _label(person: dict) -> str:
     if person.get("primary_kind") == "responsibility":
         return "Current responsibility"
     return "Related work"
+
+
+def _line(text: str) -> str:
+    cut = _OLD_SOURCE_ID.sub("", text)
+    # A quoted record needs no full stop of its own after the closing quote.
+    return cut if cut == text or cut.endswith("’") else cut + "."
+
+
+def _evidence(person: dict) -> list[dict]:
+    """Each audited evidence line with the source it cites, the primary one first."""
+    primary = person.get("primary_evidence_id")
+    lines = person.get("why", [])
+    # The audit writes one line per citation in this order. Without a primary the
+    # order is unknown, and a line must never link to a source it does not describe.
+    ids = (
+        [primary, *(sid for sid in person["evidence_ids"] if sid != primary)]
+        if primary
+        else []
+    )
+    if len(ids) != len(lines):
+        ids = [None] * len(lines)
+    return [
+        {"text": _line(text), "source_id": sid}
+        for text, sid in zip(lines, ids, strict=True)
+    ]
 
 
 def _strength(person: dict) -> tuple[int, int]:
@@ -60,6 +90,7 @@ def build_plan(card: dict) -> dict:
             **person,
             "ended_duty": notes.get(person["person_id"]),
             "label": _label(person),
+            "evidence": _evidence(person),
             "area": area["label"],
             "need": area.get("consultation_need"),
         }
@@ -84,7 +115,8 @@ def build_plan(card: dict) -> dict:
     return {
         "first": [entries[pid] for pid in chosen],
         "gaps": gaps,
-        "notes": notes,
+        # Everyone on the card once, as shown in their home area.
+        "people": entries,
         # Per area: where each listed person is shown in full (None = here).
         "elsewhere": [
             {

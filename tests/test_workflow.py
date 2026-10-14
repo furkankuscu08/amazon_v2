@@ -319,9 +319,9 @@ def test_contribution_reaches_the_card_but_not_the_priority_model(db):
     assert model.calls[-1][0] == "priority"
     assert "contribution" not in priority_input
     assert "launch review steps" not in priority_input
-    # Search counts and rejection flags stay on the card, out of the priority call.
-    assert "retrieval" in card["areas"][0]
-    for diagnostic in ("retrieval", "direct_review_incomplete", "no_visible_work"):
+    # Rejection flags stay on the card, out of the priority call.
+    assert "direct_review_incomplete" in card["areas"][0]
+    for diagnostic in ("direct_review_incomplete", "no_visible_work"):
         assert diagnostic not in priority_input
 
 
@@ -367,7 +367,7 @@ def test_empty_model_response_is_still_not_found(db):
     assert card["areas"][0]["status"] == "not_found"
 
 
-def test_primary_source_is_first_and_shown_question_has_no_model_premise(db):
+def test_primary_source_is_first_and_card_has_no_model_question(db):
     proposed = proposal(
         "nina",
         "direct_contact",
@@ -385,24 +385,10 @@ def test_primary_source_is_first_and_shown_question_has_no_model_premise(db):
     assert person["primary_evidence_id"] == "slack:retail-814"
     assert person["why"][0].startswith("Author of slack")
     assert person["role"] == "direct_contact"
-    assert person["ask"] == (
-        "What did your work on the cited source cover, and could it inform the consultation need shown above?"
-    )
+    # Evidence lines name no source ID; the page links each line to its source.
+    assert not any("[" in line for line in person["why"])
     assert "consent rules" not in json.dumps(card)
-    assert "specific consultation need" in person["unverified"]
-
-
-def test_reporter_advisor_question_does_not_assume_work_on_the_record(db):
-    proposed = proposal("elena", "advisor", ["jira:MKT-482"])
-    _, card = card_for(
-        db,
-        StubModel(
-            [impact(AREA)], [evaluation(proposed)], [priority("campaign_review")]
-        ),
-    )
-    assert card["areas"][0]["people"][0]["ask"] == (
-        "What can you clarify about the cited record, and could it inform the consultation need shown above?"
-    )
+    assert not {"ask", "unverified"} & set(person)
 
 
 def test_expired_responsibility_and_weak_reporter_do_not_prove_direct_contact(db):

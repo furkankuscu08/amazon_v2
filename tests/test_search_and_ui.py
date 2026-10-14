@@ -202,10 +202,13 @@ def test_web_card_reload_and_source_visibility(web):
     assert card.status_code == 200
     assert "Nina Ellis" in card.text
     assert "Eve Restricted" not in card.text
-    assert "Proposed direct contact" in card.text
-    assert "Primary cited source:" in card.text
+    assert "Proposed" not in card.text
     assert f'href="{url}/sources/jira%3AMKT-482"' in card.text
-    assert "Ask to check the connection:" in card.text
+    # No raw source ID is shown as text, and no stock question or search trace.
+    assert "jira:MKT-482" not in card.text
+    assert "Ask:" not in card.text and "Ask to check" not in card.text
+    assert "what to find out:" in card.text
+    assert "Evaluation trace" not in card.text
     assert "Before you start, talk to one person." in card.text
     assert "Related work" in card.text
     assert "Assignee of a jira record:" in card.text
@@ -215,7 +218,11 @@ def test_web_card_reload_and_source_visibility(web):
     assert 'http-equiv="refresh"' not in card.text
     assert client.get(url).text == card.text
     assert client.get(url + "/sources/slack:restricted-plan").status_code == 404
-    assert client.get(url + "/sources/jira:MKT-482").status_code == 200
+    source_page = client.get(url + "/sources/jira:MKT-482")
+    assert source_page.status_code == 200
+    assert "<h2>Jira record · " in source_page.text
+    assert "jira:MKT-482" not in source_page.text
+    assert "version" not in source_page.text
     db = connect(web.path)
     saved = db.execute("SELECT card_json FROM sessions WHERE id=?", (sid,)).fetchone()
     old_card = json.loads(saved["card_json"])
@@ -228,8 +235,9 @@ def test_web_card_reload_and_source_visibility(web):
     db.close()
     previous = client.get(url)
     assert previous.status_code == 200
-    assert "Primary cited source:" not in previous.text
-    assert "Source IDs and dates" in previous.text
+    # An older card without a primary source lists its evidence without links.
+    assert "Assignee of jira record" in previous.text
+    assert "/sources/" not in previous.text
     db = connect(web.path)
     db.execute(
         """INSERT INTO sessions
@@ -240,7 +248,7 @@ def test_web_card_reload_and_source_visibility(web):
     db.close()
     # No run is working on it (a restart, say): it must not wait forever.
     running = client.get("/sessions/running")
-    assert "Unable to evaluate this request safely" in running.text
+    assert "I could not evaluate this idea" in running.text
     assert "Working on it" not in running.text
     home = client.get("/").text
     assert "Your earlier ideas" in home
@@ -257,12 +265,17 @@ def test_web_card_reload_and_source_visibility(web):
 def test_not_found_does_not_expose_retrieved_but_uncited_source(web):
 
     class EmptyAreaModel(WebModel):
+        def __init__(self):
+            self.area_inputs = []
+
         def complete(self, task, payload):
             if task == "area":
+                self.area_inputs.append(json.dumps(payload))
                 return AreaEvaluation.model_validate({"people": []})
             return super().complete(task, payload)
 
-    client = web.use(EmptyAreaModel())
+    model = EmptyAreaModel()
+    client = web.use(model)
     response = client.post(
         "/sessions",
         data={"idea": "Help plan marketing campaigns", "idempotency_key": "empty"},
@@ -273,8 +286,9 @@ def test_not_found_does_not_expose_retrieved_but_uncited_source(web):
     app.state.last_run.join(10)
     page = client.get(url)
     assert page.status_code == 200
-    assert "No verified contact found" in page.text
-    assert "Accessible records: 1" in page.text
+    assert "No contact found." in page.text
+    # Search did return the record: the model saw it, the page must not show it.
+    assert "jira:MKT-482" in model.area_inputs[0]
     assert "jira:MKT-482" not in page.text
     assert client.get(url + "/sources/jira:MKT-482").status_code == 404
 
@@ -365,6 +379,7 @@ class ScriptedModel(WebModel):
         self.people = people
         self.question = question
         self.calls = 0
+        self.area_inputs = []
 
     def complete(self, task, payload):
         self.calls += 1
@@ -372,6 +387,7 @@ class ScriptedModel(WebModel):
         if task == "impact" and self.question and not payload["answers"]:
             return Impact.model_validate({"question": self.question, "areas": []})
         if task == "area":
+            self.area_inputs.append(json.dumps(payload))
             return AreaEvaluation.model_validate({"people": self.people})
         return reply
 
@@ -405,16 +421,44 @@ def test_routing_line_and_directory_source_page(web):
     client, url = _submit(web, model)
     card = client.get(url).text
     # Search returned a record, so the line must not claim nothing was found.
-    assert "Accessible records: 1" in card
+    assert "jira:MKT-482" in model.area_inputs[0]
     assert "No one was identified from the visible work on this." in card
     assert "was found" not in card
     remit = client.get(url + "/sources/directory:growth-remit")
     assert remit.status_code == 200
+    assert "<h2>Directory record</h2>" in remit.text
+    assert "directory:growth-remit" not in remit.text
+    # Both routing sources stay reachable from the list without showing their IDs.
+    assert f'href="{url}/sources/directory%3Agrowth-manager"' in card
+    assert "directory:growth" not in card
     assert "team remit:" in remit.text and "Since " in remit.text
     manager = client.get(url + "/sources/directory:growth-manager").text
     assert "manages" in manager and "Since 2025-01-01." in manager
     assert client.get(url + "/sources/directory:secret-duty").status_code == 404
     assert "Eve Restricted" not in card + remit.text + manager
+
+
+def test_routing_line_in_the_plan_is_not_linked_to_a_work_record(web):
+    # The routing line is built from the manager and remit records, so it must not
+    # link to a work record the model happened to choose as the primary source.
+    db = connect(web.path)
+    db.execute(
+        "INSERT INTO work_links (record_id, person_id, relation) VALUES (?, ?, ?)",
+        ("jira:MKT-482", "marcus", "reporter"),
+    )
+    db.commit()
+    db.close()
+    refs = ["jira:MKT-482", "directory:growth-manager", "directory:growth-remit"]
+    model = ScriptedModel([_person("marcus", "routing_contact", refs, "adjacent")])
+    client, url = _submit(web, model)
+    card = client.get(url).text
+    plan, full_list = card.split('<details class="all">')
+    assert "Can route you" in plan and "Manages the team." in plan
+    assert "/sources/" not in plan
+    for source_id in ("jira%3AMKT-482", "directory%3Agrowth-manager"):
+        assert f'href="{url}/sources/{source_id}"' in full_list
+    # One caution sentence closes the list in place of per-person text.
+    assert "who owns the new idea, has not been established" in full_list
 
 
 def test_incomplete_review_does_not_also_promise_remaining_people(web):
@@ -425,7 +469,7 @@ def test_incomplete_review_does_not_also_promise_remaining_people(web):
     client, url = _submit(web, model)
     card = client.get(url).text
     assert "Review incomplete." in card
-    assert "No partial person list" in card
+    assert "so no one is shown for it" in card
     assert "remaining verified people are shown" not in card
 
 

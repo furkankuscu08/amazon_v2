@@ -13,7 +13,6 @@ from threading import Lock
 from workbot.llm import ModelError
 from workbot.models import AreaEvaluation, Impact, Priority
 from workbot.plan import ROLE_ORDER
-from workbot.questions import NEUTRAL_QUESTIONS
 from workbot.search import candidate_pool, keywords
 from workbot.storage import (
     current,
@@ -265,12 +264,6 @@ def _review_areas(
                 "people": [],
                 "direct_review_incomplete": False,
                 "no_visible_work_trace": False,
-                "retrieval": {
-                    "bm25": 0,
-                    "qdrant": 0,
-                    "visible_records": 0,
-                    "candidates": 0,
-                },
             }
             card["areas"].append(item)
             if area.mapping == "mapping_unresolved":
@@ -281,20 +274,7 @@ def _review_areas(
                 records = searcher.records(
                     db, [intent.model_dump() for intent in area.search_intents]
                 )
-                item["retrieval"] = {
-                    "bm25": sum(
-                        "bm25" in record.get("retrieval_channels", [])
-                        for record in records
-                    ),
-                    "qdrant": sum(
-                        "qdrant" in record.get("retrieval_channels", [])
-                        for record in records
-                    ),
-                    "visible_records": len(records),
-                    "candidates": 0,
-                }
                 pool = candidate_pool(db, area.model_dump(), records)
-                item["retrieval"]["candidates"] = len(pool["people"])
                 item["no_visible_work_trace"] = pool["no_visible_work_trace"]
                 if not pool["people"]:
                     continue
@@ -365,9 +345,9 @@ def _apply_priority(db, session: dict, card: dict, model) -> None:
 def _priority_areas(areas: list[dict]) -> list[dict]:
     """Keep out of the priority call what no model has audited or may see (the
     unverified model summary, the expired-duty note with its source) and the
-    area's search counts and rejection flags."""
+    area's rejection flags."""
     hidden = {"contribution", "ended_duty", "context_ids"}
-    diagnostics = {"retrieval", "direct_review_incomplete", "no_visible_work_trace"}
+    diagnostics = {"direct_review_incomplete", "no_visible_work_trace"}
     return [
         {
             **{k: v for k, v in area.items() if k not in diagnostics},
@@ -452,18 +432,18 @@ def _evidence(db, candidate: dict, evidence_id: str) -> tuple[str, str, str] | N
         if evidence["kind"] == "responsibility":
             return (
                 "responsibility",
-                f"Current {row['relation']}: {row['scope']} [{evidence_id}].",
+                f"Current {row['relation']}: {row['scope']}.",
                 f"Current {row['relation']} — {_lower_first(row['scope'])}.",
             )
         if evidence["kind"] == "manager":
             return (
                 "manager",
-                f"Currently manages the relevant team [{evidence_id}].",
+                "Currently manages the relevant team.",
                 "Currently manages the team.",
             )
         return (
             "remit",
-            f"Team remit: {row['scope']} [{evidence_id}].",
+            f"Team remit: {row['scope']}.",
             f"Team remit: {row['scope']}.",
         )
     record = visible_record(db, evidence_id)
@@ -473,7 +453,7 @@ def _evidence(db, candidate: dict, evidence_id: str) -> tuple[str, str, str] | N
     ).fetchone()
     if not record or not link:
         return None
-    description = f"{evidence['relation'].capitalize()} of {record['kind']} record on {record['occurred_at']}: ‘{_excerpt(record['text'])}’ [{evidence_id}]."
+    description = f"{evidence['relation'].capitalize()} of {record['kind']} record on {record['occurred_at']}: ‘{_excerpt(record['text'])}’"
     headline = f"{evidence['relation'].capitalize()} of a {record['kind']} record: ‘{_excerpt(record['text'], 120)}’"
     return evidence["relation"], description, headline
 
@@ -481,17 +461,6 @@ def _evidence(db, candidate: dict, evidence_id: str) -> tuple[str, str, str] | N
 WORK_STRONG = {"assignee", "author", "contributor"}
 DIRECT_KINDS = WORK_STRONG | {"responsibility"}
 ADVISOR_KINDS = WORK_STRONG | {"responsibility", "reporter"}
-
-
-def _grounded_ask(role: str, primary_kind: str) -> str:
-    """Ask about a verified link without asserting what the source contains."""
-    if role == "routing_contact":
-        return NEUTRAL_QUESTIONS["routing"]
-    if primary_kind == "responsibility":
-        return NEUTRAL_QUESTIONS["responsibility"]
-    if primary_kind in WORK_STRONG:
-        return NEUTRAL_QUESTIONS["work"]
-    return NEUTRAL_QUESTIONS["record"]
 
 
 def _ended_duty(db, person_id: str, topic: set[str]) -> dict | None:
@@ -605,13 +574,6 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
                 ],
                 # Unverified model text, shown labelled as such; None hides the line.
                 "contribution": _shown_contribution(proposal.contribution),
-                "ask": _grounded_ask(role, primary_kind),
-                # A stable, role-specific caution rather than model free text.
-                "unverified": (
-                    "Ownership of the new idea and subject expertise have not been established."
-                    if role == "routing_contact"
-                    else "Whether the cited work addresses this area's specific consultation need and who owns the new initiative have not been established."
-                ),
             }
         )
     has_direct = any(p["role"] == "direct_contact" for p in accepted)
