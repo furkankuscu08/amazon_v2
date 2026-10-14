@@ -1,7 +1,7 @@
 # Official Rules
 
 Source: https://amazonappdev2026.devpost.com/rules  
-Extracted: 2026-09-19. Reconciled with the live page: 2026-09-26.
+Extracted: 2026-09-19. Reconciled with the live page: 2026-10-14.
 
 This file is the **governing extract**. If it disagrees with homepage copy, Resources, Updates, talks, or notes in this folder, **this text wins** (§11.4). Prefer the live Rules URL if this copy and the website later diverge. [Source kinds](../competition.md#source-precedence).
 
@@ -92,6 +92,8 @@ Entrants may request $150 in AWS Promotional Credits for the purpose of completi
 
 - NOTE: Additional charges incurred by the Entrant for the use of AWS products are the responsibility of the Entrant. Entrants are encouraged to monitor their usage of services so as to not incur additional charges.
 
+October 7th Update: We are out of credit codes and will no longer be accepting credit requests.
+
 Complete and enter all of the required fields on the “Enter a Submission” page of the Hackathon Website (each a “Submission”) during the Submission Period and follow the requirements below.
 
 #### Project Requirements
@@ -126,7 +128,7 @@ Submissions to the Hackathon must meet the following requirements:
 - The repository must be either public and open source by including an open source license file OR private and shared with testing@devpost.com and the Amazon team (info below).
 
 - To share your project with the Amazon team, open your repo’s Settings > Collaborators > Add people and add the usernames below. [GitHub walk through here](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-access-to-your-personal-repositories/inviting-collaborators-to-a-personal-repository).
-- Amazon Developer Relations GitHub profiles: Chris Traganos: https://github.com/chris-trag Kourtney Meiss: https://github.com/knmeiss Giovanni Laquidara: https://github.com/giolaq Anisha Malde: https://github.com/anishamalde Moses Roth: https://github.com/mosesroth Emerson Sklar: https://github.com/emersonsklar
+- Amazon Developer Relations GitHub profiles: Kourtney Meiss: https://github.com/knmeiss Giovanni Laquidara: https://github.com/giolaq Anisha Malde: https://github.com/anishamalde Moses Roth: https://github.com/mosesroth Emerson Sklar: https://github.com/emersonsklar
 - Make sure this repo is private, then add these GitHub users as collaborators so they can review my submission: chris-trag, knmeiss, giolaq, anishamalde, mosesroth, emersonsklar.
 - For public repositories: this license should be detectable and visible at the top of the repository page (in the About section).
 

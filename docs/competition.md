@@ -1,6 +1,6 @@
 # Build, Ship, Shape: Amazon Developer Hackathon
 
-Working brief for the **Alexa+ track**, including both the real Agent Skill/MCP route and the simulated-web-experience route. Both mini-challenges remain possible. Sources checked **2026-09-26**; recheck live pages before making a submission because the Rules can change (§11.5).
+Working brief for the **Alexa+ track**, including both the real Agent Skill/MCP route and the simulated-web-experience route. Both mini-challenges remain possible. Sources checked **2026-09-26**; Rules, FAQs, Updates, and homepage rechecked **2026-10-14** (see [changes found](#changes-found-on-2026-10-14)). Recheck live pages before making a submission because the Rules can change (§11.5).
 
 ## Source precedence
 
@@ -15,7 +15,8 @@ If a Rules term is ambiguous, request clarification **in writing before the dead
 | When (Pacific time) | What | Authority |
 | --- | --- | --- |
 | 31 Aug 2026, 10:15 am | Submission Period began; existing projects must show significant work since then | Rules §§1, 4 |
-| **21 Oct 2026, 12:00 pm** | Request optional $150 AWS Promotional Credits, while supplies last | Rules §4; [details](competition/mini-challenges.md#aws-credits) |
+| 19 Oct 2026, 9:00 am | Office Hours #2 with the Amazon team (registration link in the [update](https://amazonappdev2026.devpost.com/updates/46771-office-hours-schedule)) | Updates |
+| ~~21 Oct 2026, 12:00 pm~~ | ~~Request optional $150 AWS Promotional Credits~~: **closed**; the Rules' 7 Oct update says credit codes ran out and no more requests are accepted | Rules §4; [details](competition/mini-challenges.md#aws-credits) |
 | **23 Oct 2026, 12:00 pm** | Devpost submission closes | Rules §1 |
 | **9–20 Nov 2026** (noon to noon) | Judging; keep project freely available through the end | Rules §§1, 4 |
 | On or around **3 Dec 2026, 12:00 pm** | Winners announced | Rules §1 |
@@ -30,5 +31,15 @@ The [schedule widget](https://amazonappdev2026.devpost.com/details/dates) still 
 - [Judging](competition/judging.md) covers the pass/fail screen, four equal criteria, and optional friction-log bonus; [prizes](competition/prizes.md) lists the awards.
 
 The other primary tracks are **Fire TV** (demo-ready Fire OS/Vega OS app on device or simulator), **Bee** (actual Bee/Apple Watch Bee data used in code and video), and **Ring** (working Ring API/SDK/simulator/device app shown via simulator or device). This is only a synopsis; follow [Rules §4](competition/rules.md#4-how-to-enter) if entering one. Theme tags such as AI/Productivity do **not** replace track requirements.
+
+## Changes found on 2026-10-14
+
+The live Rules, FAQs, Updates, and homepage were compared with the 2026-09-26 extract; the files in `competition/` now include these changes.
+
+- **AWS credits closed:** the Rules' 7 Oct update says credit codes ran out. Live Bedrock or other AWS usage is at the entrant's own cost ([details](competition/mini-challenges.md#aws-credits)).
+- **Private-repository reviewers:** the Rules' profile list and the FAQs dropped `chris-trag`; the Rules' collaborator sentence and the homepage still include him. Invite all six if the repository stays private ([checklist](competition/submission.md#required)). The rest of the Rules text is unchanged.
+- **FAQ wording on the simulated route:** one answer calls a web MCP client "the simulated-experience path". The Rules' separate simulation alternative is unchanged and prevails ([Alexa+ routes](competition/alexa.md#simulated-web-experience-route)).
+- **Judges may run the project themselves** (FAQs), so the README setup and the credentials a judge needs must work from a clean checkout ([checklist](competition/submission.md#testing-rights-and-final-checks)).
+- **Submission tips** (Updates, informative): name the track's tool in the description, Built With, and video; pitch the problem first; keep keys out of the repository ([judging](competition/judging.md)).
 
 Questions: [Devpost discussions](https://amazonappdev2026.devpost.com/forum_topics), `janet@devpost.com` (homepage), or `support@devpost.com` (Rules). [Discord](https://discord.gg/devpost), `#amazon-developer-checkin`, is for informal help; use a written request for a Rules ambiguity.

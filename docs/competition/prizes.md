@@ -1,6 +1,6 @@
 # Prizes
 
-Checked 2026-09-26 against [Official Rules §8](rules.md#8-prizes) and [Devpost prize cards](https://amazonappdev2026.devpost.com/). **Each listed prize has one winner** (Qty 1 in the live Rules); no Bee/Ring third-place prize is listed.
+Checked 2026-09-26 and rechecked 2026-10-14 against [Official Rules §8](rules.md#8-prizes) and [Devpost prize cards](https://amazonappdev2026.devpost.com/). **Each listed prize has one winner** (Qty 1 in the live Rules); no Bee/Ring third-place prize is listed.
 
 | Category | Place | Cash | AWS Credits |
 | --- | --- | ---: | ---: |

@@ -1,6 +1,6 @@
 # Optional mini-challenges and AWS credits
 
-Checked 2026-09-26 against [Official Rules §§4, 8](rules.md#4-how-to-enter), [Devpost home](https://amazonappdev2026.devpost.com/), [Resources](https://amazonappdev2026.devpost.com/resources), and [FAQs](https://amazonappdev2026.devpost.com/details/faqs). Mini-challenges layer onto a **primary-track project**; they are not replacement primary tracks. A project can win **one primary-track prize and one mini-challenge prize** (Rules §8). Rules §4 also permits the organizers to reassign a project between categories/mini-challenges where applicable.
+Checked 2026-09-26 and rechecked 2026-10-14 against [Official Rules §§4, 8](rules.md#4-how-to-enter), [Devpost home](https://amazonappdev2026.devpost.com/), [Resources](https://amazonappdev2026.devpost.com/resources), and [FAQs](https://amazonappdev2026.devpost.com/details/faqs). Mini-challenges layer onto a **primary-track project**; they are not replacement primary tracks. A project can win **one primary-track prize and one mini-challenge prize** (Rules §8). Rules §4 also permits the organizers to reassign a project between categories/mini-challenges where applicable.
 
 ## AWS Builder
 
@@ -18,6 +18,5 @@ Checked 2026-09-26 against [Official Rules §§4, 8](rules.md#4-how-to-enter), [
 
 ## AWS Promotional Credits (separate from prizes)
 
-- Registered eligible **individuals** may request **$150** for building the hackathon project, while supplies last, using the [form linked in Rules §4](https://forms.gle/5hyhr1u6x3fuV2aW7) **by 21 Oct 2026, 12:00 Pacific**. The [FAQs](https://amazonappdev2026.devpost.com/details/faqs) say each registered teammate may make their own request (not one per team); this is guidance consistent with the Rules' “individuals” wording.
-- The [Resources page](https://amazonappdev2026.devpost.com/resources) has a different form shortlink; prefer the Rules link if the links ever diverge. The previously checked [full form](https://docs.google.com/forms/d/e/1FAIpQLSeBczXNHM9Y1Zy7KoaKRCGdRS4YJQGOcgM6hV8qouAEnHMz4Q/viewform) says credits are not guaranteed, are first-come while supplies last, require naming a hackathon track, and can take up to five business days to process. **Form contents/redirects were not independently re-verified on 2026-09-26**; check before applying.
-- Credits are promotional, not cash; [AWS credit terms](https://aws.amazon.com/awscredits/) limit eligible charges and any extra spend is the entrant's responsibility (Rules §4). You do **not** have to enter AWS Builder to request build credits; the Rules make this available to individuals registered for the hackathon project.
+- **Closed.** Rules §4 offered registered individuals **$150** in credits while supplies last, with requests due 21 Oct 2026, 12:00 Pacific. Its **7 Oct 2026 update** says credit codes ran out and no more requests are accepted.
+- Any AWS usage, including live Bedrock calls during development and judging, is therefore paid by the entrant (Rules §4); see the FAQ cost tip under [AWS Builder](#aws-builder).
