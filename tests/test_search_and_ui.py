@@ -265,12 +265,17 @@ def test_web_card_reload_and_source_visibility(web):
 def test_not_found_does_not_expose_retrieved_but_uncited_source(web):
 
     class EmptyAreaModel(WebModel):
+        def __init__(self):
+            self.area_inputs = []
+
         def complete(self, task, payload):
             if task == "area":
+                self.area_inputs.append(json.dumps(payload))
                 return AreaEvaluation.model_validate({"people": []})
             return super().complete(task, payload)
 
-    client = web.use(EmptyAreaModel())
+    model = EmptyAreaModel()
+    client = web.use(model)
     response = client.post(
         "/sessions",
         data={"idea": "Help plan marketing campaigns", "idempotency_key": "empty"},
@@ -282,6 +287,8 @@ def test_not_found_does_not_expose_retrieved_but_uncited_source(web):
     page = client.get(url)
     assert page.status_code == 200
     assert "No contact found." in page.text
+    # Search did return the record: the model saw it, the page must not show it.
+    assert "jira:MKT-482" in model.area_inputs[0]
     assert "jira:MKT-482" not in page.text
     assert client.get(url + "/sources/jira:MKT-482").status_code == 404
 
@@ -372,6 +379,7 @@ class ScriptedModel(WebModel):
         self.people = people
         self.question = question
         self.calls = 0
+        self.area_inputs = []
 
     def complete(self, task, payload):
         self.calls += 1
@@ -379,6 +387,7 @@ class ScriptedModel(WebModel):
         if task == "impact" and self.question and not payload["answers"]:
             return Impact.model_validate({"question": self.question, "areas": []})
         if task == "area":
+            self.area_inputs.append(json.dumps(payload))
             return AreaEvaluation.model_validate({"people": self.people})
         return reply
 
@@ -412,6 +421,7 @@ def test_routing_line_and_directory_source_page(web):
     client, url = _submit(web, model)
     card = client.get(url).text
     # Search returned a record, so the line must not claim nothing was found.
+    assert "jira:MKT-482" in model.area_inputs[0]
     assert "No one was identified from the visible work on this." in card
     assert "was found" not in card
     remit = client.get(url + "/sources/directory:growth-remit")
@@ -426,6 +436,29 @@ def test_routing_line_and_directory_source_page(web):
     assert "manages" in manager and "Since 2025-01-01." in manager
     assert client.get(url + "/sources/directory:secret-duty").status_code == 404
     assert "Eve Restricted" not in card + remit.text + manager
+
+
+def test_routing_line_in_the_plan_is_not_linked_to_a_work_record(web):
+    # The routing line is built from the manager and remit records, so it must not
+    # link to a work record the model happened to choose as the primary source.
+    db = connect(web.path)
+    db.execute(
+        "INSERT INTO work_links (record_id, person_id, relation) VALUES (?, ?, ?)",
+        ("jira:MKT-482", "marcus", "reporter"),
+    )
+    db.commit()
+    db.close()
+    refs = ["jira:MKT-482", "directory:growth-manager", "directory:growth-remit"]
+    model = ScriptedModel([_person("marcus", "routing_contact", refs, "adjacent")])
+    client, url = _submit(web, model)
+    card = client.get(url).text
+    plan, full_list = card.split('<details class="all">')
+    assert "Can route you" in plan and "Manages the team." in plan
+    assert "/sources/" not in plan
+    for source_id in ("jira%3AMKT-482", "directory%3Agrowth-manager"):
+        assert f'href="{url}/sources/{source_id}"' in full_list
+    # One caution sentence closes the list in place of per-person text.
+    assert "who owns the new idea, has not been established" in full_list
 
 
 def test_incomplete_review_does_not_also_promise_remaining_people(web):

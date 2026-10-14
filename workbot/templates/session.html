@@ -25,7 +25,7 @@
 {% set count = plan.first | length %}
 <h2>{% if count == 0 %}I found no one to point you to from the work I can see.{% elif count == 1 %}Before you start, talk to one person.{% else %}Before you start, talk to {{ ['two', 'three', 'four'][count - 2] }} people.{% endif %}</h2>
 {% if count %}<ol class="people">{% for person in plan.first %}<li><h3>{{ person.name }} <small>· {{ person.team or person.area }}</small> <span class="badge">{{ person.label }}</span></h3>
-<p>{{ person.headline or person.evidence[0].text }}{% if person.primary_evidence_id and not person.primary_evidence_id.startswith('directory:') %} <a href="/sessions/{{ session.id }}/sources/{{ person.primary_evidence_id | urlencode }}">source</a>{% endif %}</p>
+<p>{{ person.headline or person.evidence[0].text }}{% if person.role != 'routing_contact' and person.primary_evidence_id and not person.primary_evidence_id.startswith('directory:') %} <a href="/sessions/{{ session.id }}/sources/{{ person.primary_evidence_id | urlencode }}">source</a>{% endif %}</p>
 {% if person.ended_duty %}<p class="note">{{ person.ended_duty }}</p>{% endif %}
 <p><small><strong>{{ person.area }}</strong>{% if person.need %} — what to find out: {{ person.need }}{% endif %}</small></p></li>{% endfor %}</ol>{% endif %}
 {% if plan.gaps.no_contact %}<p class="warning"><strong>No contact found for:</strong> {{ plan.gaps.no_contact | join('; ') }}.</p>{% endif %}
