@@ -1,16 +1,16 @@
 {% extends "base.html" %}
-{% block body %}
-<div class="turn"><span class="ring"></span><div class="bubble card">
-<span class="who">Workbot</span>
-<h2>Who should Maya talk to?</h2>
-<p>Tell me a project idea. I will look through the work traces and directory you can see, and tell you who to talk to before you start and why. I do not contact anyone.</p></div></div>
-<div class="turn user"><div class="bubble" style="flex:1">
-<span class="who">Maya</span>
-<form action="/sessions" method="post"><input type="hidden" name="idempotency_key" value="{{ key }}">
-<label for="idea">Your project idea</label><textarea name="idea" id="idea" maxlength="600" required placeholder="We should accept stablecoin payments in the Northgate app."></textarea>
-<p><button type="submit">Ask Workbot</button></p></form></div></div>
-{% if recent %}<div class="bubble"><span class="who">Your earlier ideas</span><ul class="recent">
+{% block body %}<div class="stack">
+<div class="stack tight"><h1>Who should Maya talk to?</h1>
+<p class="muted">Describe a project idea. I will look through the work traces and directory you can see, and tell you who to talk to before you start and why. I do not contact anyone.</p></div>
+<form class="panel stack tight" action="/sessions" method="post"><input type="hidden" name="idempotency_key" value="{{ key }}">
+<label for="idea">Your project idea<textarea name="idea" id="idea" maxlength="600" required placeholder="We should accept stablecoin payments in the Northgate app."></textarea></label>
+<div class="chips" id="examples" hidden><span class="small muted">Try an example:</span>
+<button type="button" data-idea="Raise the approval threshold for marketing spend requests so small changes need no review.">Marketing spend threshold</button>
+<button type="button" data-idea="We should accept stablecoin payments in the Northgate app.">Stablecoin payments</button>
+<button type="button" data-idea="Install self-service pickup lockers in our stores for online orders.">Pickup lockers</button></div>
+<div class="row"><button type="submit">Ask Workbot</button></div></form>
+<script>(function () { const box = document.getElementById('examples'); box.hidden = false; box.addEventListener('click', (event) => { const idea = event.target.dataset.idea; if (idea) { const field = document.getElementById('idea'); field.value = idea; field.focus(); } }); })();</script>
+{% if recent %}<section class="stack tight"><h2>Your earlier ideas</h2><ul class="plain panel recent">
 {% for item in recent %}<li><a href="/sessions/{{ item.id }}">{{ item.idea }}</a><br><small>{{ {'card': 'Plan ready', 'question': 'Waiting for your answer', 'processing': 'Working on it', 'refusal': 'Could not be evaluated'}[item.status] }}</small></li>{% endfor %}
-</ul></div>{% endif %}
-<p><small>This is an independent web simulation. All people and records are fictional.</small></p>
-{% endblock %}
+</ul></section>{% endif %}
+</div>{% endblock %}

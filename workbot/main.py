@@ -8,6 +8,7 @@ import time
 import uuid
 from collections import defaultdict, deque
 from functools import lru_cache
+from http import HTTPStatus
 from threading import Lock, Thread
 from urllib.parse import parse_qs
 
@@ -16,6 +17,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from workbot.llm import OpenRouter
 from workbot.plan import build_plan
@@ -46,6 +48,44 @@ templates = Jinja2Templates(
 )
 
 
+_ERROR_TITLES = {
+    400: "Request not accepted",
+    403: "Request refused",
+    404: "Not found",
+    405: "Request not accepted",
+    409: "Request not accepted",
+    410: "No longer available",
+    413: "That form is too large",
+    415: "Request not accepted",
+    429: "Please wait a moment",
+}
+
+
+@app.exception_handler(StarletteHTTPException)
+async def error_page(request: Request, exc: StarletteHTTPException):
+    """Show an error as a page; a framework default such as "Not Found" gets a sentence."""
+    try:
+        default = exc.detail == HTTPStatus(exc.status_code).phrase
+    except ValueError:
+        default = not exc.detail
+    if not default:
+        message = exc.detail
+    elif exc.status_code == 404:
+        message = "There is nothing to show at this address."
+    else:
+        message = "This request could not be completed. Go back to the Workbot page and try again."
+    return templates.TemplateResponse(
+        request,
+        "error.html",
+        {
+            "title": _ERROR_TITLES.get(exc.status_code, "Something went wrong"),
+            "message": message,
+        },
+        status_code=exc.status_code,
+        headers=exc.headers,
+    )
+
+
 class DemoRateLimiter:
     """A local-demo spending guard, not authentication or distributed rate limiting."""
 
@@ -73,9 +113,12 @@ demo_limiter = DemoRateLimiter()
 def _guard_model_request(request: Request) -> None:
     origin = request.headers.get("origin")
     if origin and origin != str(request.base_url).rstrip("/"):
-        raise HTTPException(403, "Cross-site requests are not accepted")
+        raise HTTPException(403, "Requests from other sites are not accepted.")
     if not demo_limiter.allow(request.client.host if request.client else "unknown"):
-        raise HTTPException(429, "Demo request limit reached; please wait")
+        raise HTTPException(
+            429,
+            "The demo request limit was reached. Wait a few minutes, then try again.",
+        )
 
 
 def _db():
@@ -102,20 +145,22 @@ async def _form(request: Request) -> dict[str, str]:
         request.headers.get("content-type", "").split(";", 1)[0].lower()
         != "application/x-www-form-urlencoded"
     ):
-        raise HTTPException(415, "Expected an HTML form")
+        raise HTTPException(415, "Send the idea from the Workbot page.")
     chunks = []
     size = 0
     async for chunk in request.stream():
         size += len(chunk)
         if size > 4096:
-            raise HTTPException(413, "Form is too large")
+            raise HTTPException(413, "The form is too large. Shorten it and try again.")
         chunks.append(chunk)
     try:
         fields = parse_qs(
             b"".join(chunks).decode("utf-8"), keep_blank_values=True, errors="strict"
         )
     except UnicodeError:
-        raise HTTPException(400, "Invalid form encoding") from None
+        raise HTTPException(
+            400, "The form could not be read. Try again from the Workbot page."
+        ) from None
     return {key: values[0] for key, values in fields.items()}
 
 
@@ -217,7 +262,7 @@ def _answers(session: dict) -> list[dict]:
 def show_session(request: Request, sid: str):
     session, card = _get_session(sid)
     if not session:
-        raise HTTPException(404, "Session not found")
+        raise HTTPException(404, "There is no idea at this address.")
     if session["state"] == "card" and card is None:
         return templates.TemplateResponse(
             request,
@@ -255,7 +300,7 @@ def _answer(sid: str, answer: str | None):
     except Conflict:
         # A repeated submit: nothing is pending, so show the session as it is now.
         if not load_session(db, sid):
-            raise HTTPException(404, "Session not found") from None
+            raise HTTPException(404, "There is no idea at this address.") from None
         recorded = False
     finally:
         db.close()
@@ -285,10 +330,12 @@ def show_source(request: Request, sid: str, source_id: str):
     try:
         session = load_session(db, sid)
         if not session or session["state"] != "card":
-            raise HTTPException(404, "Source not available")
+            raise HTTPException(404, "This source is not available.")
         card = valid_card(db, session)
         if card is None:
-            raise HTTPException(410, "Card no longer valid")
+            raise HTTPException(
+                410, "This plan is out of date, so its sources are no longer shown."
+            )
         cited = {
             source_id
             for area in card["areas"]
@@ -296,15 +343,19 @@ def show_source(request: Request, sid: str, source_id: str):
             for source_id in person["evidence_ids"]
         }
         if source_id not in cited:
-            raise HTTPException(404, "Source not available")
+            raise HTTPException(404, "This source is not available.")
         item = source(db, source_id)
         if not item:
-            raise HTTPException(404, "Source not available")
+            raise HTTPException(404, "This source is not available.")
         # A work record shows its text; a directory source shows what it records.
         return templates.TemplateResponse(
             request,
             "source.html",
-            {"item": item, "claims": directory_claims(db, source_id)},
+            {
+                "item": item,
+                "claims": directory_claims(db, source_id),
+                "session_id": sid,
+            },
         )
     finally:
         db.close()
