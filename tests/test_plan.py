@@ -156,3 +156,60 @@ def test_everyone_gets_the_plan_label_and_evidence_linked_to_its_source():
     nina["why"] = nina["why"][:2]
     plan = build_plan({"areas": [area("Growth", "growth", nina)]})
     assert [e["source_id"] for e in plan["people"]["nina"]["evidence"]] == [None, None]
+
+
+def test_plan_lines_are_shortened_and_people_grouped_by_area():
+    long_record = (
+        "Author of a document record: ‘This policy was written in 2024. It lists who"
+        " approved budget changes …’"
+    )
+    cut_record = "Reporter of a jira record: ‘Prepare the reforecast with spend per …’"
+    note = (
+        "An earlier responsibility ended on 2025-06-30: approver — approving budgets."
+    )
+    tara = {
+        **person("tara", "direct_contact", "finance", kind="responsibility"),
+        "name": "Tara Lee Reed",
+        "headline": "Current reviewer — reviewing spend requests.",
+    }
+    omar = {
+        **person("omar", "advisor", "finance"),
+        "headline": long_record,
+        "ended_duty": note,
+    }
+    marcus = {**person("marcus", "advisor", "growth"), "headline": cut_record}
+    card = {
+        "areas": [
+            {**area("Finance", "finance", tara, omar), "consultation_need": "Limits?"},
+            {**area("Growth", "growth", marcus), "consultation_need": "Volumes?"},
+        ],
+        "first_conversations": ["tara", "marcus", "omar"],
+    }
+    plan = build_plan(card)
+    short = {e["person_id"]: e["short"] for e in plan["first"]}
+    # A record keeps only its first sentence; without one the excerpt stays whole.
+    assert short["omar"] == "Wrote a document: ‘This policy was written in 2024.’"
+    assert short["marcus"] == (
+        "Reported a Jira issue: ‘Prepare the reforecast with spend per …’"
+    )
+    assert short["tara"] == "Current reviewer — reviewing spend requests."
+    assert plan["people"]["omar"]["ended_short"] == "Approver role ended on 2025-06-30."
+    # The full note stays for the full list.
+    assert plan["people"]["omar"]["ended_duty"] == note
+    assert plan["people"]["tara"]["ended_short"] is None
+    # Areas follow their first chosen person; people keep the chosen order.
+    groups = [
+        (g["area"], g["need"], [e["person_id"] for e in g["people"]])
+        for g in plan["groups"]
+    ]
+    assert groups == [
+        ("Finance", "Limits?", ["tara", "omar"]),
+        ("Growth", "Volumes?", ["marcus"]),
+    ]
+    assert [e["initials"] for e in plan["first"]] == ["TR", "M", "O"]
+    # An older card without a headline or a question shows neither.
+    old = build_plan(
+        {"areas": [area("Growth", "growth", person("leo", "advisor", "g"))]}
+    )
+    assert old["first"][0]["short"] is None
+    assert old["groups"][0]["need"] is None

@@ -1,53 +1,55 @@
 {% extends "base.html" %}
 {% block title %}Workbot · who to talk to first{% endblock %}
-{% block body %}
-<div class="turn user"><div class="bubble"><span class="who">Maya</span>{{ session.sentence }}</div></div>
-{% for turn in answers %}
-<div class="turn"><span class="ring"></span><div class="bubble"><span class="who">Workbot</span>{{ turn.question }}</div></div>
-<div class="turn user"><div class="bubble"><span class="who">Maya</span>{% if turn.answer %}{{ turn.answer }}{% else %}<small>Continued without answering</small>{% endif %}</div></div>
+{% block body_class %}{{ 'busy' if session.state == 'processing' else '' }}{% endblock %}
+{% block body %}<div class="stack">
+<div class="idea"><span class="label">Maya's idea</span><q>{{ session.sentence }}</q></div>
+{% for turn in answers %}<div class="idea"><span class="label">Workbot asked</span><p>{{ turn.question }}</p><span class="label">Maya answered</span><p>{% if turn.answer %}{{ turn.answer }}{% else %}<span class="muted">Continued without answering</span>{% endif %}</p></div>
 {% endfor %}
-<div class="turn"><span class="ring"></span><div class="bubble card"><span class="who">Workbot</span>
-{% if stale %}<div class="warning"><h2>This plan is out of date</h2><p>Something it relied on (access, a source, the directory, or the team list) has changed since I prepared it. Ask again to get a current plan.</p></div>
+{% if stale %}<div class="warning stack tight"><h1>This plan is out of date</h1><p>Something it relied on (access, a source, the directory, or the team list) has changed since I prepared it. Ask again to get a current plan.</p></div>
 {% elif session.state == 'question' %}
-<h2>One clarification before searching</h2><p>{{ session.question }}</p>
-<form method="post" action="/sessions/{{ session.id }}/answer"><label for="answer">Your answer</label><textarea name="answer" id="answer" maxlength="500" required></textarea><p><button type="submit">Continue</button></p></form>
-<form method="post" action="/sessions/{{ session.id }}/answer"><input type="hidden" name="skip" value="1"><button type="submit" class="quiet">Continue without answering</button></form>
-{% elif session.state == 'refusal' %}<div class="warning"><h2>I could not evaluate this idea</h2><p>No plan was produced. Try a new idea; if this keeps happening, check the model key in the setup.</p></div>
-{% elif session.state == 'processing' %}<div id="progress">
-<h2>Working on it…</h2>{% if progress %}<ul class="steps">
+<form class="panel stack tight" method="post" action="/sessions/{{ session.id }}/answer"><h1>One clarification before searching</h1><p>{{ session.question }}</p>
+<label for="answer">Your answer<textarea name="answer" id="answer" maxlength="500" required></textarea></label>
+<div class="row"><button type="submit">Continue</button><button type="submit" form="skip" class="quiet">Continue without answering</button></div></form>
+<form id="skip" method="post" action="/sessions/{{ session.id }}/answer" hidden><input type="hidden" name="skip" value="1"></form>
+{% elif session.state == 'refusal' %}<div class="warning stack tight"><h1>I could not evaluate this idea</h1><p>No plan was produced. Try a new idea; if this keeps happening, check the model key in the setup.</p></div>
+{% elif session.state == 'processing' %}<div class="panel stack tight" id="progress">
+<h1>Working on it…</h1>{% if progress %}<ul class="steps">
 <li class="{{ 'now' if progress.stage == 'impact' else 'done' }}">Understanding the idea and who it could affect</li>
 {% for area in progress.areas %}<li class="{{ 'done' if area.done else 'now' }}">{{ 'Checked' if area.done else 'Checking' }} {{ area.label }}</li>{% endfor %}
 {% if progress.stage == 'priority' %}<li class="now">Choosing who to talk to first</li>{% endif %}</ul>{% endif %}
-<p><small>This usually takes about a minute and a half. People are shown only once every area has been checked.</small></p></div>
-<script>setInterval(async () => { try { const page = await fetch(location.href, {cache: 'no-store'}); const next = new DOMParser().parseFromString(await page.text(), 'text/html'); const now = next.getElementById('progress'); if (now) { document.getElementById('progress').replaceWith(now); } else { location.reload(); } } catch (error) {} }, 2000);</script>
+<p class="small muted">People are shown only once every area has been checked.</p>
+<p class="warning small" id="lost" role="status" hidden><strong>Connection lost.</strong> This page keeps trying; reload it if nothing changes.</p></div>
+<script>(function poll() { setTimeout(async () => { try { const page = await fetch(location.href, {cache: 'no-store'}); if (page.status >= 500) { throw new Error(); } const next = new DOMParser().parseFromString(await page.text(), 'text/html'); const now = next.getElementById('progress'); if (!now) { location.reload(); return; } document.getElementById('progress').replaceWith(now); } catch (error) { document.getElementById('lost').hidden = false; } poll(); }, 2000); })();</script>
 <noscript><meta http-equiv="refresh" content="5"></noscript>
 {% elif card %}
 {% set count = plan.first | length %}
-<h2>{% if count == 0 %}I found no one to point you to from the work I can see.{% elif count == 1 %}Before you start, talk to one person.{% else %}Before you start, talk to {{ ['two', 'three', 'four'][count - 2] }} people.{% endif %}</h2>
-{% if count %}<ol class="people">{% for person in plan.first %}<li><h3>{{ person.name }} <small>· {{ person.team or person.area }}</small> <span class="badge">{{ person.label }}</span></h3>
-<p>{{ person.headline or person.evidence[0].text }}{% if person.role != 'routing_contact' and person.primary_evidence_id and not person.primary_evidence_id.startswith('directory:') %} <a href="/sessions/{{ session.id }}/sources/{{ person.primary_evidence_id | urlencode }}">source</a>{% endif %}</p>
-{% if person.ended_duty %}<p class="note">{{ person.ended_duty }}</p>{% endif %}
-<p><small><strong>{{ person.area }}</strong>{% if person.need %} — what to find out: {{ person.need }}{% endif %}</small></p></li>{% endfor %}</ol>{% endif %}
-{% if plan.gaps.no_contact %}<p class="warning"><strong>No contact found for:</strong> {{ plan.gaps.no_contact | join('; ') }}.</p>{% endif %}
-{% if plan.gaps.team_unresolved %}<p class="warning"><strong>Team not identified for:</strong> {{ plan.gaps.team_unresolved | join('; ') }}.</p>{% endif %}
-{% if plan.gaps.review_incomplete %}<p class="warning"><strong>Review incomplete for:</strong> {{ plan.gaps.review_incomplete | join('; ') }}.</p>{% endif %}
-{% if card.shared_question %}<p><strong>Open question across areas:</strong> {{ card.shared_question }}</p>{% endif %}
-<p><small>These are proposals from the work traces and directory you can see, not verified ownership. I send no messages or invitations.</small></p>
-<details class="all"><summary>Full list: {{ card.areas | length }} consultation area{{ '' if card.areas | length == 1 else 's' }} and each person's evidence</summary>
-{% for area in card.areas %}{% set elsewhere = plan.elsewhere[loop.index0] %}<article><h3>{{ area.label }}</h3><p>{{ area.rationale }}</p>{% if area.consultation_need %}<p><strong>What to find out:</strong> {{ area.consultation_need }}</p>{% endif %}
-{% if area.status == 'mapping_unresolved' %}<div class="warning"><strong>Team not identified.</strong> {{ area.mapping_reason }} No one was reviewed for this area.</div>
-{% elif area.status == 'review_incomplete' %}<div class="warning"><strong>Review incomplete.</strong> The review of this area did not finish, so no one is shown for it.</div>
-{% elif area.status == 'not_found' %}<div class="warning"><strong>No contact found.</strong> This does not mean nobody suitable exists.</div>
+<h1>{% if count == 0 %}I found no one to point you to from the work I can see.{% elif count == 1 %}Before you start, talk to one person.{% else %}Before you start, talk to {{ ['two', 'three', 'four'][count - 2] }} people.{% endif %}</h1>
+{% if count %}<ol class="cards">{% for group in plan.groups %}<li class="card"><div class="ask"><h2>{{ group.area }}</h2>{% if group.need %}<span class="label">What to find out</span><p>{{ group.need }}</p>{% endif %}</div>
+<ul class="ppl">{% for person in group.people %}<li class="p"><span class="av" aria-hidden="true">{{ person.initials }}</span><div class="head"><h3>{{ person.name }}{% if person.team and person.team != group.area %}<span class="team">{{ person.team }}</span>{% endif %}</h3><span class="badge {{ person.role }}">{{ person.label }}</span></div>
+<p class="ev">{{ person.short or person.evidence[0].text }}{% if person.role != 'routing_contact' and person.primary_evidence_id and not person.primary_evidence_id.startswith('directory:') %} <a href="/sessions/{{ session.id }}/sources/{{ person.primary_evidence_id | urlencode }}" aria-label="Source for {{ person.name }}">Source</a>{% endif %}</p>
+{% if person.ended_short %}<p class="ended">{{ person.ended_short }}</p>{% endif %}</li>{% endfor %}</ul></li>{% endfor %}</ol>{% endif %}
+{% if card.shared_question %}<section class="shared"><h2 class="label">Across all areas</h2><p>{{ card.shared_question }}</p></section>{% endif %}
+{% if plan.gaps.no_contact or plan.gaps.team_unresolved or plan.gaps.review_incomplete %}<section class="warning stack tight"><h2>Still open</h2><ul class="plain stack tight">
+{% if plan.gaps.no_contact %}<li><strong>No contact found for:</strong> {{ plan.gaps.no_contact | join('; ') }}.</li>{% endif %}
+{% if plan.gaps.team_unresolved %}<li><strong>Team not identified for:</strong> {{ plan.gaps.team_unresolved | join('; ') }}.</li>{% endif %}
+{% if plan.gaps.review_incomplete %}<li><strong>Review incomplete for:</strong> {{ plan.gaps.review_incomplete | join('; ') }}.</li>{% endif %}</ul></section>{% endif %}
+<p class="caution">These are proposals from the work traces and directory you can see, not verified ownership. I send no messages or invitations.</p>
+<details class="all"><summary>Full list: {{ card.areas | length }} consultation area{{ '' if card.areas | length == 1 else 's' }} and each person's evidence</summary><div class="areas">
+{% for area in card.areas %}{% set elsewhere = plan.elsewhere[loop.index0] %}<details class="area"><summary>{{ area.label }} <span>{% if area.people %}{{ area.people | map(attribute='name') | join(', ') }}{% else %}{{ {'mapping_unresolved': 'Team not identified', 'review_incomplete': 'Review incomplete', 'not_found': 'No contact found'}.get(area.status, '') }}{% endif %}</span></summary><div class="areabody">
+<p>{{ area.rationale }}</p>{% if area.consultation_need %}<p><strong>What to find out:</strong> {{ area.consultation_need }}</p>{% endif %}
+{% if area.status == 'mapping_unresolved' %}<p class="warning"><strong>Team not identified.</strong> {{ area.mapping_reason }} No one was reviewed for this area.</p>
+{% elif area.status == 'review_incomplete' %}<p class="warning"><strong>Review incomplete.</strong> The review of this area did not finish, so no one is shown for it.</p>
+{% elif area.status == 'not_found' %}<p class="warning"><strong>No contact found.</strong> This does not mean nobody suitable exists.</p>
 {% endif %}
 {% if area.direct_review_incomplete and area.status == 'people' %}<p class="warning">The direct-contact review could not be completed; the people below are the remaining verified ones.</p>{% endif %}
-{% if area.no_visible_work_trace and area.mapping == 'mapped' %}<p><small>No relevant accessible work trace was found in this search; other evidence may still exist.</small></p>{% endif %}
-{% for person in area.people %}{% if elsewhere[person.person_id] %}<p class="person"><small>Also relevant: {{ person.name }} — see {{ elsewhere[person.person_id] }}.</small></p>
-{% else %}{% set entry = plan.people[person.person_id] %}<section class="person"><h3>{{ person.name }} <span class="badge">{{ entry.label }}</span></h3>
-{% if person.contribution %}<p><strong>Model summary (unverified):</strong> {{ person.contribution }}</p>{% endif %}
-<ul>{% for line in entry.evidence %}<li>{{ line.text }}{% if line.source_id %} <a href="/sessions/{{ session.id }}/sources/{{ line.source_id | urlencode }}">source</a>{% endif %}</li>{% endfor %}</ul>
-{% if entry.ended_duty %}<p class="note"><strong>Directory note:</strong> {{ entry.ended_duty }}</p>{% endif %}</section>{% endif %}{% endfor %}
-</article>{% endfor %}
-<p><small>The people shown were proposed by the model, and their cited links were checked against this synthetic directory. Whether the cited work answers an area's question, and who owns the new idea, has not been established. Model summaries are the model's own reading of a source and were not checked against it.</small></p></details>
-{% endif %}</div></div>
-{% if session.state in ('card', 'refusal') or stale %}<p><a href="/">Ask about another idea</a></p>{% endif %}
-{% endblock %}
+{% if area.no_visible_work_trace and area.mapping == 'mapped' %}<p class="small muted">No relevant accessible work trace was found in this search; other evidence may still exist.</p>{% endif %}
+{% for person in area.people %}{% if elsewhere[person.person_id] %}<p class="small muted">Also relevant: {{ person.name }} — see {{ elsewhere[person.person_id] }}.</p>
+{% else %}{% set entry = plan.people[person.person_id] %}<section class="who"><div class="head"><h3>{{ person.name }}</h3><span class="badge {{ person.role }}">{{ entry.label }}</span></div>
+{% if person.contribution %}<p class="small muted"><strong>Model summary (unverified):</strong> {{ person.contribution }}</p>{% endif %}
+<ul>{% for line in entry.evidence %}<li>{{ line.text }}{% if line.source_id %} <a href="/sessions/{{ session.id }}/sources/{{ line.source_id | urlencode }}">Source</a>{% endif %}</li>{% endfor %}</ul>
+{% if entry.ended_duty %}<p class="ended"><strong>Directory note:</strong> {{ entry.ended_duty }}</p>{% endif %}</section>{% endif %}{% endfor %}
+</div></details>{% endfor %}
+<p class="caution">The people shown were proposed by the model, and their cited links were checked against this synthetic directory. Whether the cited work answers an area's question, and who owns the new idea, has not been established. Model summaries are the model's own reading of a source and were not checked against it.</p></div></details>
+{% endif %}
+{% if session.state in ('card', 'refusal') or stale %}<p><a class="btn quiet" href="/">Ask about another idea</a></p>{% endif %}
+</div>{% endblock %}
