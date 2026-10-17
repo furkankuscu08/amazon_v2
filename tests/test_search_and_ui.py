@@ -323,6 +323,13 @@ def test_invalid_or_oversized_form_is_rejected_before_model_call():
     unknown = client.get("/nowhere")
     assert unknown.status_code == 404
     assert "There is nothing to show at this address." in unknown.text
+    # Other framework errors keep their status and headers but do not claim
+    # that the address is empty.
+    wrong_method = client.post("/", data={})
+    assert wrong_method.status_code == 405
+    assert wrong_method.headers["allow"] == "GET"
+    assert "This request could not be completed." in wrong_method.text
+    assert "nothing to show" not in wrong_method.text
     cross_site = client.post(
         "/sessions",
         data={"idea": "A project", "idempotency_key": "k"},

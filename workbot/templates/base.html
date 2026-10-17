@@ -2,13 +2,13 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{% block title %}Workbot · simulated Alexa+ experience{% endblock %}</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23743b63'/%3E%3C/svg%3E"><style>
-:root{--bg:#f6f3f4;--surface:#fff;--fg:#28232d;--muted:#625b66;--line:#e6dfe4;--accent:#743b63;--accent-soft:#f3e8ef;--accent-ink:#5e2e50;--warn:#855014;--warn-bg:#fbf3e8;--warn-line:#e8cfa8;color-scheme:light}
+:root{--bg:#f6f3f4;--surface:#fff;--fg:#28232d;--muted:#625b66;--line:#e6dfe4;--accent:#743b63;--accent-soft:#f3e8ef;--accent-ink:#5e2e50;--warn:#855014;--warn-bg:#fbf3e8;--warn-line:#e8cfa8;--field-line:#8a818d;color-scheme:light}
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
 a{color:var(--accent)}a:hover{color:var(--accent-ink)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
-h1,h2,h3{margin:0;line-height:1.25;text-wrap:balance}h1{font-size:1.6rem;letter-spacing:-.01em}h2{font-size:1.15rem}h3{font-size:1.02rem}
+h1,h2,h3,h4{margin:0;line-height:1.25;text-wrap:balance}h1{font-size:1.6rem;letter-spacing:-.01em}h2{font-size:1.15rem}h3{font-size:1.02rem}h4{font-size:1rem}
 p{margin:0}
 .wrap{max-width:46rem;margin:0 auto;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px))}
 .stack{display:grid;gap:1.5rem}.tight{gap:.6rem}
@@ -28,7 +28,8 @@ small,.muted{color:var(--muted)}.small{font-size:.88rem}
 button,.btn{display:inline-block;font:inherit;font-weight:600;background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:8px;padding:.6rem 1.1rem;cursor:pointer;text-decoration:none}
 button.quiet,.btn.quiet{background:transparent;color:var(--accent)}
 label{font-weight:600}
-textarea{display:block;width:100%;min-height:6rem;margin-top:.35rem;font:inherit;font-weight:400;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:.7rem .8rem;resize:vertical}
+textarea{display:block;width:100%;min-height:6rem;margin-top:.35rem;font:inherit;font-weight:400;color:var(--fg);background:var(--bg);border:1px solid var(--field-line);border-radius:10px;padding:.7rem .8rem;resize:vertical}
+textarea::placeholder{color:var(--muted);opacity:1}
 .chips{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
 .chips button{font-size:.85rem;font-weight:500;color:var(--accent-ink);background:var(--accent-soft);border-color:transparent;border-radius:999px;padding:.2rem .7rem}
 ul.plain{list-style:none;margin:0;padding:0}
@@ -51,7 +52,7 @@ ul.recent{padding:.3rem 1.25rem}.recent li{padding:.7rem 0;border-top:1px solid 
 .shared{display:grid;gap:.3rem}
 .caution{font-size:.88rem;color:var(--muted)}
 details.all{border-top:1px solid var(--line);padding-top:1rem}
-details>summary{cursor:pointer;font-weight:650}
+details>summary{cursor:pointer;font-weight:650}summary :is(h2,h3){display:inline;font:inherit}
 .areas{display:grid;gap:.6rem;margin-top:1rem}
 details.area{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:.85rem 1.1rem}
 details.area>summary span{font-weight:400;font-size:.85rem;color:var(--muted)}
@@ -68,7 +69,7 @@ details.area>summary span{font-weight:400;font-size:.85rem;color:var(--muted)}
 blockquote{margin:0;border-left:3px solid var(--line);padding:.2rem 0 .2rem 1rem}
 pre{margin:0;overflow-x:auto;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:.6rem .8rem}
 @media (max-width:30rem){h1{font-size:1.35rem}.sim{margin-left:0}.ask,.p{padding-inline:1rem}}
-@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 </style></head><body class="{% block body_class %}{% endblock %}">
 <header class="top"><div class="wrap"><a class="mark" href="/">Workbot<i aria-hidden="true"></i></a><span class="sim">Simulation · synthetic company data</span></div></header>
 <main><div class="wrap">{% block body %}{% endblock %}</div></main>

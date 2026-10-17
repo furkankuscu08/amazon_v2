@@ -36,7 +36,10 @@ _KIND = {
     "document": "a document",
     "github": "a GitHub pull request",
 }
-_FIRST_SENTENCE = re.compile(r"(.+?[.!?])(?=\s|$)")
+# A sentence ends at . ! or ? before a capital letter or the end of the excerpt,
+# unless the word before it is an abbreviation such as "e.g.", "Dr." or "U.S.".
+_SENTENCE_END = re.compile(r"[.!?](?=\s+[A-Z‘“]|$)")
+_ABBREVIATION = re.compile(r"(?:\b(?:[A-Za-z]\.){2,}|\b(?:etc|vs|Dr|Mr|Mrs|Ms)\.)$")
 _ENDED = re.compile(r"^An earlier responsibility ended on (\S+): (.+?)(?: — .*)?\.$")
 
 
@@ -46,8 +49,14 @@ def _short(headline: str | None) -> str | None:
     if not match or match[2] not in _KIND:
         return headline
     relation, kind, quote = match.groups()
-    sentence = _FIRST_SENTENCE.match(quote)
-    return f"{_DID[relation]} {_KIND[kind]}: ‘{sentence[1] if sentence else quote}’"
+    return f"{_DID[relation]} {_KIND[kind]}: ‘{_first_sentence(quote)}’"
+
+
+def _first_sentence(quote: str) -> str:
+    for end in _SENTENCE_END.finditer(quote):
+        if not _ABBREVIATION.search(quote[: end.end()]):
+            return quote[: end.end()]
+    return quote
 
 
 def _ended_short(note: str | None) -> str | None:

@@ -1,6 +1,6 @@
 """The first-conversations plan is a pure regrouping of an audited card."""
 
-from workbot.plan import build_plan, placements
+from workbot.plan import _short, build_plan, placements
 
 
 def person(pid, role, org, confidence="medium", kind="assignee"):
@@ -183,7 +183,9 @@ def test_plan_lines_are_shortened_and_people_grouped_by_area():
             {**area("Finance", "finance", tara, omar), "consultation_need": "Limits?"},
             {**area("Growth", "growth", marcus), "consultation_need": "Volumes?"},
         ],
-        "first_conversations": ["tara", "marcus", "omar"],
+        # The first choice is in the second area, and Omar is chosen before Tara
+        # although the area lists Tara first.
+        "first_conversations": ["marcus", "omar", "tara"],
     }
     plan = build_plan(card)
     short = {e["person_id"]: e["short"] for e in plan["first"]}
@@ -203,13 +205,30 @@ def test_plan_lines_are_shortened_and_people_grouped_by_area():
         for g in plan["groups"]
     ]
     assert groups == [
-        ("Finance", "Limits?", ["tara", "omar"]),
         ("Growth", "Volumes?", ["marcus"]),
+        ("Finance", "Limits?", ["omar", "tara"]),
     ]
-    assert [e["initials"] for e in plan["first"]] == ["TR", "M", "O"]
+    assert [e["initials"] for e in plan["first"]] == ["M", "O", "TR"]
     # An older card without a headline or a question shows neither.
     old = build_plan(
         {"areas": [area("Growth", "growth", person("leo", "advisor", "g"))]}
     )
     assert old["first"][0]["short"] is None
     assert old["groups"][0]["need"] is None
+
+
+def test_first_sentence_skips_abbreviations():
+    cases = {
+        "Review e.g. card payment failures before launch.": "Review e.g. card payment"
+        " failures before launch.",
+        "See Dr. Patel about the budget. She owns the ledger.": "See Dr. Patel about"
+        " the budget.",
+        "U.S. stores need a new pickup flow. Start with Northgate.": "U.S. stores need"
+        " a new pickup flow.",
+        "Ship it, e.g. the checkout path, by Friday. Then tell finance.": "Ship it,"
+        " e.g. the checkout path, by Friday.",
+        "Release v2.1 is out. Next steps follow.": "Release v2.1 is out.",
+    }
+    for quote, first in cases.items():
+        line = _short(f"Author of a document record: ‘{quote}’")
+        assert line == f"Wrote a document: ‘{first}’"

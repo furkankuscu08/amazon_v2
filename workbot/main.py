@@ -52,6 +52,7 @@ _ERROR_TITLES = {
     400: "Request not accepted",
     403: "Request refused",
     404: "Not found",
+    405: "Request not accepted",
     409: "Request not accepted",
     410: "No longer available",
     413: "That form is too large",
@@ -66,15 +67,19 @@ async def error_page(request: Request, exc: StarletteHTTPException):
     try:
         default = exc.detail == HTTPStatus(exc.status_code).phrase
     except ValueError:
-        default = True
+        default = not exc.detail
+    if not default:
+        message = exc.detail
+    elif exc.status_code == 404:
+        message = "There is nothing to show at this address."
+    else:
+        message = "This request could not be completed. Go back to the Workbot page and try again."
     return templates.TemplateResponse(
         request,
         "error.html",
         {
             "title": _ERROR_TITLES.get(exc.status_code, "Something went wrong"),
-            "message": "There is nothing to show at this address."
-            if default
-            else exc.detail,
+            "message": message,
         },
         status_code=exc.status_code,
         headers=exc.headers,
