@@ -20,7 +20,7 @@ Read this file for working rules, then the code/tests relevant to the task. Use 
 
 ## Removed evaluation history
 
-On 12 October 2026 the user decided to remove the earlier evaluation apparatus (`scripts/`, captured traces and labels under `tests/fixtures/`, the `docs/evaluations/` comparison bundle, `docs/quality-evaluation.md`, and the archived problem analysis) because it measured a nine-person fixture on which retrieval and candidate selection did not discriminate between areas. Everything remains reachable at the `archive/pre-cleanup-20261012` tag; the pre-merge high-effort code is at `baseline/pre-combined-candidate-20261012`. Do not restore those files or rebuild a similar apparatus without asking. Prefer a small number of end-to-end checks with pre-written expectations over per-call micro-experiments.
+On 12 October 2026 the user decided to remove the earlier evaluation apparatus (`scripts/`, captured traces and labels under `tests/fixtures/`, the `docs/evaluations/` comparison bundle, `docs/quality-evaluation.md`, and the archived problem analysis) because it measured a nine-person fixture on which retrieval and candidate selection did not discriminate between areas. On 18 October 2026 the user also deleted the tags that preserved them, and `main` is the only branch; that material is no longer in the repository. Do not restore those files or rebuild a similar apparatus without asking. Prefer a small number of end-to-end checks with pre-written expectations over per-call micro-experiments.
 
 ## Product and language boundaries
 
