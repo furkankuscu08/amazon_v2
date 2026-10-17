@@ -189,6 +189,8 @@ def test_web_card_reload_and_source_visibility(web):
     client = web.use(WebModel())
     response = client.get("/")
     assert "simulated Alexa+ experience" in response.text
+    # An inline icon, so the browser does not ask for /favicon.ico.
+    assert '<link rel="icon" href="data:image/svg+xml,' in response.text
     response = client.post(
         "/sessions",
         data={"idea": "Help plan marketing campaigns", "idempotency_key": "abc"},
