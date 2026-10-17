@@ -19,6 +19,54 @@ _GAPS = {
 # Cards stored before the list linked each line ended a line with its source ID,
 # such as " [jira:MKT-482]."; other bracketed text is left alone.
 _OLD_SOURCE_ID = re.compile(r" \[[a-z]+:[^\]\s]+\]\.$")
+# The audit's plan line for a work record and its ended-duty note. Anything else,
+# such as a responsibility or routing line, is shown as written.
+_RECORD_HEADLINE = re.compile(
+    r"^(Author|Assignee|Contributor|Reporter) of an? (\w+) record: ‘(.+)’$"
+)
+_DID = {
+    "Author": "Wrote",
+    "Assignee": "Assigned to",
+    "Contributor": "Contributed to",
+    "Reporter": "Reported",
+}
+_KIND = {
+    "jira": "a Jira issue",
+    "slack": "a Slack message",
+    "document": "a document",
+    "github": "a GitHub pull request",
+}
+# A sentence ends at . ! or ? before a capital letter or the end of the excerpt,
+# unless the word before it is an abbreviation such as "e.g.", "Dr." or "U.S.".
+_SENTENCE_END = re.compile(r"[.!?](?=\s+[A-Z‘“]|$)")
+_ABBREVIATION = re.compile(r"(?:\b(?:[A-Za-z]\.){2,}|\b(?:etc|vs|Dr|Mr|Mrs|Ms)\.)$")
+_ENDED = re.compile(r"^An earlier responsibility ended on (\S+): (.+?)(?: — .*)?\.$")
+
+
+def _short(headline: str | None) -> str | None:
+    """The plan's one-line reason: a record's first sentence when the excerpt holds it."""
+    match = _RECORD_HEADLINE.match(headline or "")
+    if not match or match[2] not in _KIND:
+        return headline
+    relation, kind, quote = match.groups()
+    return f"{_DID[relation]} {_KIND[kind]}: ‘{_first_sentence(quote)}’"
+
+
+def _first_sentence(quote: str) -> str:
+    for end in _SENTENCE_END.finditer(quote):
+        if not _ABBREVIATION.search(quote[: end.end()]):
+            return quote[: end.end()]
+    return quote
+
+
+def _ended_short(note: str | None) -> str | None:
+    match = _ENDED.match(note or "")
+    return f"{match[2].capitalize()} role ended on {match[1]}." if match else note
+
+
+def _initials(name: str) -> str:
+    words = name.split()
+    return "".join(word[0] for word in words[:1] + words[1:][-1:]).upper()
 
 
 def _label(person: dict) -> str:
@@ -89,6 +137,9 @@ def build_plan(card: dict) -> dict:
         person["person_id"]: {
             **person,
             "ended_duty": notes.get(person["person_id"]),
+            "ended_short": _ended_short(notes.get(person["person_id"])),
+            "short": _short(person.get("headline")),
+            "initials": _initials(person["name"]),
             "label": _label(person),
             "evidence": _evidence(person),
             "area": area["label"],
@@ -108,12 +159,22 @@ def build_plan(card: dict) -> dict:
                 best.append(min(here, key=_strength))
         chosen = [e["person_id"] for e in sorted(best, key=_strength)]
     chosen = list(dict.fromkeys(chosen))[:MAX_FIRST_CONVERSATIONS]
+    first = [entries[pid] for pid in chosen]
+    # One group per home area, with what to find out there. Groups follow their
+    # first chosen person, and people keep the chosen order within a group.
+    groups: dict[str, dict] = {}
+    for entry in first:
+        groups.setdefault(
+            entry["area"],
+            {"area": entry["area"], "need": entry["need"], "people": []},
+        )["people"].append(entry)
     gaps: dict[str, list[str]] = {name: [] for name in _GAPS.values()}
     for area in areas:
         if area["status"] in _GAPS:
             gaps[_GAPS[area["status"]]].append(area["label"])
     return {
-        "first": [entries[pid] for pid in chosen],
+        "first": first,
+        "groups": list(groups.values()),
         "gaps": gaps,
         # Everyone on the card once, as shown in their home area.
         "people": entries,

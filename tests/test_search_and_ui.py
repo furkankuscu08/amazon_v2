@@ -189,6 +189,8 @@ def test_web_card_reload_and_source_visibility(web):
     client = web.use(WebModel())
     response = client.get("/")
     assert "simulated Alexa+ experience" in response.text
+    # An inline icon, so the browser does not ask for /favicon.ico.
+    assert '<link rel="icon" href="data:image/svg+xml,' in response.text
     response = client.post(
         "/sessions",
         data={"idea": "Help plan marketing campaigns", "idempotency_key": "abc"},
@@ -207,11 +209,12 @@ def test_web_card_reload_and_source_visibility(web):
     # No raw source ID is shown as text, and no stock question or search trace.
     assert "jira:MKT-482" not in card.text
     assert "Ask:" not in card.text and "Ask to check" not in card.text
-    assert "what to find out:" in card.text
+    assert '<span class="label">What to find out</span>' in card.text
+    assert 'aria-label="Source for Nina Ellis">Source</a>' in card.text
     assert "Evaluation trace" not in card.text
     assert "Before you start, talk to one person." in card.text
     assert "Related work" in card.text
-    assert "Assignee of a jira record:" in card.text
+    assert "Assigned to a Jira issue: ‘" in card.text
     assert "Full list: 1 consultation area and each person's evidence" in card.text
     assert "Model summary (unverified):" in card.text
     assert "Checklist work can clarify pre-launch campaign review scope." in card.text
@@ -220,7 +223,8 @@ def test_web_card_reload_and_source_visibility(web):
     assert client.get(url + "/sources/slack:restricted-plan").status_code == 404
     source_page = client.get(url + "/sources/jira:MKT-482")
     assert source_page.status_code == 200
-    assert "<h2>Jira record · " in source_page.text
+    assert "<h1>Jira record · " in source_page.text
+    assert f'href="{url}">← Back to the plan' in source_page.text
     assert "jira:MKT-482" not in source_page.text
     assert "version" not in source_page.text
     db = connect(web.path)
@@ -313,6 +317,19 @@ def test_invalid_or_oversized_form_is_rejected_before_model_call():
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     assert oversized.status_code == 413
+    # Errors are shown as pages, and a framework default gets a sentence of its own.
+    assert "<h1>That form is too large</h1>" in oversized.text
+    assert "Shorten it and try again." in oversized.text
+    unknown = client.get("/nowhere")
+    assert unknown.status_code == 404
+    assert "There is nothing to show at this address." in unknown.text
+    # Other framework errors keep their status and headers but do not claim
+    # that the address is empty.
+    wrong_method = client.post("/", data={})
+    assert wrong_method.status_code == 405
+    assert wrong_method.headers["allow"] == "GET"
+    assert "This request could not be completed." in wrong_method.text
+    assert "nothing to show" not in wrong_method.text
     cross_site = client.post(
         "/sessions",
         data={"idea": "A project", "idempotency_key": "k"},
@@ -426,7 +443,7 @@ def test_routing_line_and_directory_source_page(web):
     assert "was found" not in card
     remit = client.get(url + "/sources/directory:growth-remit")
     assert remit.status_code == 200
-    assert "<h2>Directory record</h2>" in remit.text
+    assert "<h1>Directory record</h1>" in remit.text
     assert "directory:growth-remit" not in remit.text
     # Both routing sources stay reachable from the list without showing their IDs.
     assert f'href="{url}/sources/directory%3Agrowth-manager"' in card
