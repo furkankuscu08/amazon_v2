@@ -2,16 +2,14 @@
 {% block body %}<div class="stack">
 <div class="stack tight"><h1>Who should Maya talk to?</h1>
 <p class="muted">You are Maya, an employee at Northgate, a fictional retailer. Tell Alexa about a change you want to make that touches other teams, by voice or text. Alexa checks the work records and directory you can see and answers with who to talk to first, why, and what to find out. It contacts no one.</p></div>
-<form class="panel stack tight" action="/sessions" method="post"><input type="hidden" name="idempotency_key" value="{{ key }}">
+<form class="panel stack tight" action="/sessions" method="post" data-swap><input type="hidden" name="idempotency_key" value="{{ key }}">
 <label for="idea">The change you want to make<textarea name="idea" id="idea" maxlength="600" required placeholder="We should accept stablecoin payments in the Northgate app."></textarea></label>
 <div class="row"><button type="button" class="quiet speak" data-voice-for="idea" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5"/><path d="M3.5 7.5a4.5 4.5 0 0 0 9 0" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 12v2.5" stroke="currentColor" stroke-width="1.4"/></svg><span>Speak</span></button><span class="small muted" data-voice-status role="status"></span></div>
 <div class="chips" id="examples" hidden><span class="small muted">Try an example:</span>
 <button type="button" data-idea="Raise the approval threshold for marketing spend requests so small changes need no review.">Marketing spend threshold</button>
 <button type="button" data-idea="We should accept stablecoin payments in the Northgate app.">Stablecoin payments</button>
 <button type="button" data-idea="Install self-service pickup lockers in our stores for online orders.">Pickup lockers</button></div>
-<div class="row"><button type="submit">Ask Alexa</button></div></form>
-{% include "_voice.html" %}
-<script>(function () { const box = document.getElementById('examples'); box.hidden = false; box.addEventListener('click', (event) => { const idea = event.target.dataset.idea; if (idea) { const field = document.getElementById('idea'); field.value = idea; field.focus(); } }); })();</script>
+<div class="row"><button type="submit">Ask Alexa</button><label class="toggle" hidden><input type="checkbox" id="read-aloud" checked>Read answers aloud</label></div></form>
 {% if recent %}<section class="stack tight"><h2>Your earlier ideas</h2><ul class="plain panel recent">
 {% for item in recent %}<li><a href="/sessions/{{ item.id }}">{{ item.idea }}</a><br><small>{{ {'card': 'Plan ready', 'question': 'Waiting for your answer', 'processing': 'Working on it', 'refusal': 'Could not be evaluated'}[item.status] }}</small></li>{% endfor %}
 </ul></section>{% endif %}

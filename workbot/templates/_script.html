@@ -1,0 +1,191 @@
+<script>(function () {
+  // The only script, on every page. It runs `setup` on the page and again on each
+  // page it swaps in, so nothing below may assume a fresh document. Without it
+  // every form and link still works, and nothing is read aloud.
+  const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=';
+  const audio = new Audio();
+  let owner = null;  // The Listen button whose clip is playing.
+  let unlocked = false;
+  let sending = false;
+  let polls = 0;  // A swap ends older polls.
+  let cancelRecording = null;
+
+  const readAloud = () => { try { return localStorage.getItem('workbot-read-aloud') !== 'off'; } catch (error) { return true; } };
+
+  // Listen: one audio element for every clip, so sound the person allowed once
+  // (by sending a form) also lets a later answer be read aloud.
+  const controls = (button) => { const box = button.closest('.screen, .panel'); return {box, status: box.querySelector('[data-speech-status]'), label: button.querySelector('span')}; };
+  const idle = (button, message = '') => { const {box, status, label} = controls(button); label.textContent = 'Listen'; box.classList.remove('speaking'); status.textContent = message; };
+  const settle = (message) => { if (owner) { const button = owner; owner = null; idle(button, message); } };
+  const stopAudio = () => { if (owner) audio.pause(); settle(); };
+  const play = (button, auto) => {
+    stopAudio();
+    owner = button;
+    const {box, status, label} = controls(button);
+    status.textContent = ''; label.textContent = 'Stop'; box.classList.add('speaking');
+    audio.src = button.dataset.speech;
+    audio.play().catch((error) => {
+      if (owner !== button || error.name === 'AbortError') return;
+      // A browser may refuse sound the person did not start; Listen still works.
+      settle(auto && error.name === 'NotAllowedError' ? 'Press Listen to hear it.' : 'Audio is not available right now.');
+    });
+  };
+  audio.addEventListener('ended', () => settle());
+  audio.addEventListener('error', () => settle('Audio is not available right now.'));
+  const unlock = () => { if (unlocked || owner) return; unlocked = true; audio.src = SILENT; audio.play().catch(() => {}); };
+
+  // Speak: shown only where the browser can record; the text only fills the box.
+  const voice = (button) => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.AudioContext) return;
+    const field = document.getElementById(button.dataset.voiceFor);
+    const status = button.parentElement.querySelector('[data-voice-status]');
+    const label = button.querySelector('span');
+    const unavailable = 'Voice input is not available right now. Type the text instead.';
+    let stop = null;
+    const done = (message) => { label.textContent = 'Speak'; button.classList.remove('recording'); button.disabled = false; status.textContent = message; };
+    button.hidden = false;
+    button.addEventListener('click', async () => {
+      if (stop) { stop(); return; }
+      // The microphone must not pick up Alexa reading aloud.
+      stopAudio();
+      // No second recording can start while the browser asks for the microphone.
+      button.disabled = true;
+      let stream;
+      try { stream = await navigator.mediaDevices.getUserMedia({audio: true}); }
+      catch (error) { done('The microphone is not available. Type the text instead.'); return; }
+      button.disabled = false;
+      const context = new AudioContext();
+      const source = context.createMediaStreamSource(stream);
+      const node = context.createScriptProcessor(4096, 1, 1);
+      const parts = [];
+      let length = 0;
+      node.onaudioprocess = (event) => {
+        const data = event.inputBuffer.getChannelData(0);
+        parts.push(new Float32Array(data));
+        length += data.length;
+        if (stop === finish && length >= context.sampleRate * 19.5) finish();  // The server takes 20 s at most.
+      };
+      source.connect(node);
+      node.connect(context.destination);
+      label.textContent = 'Stop';
+      button.classList.add('recording');
+      status.textContent = 'Listening. Press Stop when you are done.';
+      const release = () => { stop = null; cancelRecording = null; node.disconnect(); source.disconnect(); stream.getTracks().forEach((track) => track.stop()); };
+      const finish = async () => {
+        if (stop !== finish) return;
+        release();
+        const rate = context.sampleRate;
+        await context.close();
+        // Average down to 16 kHz, 16-bit mono PCM.
+        const all = new Float32Array(length);
+        let offset = 0;
+        for (const part of parts) { all.set(part, offset); offset += part.length; }
+        const ratio = rate / 16000;
+        const pcm = new Int16Array(Math.floor(length / ratio));
+        for (let i = 0; i < pcm.length; i++) {
+          const from = Math.floor(i * ratio), to = Math.max(from + 1, Math.min(length, Math.floor((i + 1) * ratio)));
+          let sum = 0;
+          for (let j = from; j < to; j++) sum += all[j];
+          const value = Math.max(-1, Math.min(1, sum / (to - from)));
+          pcm[i] = value < 0 ? value * 0x8000 : value * 0x7fff;
+        }
+        label.textContent = 'Speak'; button.classList.remove('recording'); button.disabled = true;
+        status.textContent = 'Turning speech into text.';
+        try {
+          const reply = await fetch('/transcribe', {method: 'POST', headers: {'Content-Type': 'application/octet-stream'}, body: pcm.buffer});
+          const data = await reply.json().catch(() => ({}));
+          if (reply.ok && data.text) {
+            const text = field.value.trim() ? field.value.trimEnd() + ' ' + data.text : data.text;
+            field.value = text.slice(0, field.maxLength > 0 ? field.maxLength : text.length);
+            field.focus();
+            done('Check the text, then send it.');
+          } else { done(data.error || unavailable); }
+        } catch (error) { done(unavailable); }
+      };
+      stop = finish;
+      // Leaving the form drops the recording unsent.
+      cancelRecording = () => { if (stop === finish) { release(); context.close(); } };
+    });
+  };
+
+  // Swapping the page in place, instead of loading a new one, keeps the sound
+  // the person allowed. Only an answer that arrives this way is read aloud on its
+  // own; a stored plan opened from a link waits for Listen.
+  const swap = (next, url) => {
+    const page = next.getElementById('page');
+    if (!page) return false;
+    // A parsed <noscript> holds live elements; its refresh would reload the page.
+    page.querySelectorAll('noscript').forEach((element) => element.remove());
+    stopAudio();
+    if (cancelRecording) cancelRecording();
+    polls++;
+    document.getElementById('page').replaceWith(page);
+    document.body.className = next.body.className;
+    document.title = next.title;
+    if (url && url !== location.href) history.pushState(null, '', url);
+    setup(page);
+    const heading = page.querySelector('h1');
+    if (heading) { heading.tabIndex = -1; heading.focus({preventScroll: true}); }
+    scrollTo(0, 0);
+    const listen = page.querySelector('[data-speech]');
+    if (listen && readAloud()) play(listen, true);
+    return true;
+  };
+  const parse = (html) => new DOMParser().parseFromString(html, 'text/html');
+
+  // One request at a time while the answer is being prepared.
+  const poll = (mine) => setTimeout(async () => {
+    if (mine !== polls) return;
+    try {
+      const reply = await fetch(location.href, {cache: 'no-store'});
+      if (reply.status >= 500) { throw new Error(); }
+      const next = parse(await reply.text());
+      if (mine !== polls) return;
+      const now = next.getElementById('progress');
+      if (now) { document.getElementById('progress').replaceWith(now); }
+      else { if (reply.redirected || !swap(next)) location.reload(); return; }
+    } catch (error) { if (mine !== polls) return; document.getElementById('lost').hidden = false; }
+    poll(mine);
+  }, 2000);
+
+  document.addEventListener('submit', async (event) => {
+    const form = event.target;
+    if (!form.matches('[data-swap]')) return;
+    event.preventDefault();
+    if (sending) return;
+    sending = true;
+    stopAudio();
+    if (readAloud()) unlock();
+    document.querySelectorAll('#page button[type=submit]').forEach((button) => { button.disabled = true; });
+    let reply, next;
+    try {
+      reply = await fetch(form.action, {method: 'POST', body: new URLSearchParams(new FormData(form))});
+      next = parse(await reply.text());
+    } catch (error) { next = null; }
+    sending = false;
+    // A page that was not redirected to, such as an error, keeps this address.
+    if (!next || !swap(next, reply.redirected && reply.ok ? reply.url : null)) form.submit();
+  });
+  addEventListener('popstate', () => location.reload());
+
+  const setup = (root) => {
+    root.querySelectorAll('[data-speech]').forEach((button) => {
+      button.hidden = false;
+      button.addEventListener('click', () => { if (owner === button) stopAudio(); else play(button, false); });
+    });
+    root.querySelectorAll('[data-voice-for]').forEach(voice);
+    const examples = root.querySelector('#examples');
+    if (examples) {
+      examples.hidden = false;
+      examples.addEventListener('click', (event) => { const idea = event.target.dataset.idea; if (idea) { const field = document.getElementById('idea'); field.value = idea; field.focus(); } });
+    }
+    const toggle = root.querySelector('#read-aloud');
+    if (toggle) {
+      toggle.closest('label').hidden = false;
+      toggle.checked = readAloud();
+      toggle.addEventListener('change', () => { try { localStorage.setItem('workbot-read-aloud', toggle.checked ? 'on' : 'off'); } catch (error) { /* Kept for this page only. */ } });
+    }
+    if (root.querySelector('#progress')) poll(polls);
+  };
+  setup(document);
+})();</script>
