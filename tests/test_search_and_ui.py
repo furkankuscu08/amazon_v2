@@ -479,9 +479,9 @@ def test_routing_line_in_the_plan_is_not_linked_to_a_work_record(web):
 
 
 def test_incomplete_review_does_not_also_promise_remaining_people(web):
-    # Elena is only the reporter of this record, so the direct proposal is rejected.
+    # The direct proposal cites a source that is not in Elena's evidence.
     model = ScriptedModel(
-        [_person("elena", "direct_contact", ["jira:MKT-482"], "direct")]
+        [_person("elena", "direct_contact", ["jira:NOT-IN-POOL"], "direct")]
     )
     client, url = _submit(web, model)
     card = client.get(url).text
