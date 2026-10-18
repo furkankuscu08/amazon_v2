@@ -14,7 +14,7 @@
 <div class="row"><button type="submit">Continue</button><button type="submit" form="skip" class="quiet">Continue without answering</button></div></form>
 <form id="skip" method="post" action="/sessions/{{ session.id }}/answer" hidden><input type="hidden" name="skip" value="1"></form>
 {% include "_voice.html" %}
-{% elif session.state == 'refusal' %}<div class="warning stack tight"><h1>Alexa could not evaluate this idea</h1><p>No plan was produced. Try a new idea; if this keeps happening, check the model key in the setup.</p></div>
+{% elif session.state == 'refusal' %}<div class="warning stack tight"><h1>Alexa could not evaluate this idea</h1><p>No plan was produced. Try a new idea; if this keeps happening, check the model setup.</p></div>
 {% elif session.state == 'processing' %}<div class="panel stack tight" id="progress">
 <h1>Working on it…</h1>{% if progress %}<ul class="steps">
 <li class="{{ 'now' if progress.stage == 'impact' else 'done' }}">Understanding the idea and who it could affect</li>

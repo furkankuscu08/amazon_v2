@@ -378,9 +378,9 @@ def test_areas_left_out_of_the_plan_are_named_below_it():
         {"area": "Data", "names": ["Omar"]},
     ]
     assert "Two more areas are in the full list." in plan["lead"]
-    # An area whose left-out person has their home elsewhere is named alone.
+    # A left-out person is named even when their home is another area.
     alone = build_plan({**CARD, "first_conversations": ["tara", "leo", "dan", "omar"]})
-    assert alone["more"] == [{"area": "Platform", "names": []}]
+    assert alone["more"] == [{"area": "Platform", "names": ["Nina"]}]
     assert "One more area is in the full list." in alone["lead"]
     # Gaps stay under "Still open" and never count as more areas.
     assert all(m["area"] not in ("Legal", "Brand") for m in plan["more"])

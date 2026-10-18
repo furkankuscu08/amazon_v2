@@ -266,13 +266,14 @@ def build_plan(card: dict) -> dict:
         group["people"].sort(key=lambda e: bool(e["ended_duty"]))
     first = [entry for group in ordered for entry in group["people"]]
     # Areas with people where nobody chosen has their home and somebody was left
-    # out, named under the cards so the plan does not seem to have lost them.
+    # out, named with those people under the cards so the plan does not seem to
+    # have lost them.
     shown = {home[pid] for pid in chosen}
     more = [
         {
             "area": area["label"],
             "names": [
-                p["name"] for p in area["people"] if home[p["person_id"]] == index
+                p["name"] for p in area["people"] if p["person_id"] not in chosen
             ],
         }
         for index, area in enumerate(areas)
