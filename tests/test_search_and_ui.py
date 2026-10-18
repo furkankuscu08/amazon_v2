@@ -14,6 +14,7 @@ from workbot.models import AreaEvaluation, Impact, Priority
 from workbot.search import Searcher, SetupError, index_visible_records
 from workbot.speech import SpeechError
 from workbot.storage import connect
+from workbot.transcribe import TranscriptionError
 
 
 def tiny_embedding(text: str) -> list[float]:
@@ -798,3 +799,95 @@ def test_daily_limit_counts_each_new_idea_once(web, monkeypatch):
     monkeypatch.setattr(main_module, "datetime", Tomorrow)
     assert submit("next-day").status_code == 303
     app.state.last_run.join(10)
+
+
+class StubTranscriber:
+    def __init__(self, text="Let customers pause their plan.", error=None):
+        self.calls = []
+        self.reply = text
+        self.error = error
+
+    async def text(self, pcm):
+        self.calls.append(pcm)
+        if self.error:
+            raise TranscriptionError(self.error)
+        return self.reply
+
+
+def _pcm(seconds=1.0):
+    return b"\x00\x01" * int(16000 * seconds)
+
+
+def test_speak_fills_the_box_only_and_starts_nothing(web, monkeypatch):
+    stub = StubTranscriber()
+    monkeypatch.setattr(app.state, "transcriber", stub, raising=False)
+    client = web.use(ScriptedModel([]))
+    home = client.get("/").text
+    assert 'data-voice-for="idea"' in home and "/transcribe" in home
+    reply = client.post(
+        "/transcribe",
+        content=_pcm(),
+        headers={"Content-Type": "application/octet-stream"},
+    )
+    assert reply.status_code == 200
+    assert reply.json() == {"text": "Let customers pause their plan."}
+    assert stub.calls == [_pcm()]
+    assert _sessions(web.path) == 0
+
+
+def test_speak_refuses_bad_or_foreign_requests(web, monkeypatch):
+    stub = StubTranscriber()
+    monkeypatch.setattr(app.state, "transcriber", stub, raising=False)
+    client = web.use(ScriptedModel([]))
+    octet = {"Content-Type": "application/octet-stream"}
+    assert client.post("/transcribe", content=_pcm(), headers={}).status_code == 415
+    too_long = client.post("/transcribe", content=_pcm(20.5), headers=octet)
+    assert too_long.status_code == 413
+    assert "under 20 seconds" in too_long.json()["error"]
+    foreign = client.post(
+        "/transcribe",
+        content=_pcm(),
+        headers={**octet, "Origin": "https://evil.example"},
+    )
+    assert foreign.status_code == 403
+    assert stub.calls == []
+    monkeypatch.setattr(main_module, "transcribe_limiter", DemoRateLimiter(1, 600))
+    assert client.post("/transcribe", content=_pcm(), headers=octet).status_code == 200
+    assert client.post("/transcribe", content=_pcm(), headers=octet).status_code == 429
+
+
+def test_speak_failure_is_a_plain_message(web, monkeypatch):
+    stub = StubTranscriber(error="No speech was recognized. Try again or type it.")
+    monkeypatch.setattr(app.state, "transcriber", stub, raising=False)
+    client = web.use(ScriptedModel([]))
+    reply = client.post(
+        "/transcribe",
+        content=_pcm(),
+        headers={"Content-Type": "application/octet-stream"},
+    )
+    assert reply.status_code == 503
+    assert reply.json() == {"error": "No speech was recognized. Try again or type it."}
+
+
+def test_speak_is_behind_the_access_code(web, monkeypatch):
+    monkeypatch.setenv("WORKBOT_ACCESS_CODE", "judge-2026")
+    stub = StubTranscriber()
+    monkeypatch.setattr(app.state, "transcriber", stub, raising=False)
+    client = web.use(ScriptedModel([]))
+    reply = client.post(
+        "/transcribe",
+        content=_pcm(),
+        headers={"Content-Type": "application/octet-stream"},
+        follow_redirects=False,
+    )
+    assert reply.status_code == 303
+    assert stub.calls == []
+
+
+def test_question_form_offers_speak_for_the_answer(web):
+    model = ScriptedModel(
+        [_person("nina", "direct_contact", ["jira:MKT-482"], "direct")],
+        question="Which campaigns are in scope?",
+    )
+    client, url = _submit(web, model)
+    assert 'data-voice-for="answer"' in client.get(url).text

@@ -9,6 +9,10 @@ jinja2
 pydantic
 httpx
 boto3
+# Voice input: Nova 2 Sonic needs Bedrock's bidirectional stream, which boto3
+# does not offer; the duplex transport needs the awscrt extra.
+aws-sdk-bedrock-runtime
+smithy-http[awscrt]
 qdrant-client
 fastembed
 python-dotenv

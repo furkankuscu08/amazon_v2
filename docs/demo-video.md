@@ -4,7 +4,7 @@
 
 ## Decisions so far
 
-- One TTS narrator. The app's own voice is its **Listen** button (Amazon Polly reading the plan summary or the clarification question), so record that audio from the app itself; add no other WorkBot voice. The app has no voice input, so Maya's idea is typed, not spoken.
+- One TTS narrator. The app's own voice is its **Listen** button (Amazon Polly reading the plan summary or the clarification question), so record that audio from the app itself; add no other WorkBot voice. Maya can speak her idea with **Speak** (Amazon Nova 2 Sonic fills the box, and she sends it herself); if the recording is used, show the box filling, not an added voice.
 - Under three minutes (target 2:50) with about 330 narrated words, leaving time for silent screen actions.
 - The story is the contrast between who handles the decision today (Tara) and who used to (Omar); the other two people get one sentence.
 - Ideas whose stored cards showed a wrong direct contact (pickup lockers, campaign AI) stay out of the video.
