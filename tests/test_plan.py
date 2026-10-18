@@ -247,6 +247,17 @@ def test_people_whose_duty_ended_are_not_who_to_start_with():
     )
     # The full list is unchanged.
     assert set(plan["people"]) == {"omar", "tara", "ivan", "jules"}
+    # Without a usable model choice, an area's pick prefers someone whose duty
+    # has not ended, even over a stronger role.
+    strong = {**omar, "confidence": "high"}
+    advisor = person("tara", "advisor", "finance")
+    fallback = build_plan(
+        {
+            "areas": [area("Finance", "finance", strong, advisor)],
+            "first_conversations": [],
+        }
+    )
+    assert [e["person_id"] for e in fallback["first"]] == ["tara"]
 
 
 def test_first_sentence_skips_abbreviations():

@@ -190,12 +190,15 @@ def build_plan(card: dict) -> dict:
     }
     chosen = [pid for pid in card.get("first_conversations") or [] if pid in entries]
     if not chosen:
-        # No usable model choice: the strongest person of each area, strongest first.
+        # No usable model choice: the strongest person of each area, strongest first,
+        # preferring someone whose related responsibility has not ended.
         best = []
         for index in range(len(areas)):
             here = [e for pid, e in entries.items() if home[pid] == index]
             if here:
-                best.append(min(here, key=_strength))
+                best.append(
+                    min(here, key=lambda e: (bool(e["ended_duty"]), _strength(e)))
+                )
         chosen = [e["person_id"] for e in sorted(best, key=_strength)]
     chosen = list(dict.fromkeys(chosen))[:MAX_FIRST_CONVERSATIONS]
     # One group per home area, with what to find out there. Groups follow their

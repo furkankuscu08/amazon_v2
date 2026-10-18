@@ -1,6 +1,6 @@
 # Demo video script (draft)
 
-**Status: working draft, not final.** Written on 14 October 2026; the user will revisit it. Any line, timing, or decision below may change. On 18 October 2026 the facts about the demo card were rechecked against a run on the hosted demo with Amazon Nova 2 Lite: a clarification question, then three people (Tara Reed and Omar Haddad in Finance, Jules Carter in Growth Marketing), about 30 seconds after the answer. People, questions, and wording vary from run to run, so recheck them against the run that is recorded.
+**Status: working draft, not final.** Written on 14 October 2026; the user will revisit it. Any line, timing, or decision below may change. On 18 October 2026 the facts about the demo card were rechecked against a run on the hosted demo with Amazon Nova 2 Lite: a clarification question, then three people (Omar Haddad and Tara Reed in Finance, Jules Carter in Growth Marketing; the plan now names Tara before Omar because his approver role has ended), about 30 seconds after the answer. People, questions, and wording vary from run to run, so recheck them against the run that is recorded.
 
 ## Decisions so far
 
