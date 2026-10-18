@@ -17,7 +17,7 @@ from urllib.parse import parse_qs, quote, urlsplit
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -47,6 +47,7 @@ from workbot.storage import (
     take_daily_idea,
     valid_card,
 )
+from workbot.transcribe import MAX_BYTES, Transcriber, TranscriptionError
 
 load_dotenv()
 app = FastAPI(title="Workbot — simulated Alexa+ experience")
@@ -116,6 +117,8 @@ class DemoRateLimiter:
 
 
 demo_limiter = DemoRateLimiter()
+# Voice inputs per client: each one is a paid Nova 2 Sonic request.
+transcribe_limiter = DemoRateLimiter(limit=20, window_seconds=600)
 # Wrong access codes per client: enough for typos, too few to guess a code.
 access_limiter = DemoRateLimiter(limit=10, window_seconds=600)
 ACCESS_COOKIE = "workbot_access"
@@ -193,6 +196,10 @@ def _default_searcher():
 
 def _searcher():
     return getattr(app.state, "searcher", None) or _default_searcher()
+
+
+def _transcriber():
+    return getattr(app.state, "transcriber", None) or Transcriber()
 
 
 @lru_cache(maxsize=1)
@@ -452,6 +459,36 @@ async def answer(request: Request, sid: str):
     except SetupError as exc:
         return _setup_page(request, exc)
     return RedirectResponse(f"/sessions/{sid}", status_code=303)
+
+
+@app.post("/transcribe")
+async def transcribe(request: Request):
+    """Speech for the idea or answer box: 16 kHz 16-bit mono PCM in, JSON text out.
+
+    The text only fills the box; the person still reads it and sends the form.
+    """
+    _same_origin(request)
+    content_type = request.headers.get("content-type", "").split(";", 1)[0].lower()
+    if content_type != "application/octet-stream":
+        return JSONResponse({"error": "Record from the Workbot page."}, 415)
+    chunks, size = [], 0
+    async for chunk in request.stream():
+        size += len(chunk)
+        if size > MAX_BYTES:
+            return JSONResponse({"error": "Keep the recording under 20 seconds."}, 413)
+        chunks.append(chunk)
+    if not transcribe_limiter.allow(
+        request.client.host if request.client else "unknown"
+    ):
+        return JSONResponse(
+            {"error": "Voice input was used often. Wait a few minutes, or type it."},
+            429,
+        )
+    try:
+        text = await _transcriber().text(b"".join(chunks))
+    except TranscriptionError as exc:
+        return JSONResponse({"error": str(exc)}, 503)
+    return JSONResponse({"text": text})
 
 
 @app.get("/sessions/{sid}/speech.mp3")

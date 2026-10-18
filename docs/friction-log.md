@@ -159,9 +159,9 @@ Setup at the time: a new account created through AWS Settings (projects owned by
 - **Task:** upgrade from the Free plan to the Paid plan to use Amazon Transcribe.
 - **Steps:** followed the AWS Account Management guide: AWS Settings → **Billing** → **Upgrade**. Then looked in Projects → Overview → **Actions** (only "Activate advanced features", "Opt out of data use by AWS AI services", "Close management account") and in the profile menu.
 - **Expected:** an Upgrade button, or a visible statement of the current plan.
-- **Actual:** no Upgrade button anywhere. The Overview, which earlier showed "Days remaining in free plan 183 days" and "Credits remaining", now shows "Current charges", and Billing shows a payment card and per-project spend limits, but no page names the plan. Whether the account was already on the Paid plan could only be inferred from an error message: `transcribe:ListVocabularies` was denied "because no identity-based policy allows" it, not by "an explicit deny in a service control policy", so Transcribe is not blocked by the plan.
+- **Actual:** no Upgrade button anywhere. The Overview, which earlier showed "Days remaining in free plan 183 days" and "Credits remaining", now shows "Current charges", and Billing shows a payment card and per-project spend limits, but no page names the plan. Whether the account is on the Paid plan cannot be read anywhere. An IAM error for `transcribe:ListVocabularies` ("because no identity-based policy allows" it) looked like evidence that the plan does not block Transcribe, but entry 18 suggests that it does.
 - **Severity:** Medium.
-- **Workaround:** the error-message check above.
+- **Workaround:** none found; voice input moved to Bedrock (entry 18).
 - **Suggestion:** name the current plan on the Billing and Projects pages, and keep the Upgrade entry where the guide says it is (or say why it is missing).
 
 ## 17. A short test burst is forecast as nearly hitting the spend limit
@@ -173,3 +173,28 @@ Setup at the time: a new account created through AWS Settings (projects owned by
 - **Severity:** Low (nothing has been blocked so far).
 - **Workaround:** none needed yet; Bedrock errors are watched for `AccessDeniedException`.
 - **Suggestion:** state what triggers the spend-limit policies, and base the warning on more than one burst of use.
+
+## 18. Transcribe streaming says the account is not authorized, without saying why
+
+- **Task:** turn a spoken idea into text with Amazon Transcribe streaming (`amazon-transcribe` SDK 0.6.4, `eu-north-1`).
+- **Steps:** an IAM user allowed `transcribe:StartStreamTranscription`; a 3.6-second synthetic English sentence made with Polly as 16 kHz PCM; `start_stream_transcription(language_code="en-US", media_encoding="pcm")`.
+- **Expected:** a transcript, or an error naming the missing permission or plan.
+- **Actual:** HTTP 401 `NotAuthorizedException` — "Your account isn't authorized to call this operation. Check your account permissions and try your request again." The IAM policy allows the action, and nothing names the plan. The AWS Account Management guide lists Transcribe only among the Paid plan's services, and entry 16 explains why the plan could not be changed.
+- **Severity:** High for voice input (it cannot be used on this account).
+- **Workaround:** voice input through Amazon Nova 2 Sonic on Bedrock, which this account can use (entry 19).
+- **Suggestion:** say in the error that the account's plan does not include the service, and link the upgrade.
+
+## 19. Nova 2 Sonic from Python takes three fixes the samples do not mention
+
+- **Task:** send a short recording to Nova 2 Sonic (`InvokeModelWithBidirectionalStream`) from Python 3.12 and keep the transcript of the user's turn.
+- **Steps:** boto3 has no bidirectional streaming, so used `aws-sdk-bedrock-runtime` 0.12.0, following the shape of AWS's Sonic samples.
+- **Expected:** the samples' client setup works.
+- **Actual:** three errors in turn:
+  - `ConfigError: AsyncBedrockRuntimeConfig cannot be constructed directly. Use await AsyncBedrockRuntimeConfig.resolve(...) instead.`
+  - `UnsupportedTransportError: The configured transport (AIOHTTPClient) does not support duplex (bidirectional) event streaming ... Use a transport that does, such as smithy_http.aio.crt.AWSCRTHTTPClient.`
+  - With `awscrt` 0.26.1 already installed: `MissingDependencyError: Attempted to use awscrt component, but awscrt is not installed.` The real cause was that the old version lacks `awscrt.aio`; installing `smithy-http[awscrt]` brought `awscrt` 0.32.2.
+
+  The IAM console also rejected `bedrock:InvokeModelWithBidirectionalStream` as an action that "does not exist"; the API reference says `bedrock:InvokeModel` covers it.
+- **Severity:** Medium (each error was clear only after reading the SDK source).
+- **Workaround:** `await AsyncBedrockRuntimeConfig.resolve(..., transport=AWSCRTHTTPClient())` with `smithy-http[awscrt]` in the requirements. After that, a 3.6-second synthetic sentence came back word for word: in 5.6 s when sent in real time, and in 1.2 s when sent at once.
+- **Suggestion:** make the duplex-capable transport the default for clients with bidirectional operations, say in the error which `awscrt` version is required, and update the samples to the current SDK.

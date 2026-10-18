@@ -1,6 +1,7 @@
 import io
 import json
 import logging
+from types import SimpleNamespace
 
 import boto3
 import botocore.httpsession
@@ -808,3 +809,190 @@ def test_speech_asks_polly_once_per_text_and_logs_no_text(monkeypatch, caplog):
         stubber.assert_no_pending_responses()
     assert MARKER not in caplog.text
     assert "speech_failed type=ClientError" in caplog.text
+
+
+# --- Speech to text (Nova 2 Sonic) ----------------------------------------------
+
+
+def test_transcriber_checks_the_recording_and_setup_before_any_request(
+    monkeypatch, caplog
+):
+    import asyncio
+
+    from workbot import transcribe
+    from workbot.transcribe import MAX_BYTES, Transcriber, TranscriptionError
+
+    streams = []
+
+    async def no_stream(*args, **kwargs):
+        streams.append(args)
+        return "never"
+
+    monkeypatch.setattr(transcribe, "_stream", no_stream)
+    for pcm in (b"", b"\x00", b"\x00" * (MAX_BYTES + 2)):
+        with pytest.raises(TranscriptionError, match="could not be used"):
+            asyncio.run(Transcriber().text(pcm))
+    # No profile and no credentials: nothing is streamed.
+    for unset in ({}, {"AWS_PROFILE": None, "AWS_REGION": "eu-north-1"}):
+        for name, value in unset.items():
+            if value is None:
+                monkeypatch.delenv(name)
+            else:
+                monkeypatch.setenv(name, value)
+        with pytest.raises(TranscriptionError, match="not available"):
+            asyncio.run(Transcriber().text(b"\x00\x01" * 100))
+    assert streams == []
+    assert "transcription_failed type=ProfileNotFound" in caplog.text
+    assert "transcription_failed type=LookupError" in caplog.text
+
+
+def test_transcriber_returns_the_heard_text(monkeypatch):
+    import asyncio
+
+    from workbot import transcribe
+    from workbot.transcribe import Transcriber, TranscriptionError
+
+    monkeypatch.delenv("AWS_PROFILE")
+    monkeypatch.setenv("AWS_REGION", "eu-north-1")
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "test-only")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "test-only")
+    seen = {}
+
+    async def fake_stream(pcm, region, credentials):
+        seen.update(region=region, key=credentials.access_key, size=len(pcm))
+        return seen.get("reply", "Pause subscriptions for three months.")
+
+    monkeypatch.setattr(transcribe, "_stream", fake_stream)
+    text = asyncio.run(Transcriber().text(b"\x00\x01" * 1600))
+    assert text == "Pause subscriptions for three months."
+    assert seen == {"region": "eu-north-1", "key": "test-only", "size": 3200}
+    seen["reply"] = ""
+    with pytest.raises(TranscriptionError, match="No speech was recognized"):
+        asyncio.run(Transcriber().text(b"\x00\x01" * 1600))
+
+
+class _FakeSonic:
+    """Stands in for the Bedrock SDK: records sent events and replays Sonic's."""
+
+    def __init__(self, replies, error=None):
+        self.sent = []
+        self.replies = list(replies)
+        self.error = error
+        self.closed = []
+
+    def install(self, monkeypatch):
+        import aws_sdk_bedrock_runtime.client as client_module
+        import aws_sdk_bedrock_runtime.config as config_module
+        from smithy_http.aio import crt
+
+        fake = self
+
+        class Transport:
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *exc):
+                fake.closed.append("transport")
+
+        class Config:
+            @classmethod
+            async def resolve(cls, **settings):
+                fake.settings = settings
+                return settings
+
+        class Receiver:
+            async def receive(self):
+                if fake.error:
+                    raise fake.error
+                if fake.replies:
+                    event = fake.replies.pop(0)
+                    return SimpleNamespace(
+                        value=SimpleNamespace(
+                            bytes_=json.dumps({"event": event}).encode()
+                        )
+                    )
+                await asyncio.sleep(60)  # Sonic waits for more speech.
+
+            async def close(self):
+                fake.closed.append("output")
+
+        class Input:
+            async def send(self, chunk):
+                fake.sent.append(next(iter(json.loads(chunk.value.bytes_)["event"])))
+
+            async def close(self):
+                fake.closed.append("input")
+
+        class Stream:
+            input_stream = Input()
+
+            async def await_output(self):
+                return None, Receiver()
+
+        class Client:
+            def __init__(self, config):
+                pass
+
+            async def invoke_model_with_bidirectional_stream(self, request):
+                fake.model = request.model_id
+                return Stream()
+
+        import asyncio
+        from types import SimpleNamespace
+
+        monkeypatch.setattr(crt, "AWSCRTHTTPClient", Transport)
+        monkeypatch.setattr(config_module, "AsyncBedrockRuntimeConfig", Config)
+        monkeypatch.setattr(client_module, "AsyncBedrockRuntimeClient", Client)
+        return self
+
+
+def _turn(role, text):
+    return [{"contentStart": {"role": role}}, {"textOutput": {"content": text}}]
+
+
+@pytest.fixture
+def quick_sonic(monkeypatch):
+    from workbot import transcribe
+
+    monkeypatch.setattr(transcribe, "_HEARD_WITHIN", 0.3)
+    monkeypatch.setattr(transcribe, "_QUIET_AFTER", 0.2)
+    return SimpleNamespace(access_key="test-only", secret_key="test-only", token=None)
+
+
+def test_sonic_keeps_every_user_turn_and_ignores_the_reply(monkeypatch, quick_sonic):
+    import asyncio
+
+    from workbot import transcribe
+
+    sonic = _FakeSonic(
+        _turn("USER", "we want to pause plans.")
+        + _turn("ASSISTANT", "Okay.")
+        + _turn("USER", "For three months.")
+    ).install(monkeypatch)
+    text = asyncio.run(transcribe._stream(b"\x00\x01" * 800, "eu-north-1", quick_sonic))
+    assert text == "We want to pause plans. For three months."
+    assert sonic.model == "amazon.nova-2-sonic-v1:0"
+    assert (
+        sonic.settings["endpoint_uri"]
+        == "https://bedrock-runtime.eu-north-1.amazonaws.com"
+    )
+    assert sonic.sent[:3] == ["sessionStart", "promptStart", "contentStart"]
+    assert "audioInput" in sonic.sent
+    assert sonic.sent[-2:] == ["promptEnd", "sessionEnd"]
+    assert sonic.closed == ["input", "output", "transport"]
+
+
+def test_sonic_silence_returns_nothing_and_an_error_is_raised(monkeypatch, quick_sonic):
+    import asyncio
+
+    from workbot import transcribe
+
+    _FakeSonic([]).install(monkeypatch)
+    assert (
+        asyncio.run(transcribe._stream(b"\x00\x01" * 800, "eu-north-1", quick_sonic))
+        == ""
+    )
+    sonic = _FakeSonic([], error=RuntimeError(MARKER)).install(monkeypatch)
+    with pytest.raises(RuntimeError):
+        asyncio.run(transcribe._stream(b"\x00\x01" * 800, "eu-north-1", quick_sonic))
+    assert "transport" in sonic.closed
