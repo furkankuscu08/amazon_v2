@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Visible source · Workbot{% endblock %}
+{% block title %}Visible source · WorkBot{% endblock %}
 {% block body %}<div class="stack tight"><p><a href="/sessions/{{ session_id }}">← Back to the plan</a></p>
 <div class="panel stack tight"><span class="label">Visible source</span>
 {% if item.occurred_at %}<h1>{{ {'github': 'GitHub'}.get(item.kind, item.kind | capitalize) }} record · {{ item.occurred_at }}</h1><blockquote>{{ item.text }}</blockquote>
