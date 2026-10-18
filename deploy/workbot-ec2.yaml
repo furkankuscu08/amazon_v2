@@ -1,0 +1,119 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  WorkBot hosted demo: one Ubuntu server with Docker, an instance role that may call
+  Amazon Nova 2 Lite, Nova 2 Sonic and Polly, and a fixed public address. Deleting the
+  stack removes all of it.
+
+Parameters:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Existing EC2 key pair for SSH
+  SshCidr:
+    Type: String
+    Description: The only address range allowed to SSH in, for example 203.0.113.7/32
+    AllowedPattern: ^\d{1,3}(\.\d{1,3}){3}/\d{1,2}$
+  InstanceType:
+    Type: String
+    Default: t3.small
+    AllowedValues: [t3.small, c7i-flex.large, m7i-flex.large]
+  # Resolved again on every stack update: a newer AMI then replaces the server and
+  # everything on it. Change the SSH rule in the security group itself instead.
+  ImageId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id
+
+Resources:
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: workbot-runtime
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # The global inference profile may route a request to any Region; its
+              # foundation-model ARN has no Region at all.
+              - Effect: Allow
+                Action: bedrock:InvokeModel
+                Resource:
+                  - !Sub arn:${AWS::Partition}:bedrock:*:${AWS::AccountId}:inference-profile/global.amazon.nova-2-lite-v1:0
+                  - !Sub arn:${AWS::Partition}:bedrock:*::foundation-model/amazon.nova-2-lite-v1:0
+                  - !Sub arn:${AWS::Partition}:bedrock:::foundation-model/amazon.nova-2-lite-v1:0
+                  - !Sub arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/amazon.nova-2-sonic-v1:0
+              - Effect: Allow
+                Action: polly:SynthesizeSpeech
+                Resource: "*"
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref Role]
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: WorkBot demo - HTTPS for everyone, SSH for one address
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 22, ToPort: 22, CidrIp: !Ref SshCidr }
+        # Port 80 lets Caddy answer the certificate challenge and redirect to HTTPS.
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0 }
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0 }
+
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        # Hop limit 2: the role's credentials must reach the app inside a container.
+        MetadataOptions:
+          HttpTokens: required
+          HttpPutResponseHopLimit: 2
+        BlockDeviceMappings:
+          - DeviceName: /dev/sda1
+            Ebs: { VolumeSize: 20, VolumeType: gp3, Encrypted: true, DeleteOnTermination: true }
+
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      IamInstanceProfile: !Ref InstanceProfile
+      SecurityGroupIds: [!GetAtt SecurityGroup.GroupId]
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
+      Tags:
+        - { Key: Name, Value: workbot-demo }
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          set -euxo pipefail
+          # Swap keeps the image build and the embedding model inside 2 GiB of memory.
+          fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+          echo '/swapfile none swap sw 0 0' >> /etc/fstab
+          # First boot may run apt's own updates: wait for its lock instead of failing.
+          apt-get -o DPkg::Lock::Timeout=600 update
+          DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install -y docker.io docker-compose-v2 docker-buildx rsync
+          usermod -aG docker ubuntu
+          systemctl enable --now docker
+
+  Address:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref Instance
+      Tags:
+        - { Key: Name, Value: workbot-demo }
+
+Outputs:
+  PublicIp:
+    Value: !Ref Address
+  Hostname:
+    Description: Set this as WORKBOT_HOSTNAME; the demo is served at https://<hostname>
+    Value: !Sub ${Address}.sslip.io

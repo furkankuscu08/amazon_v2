@@ -32,6 +32,7 @@ For example, Maya asks: *"Raise the approval threshold for marketing spend reque
 | Voice input | Amazon Nova 2 Sonic on Bedrock (`amazon.nova-2-sonic-v1:0`, bidirectional stream through the `aws-sdk-bedrock-runtime` SDK, 16 kHz PCM) — **Speak** next to the idea and answer boxes fills the box with Sonic's transcript of what was said; Amazon Transcribe is not open to this project's account |
 | Embeddings | Local FastEmbed / all-MiniLM-L6-v2 (no cloud embedding calls) |
 | Relational data | SQLite via `WORKBOT_DB_PATH` (default `data/workbot.sqlite3`) |
+| Hosted demo (optional) | One Amazon EC2 server from a CloudFormation template, with an instance role; Docker Compose runs Caddy (automatic TLS), the app, and Qdrant |
 
 ## Prerequisites
 
@@ -85,7 +86,23 @@ docker compose --profile app up -d --build                     # app on :8000 + 
 docker compose --profile app run --rm app python -m workbot.seed
 ```
 
-The container does not see your AWS profile. Either set `WORKBOT_MODEL_PROVIDER=openrouter` and `OPENROUTER_API_KEY` in `.env`, or give the container AWS credentials yourself, for example a read-only mount of `~/.aws` at `/root/.aws`.
+The container does not see your AWS profile. Either set `WORKBOT_MODEL_PROVIDER=openrouter` and `OPENROUTER_API_KEY` in `.env`, or give the container AWS credentials yourself, for example a read-only mount of an AWS config directory at `/home/workbot/.aws`; the image runs as the user `workbot` (uid 10001), which must be able to read those files, and a `~/.aws` with the usual owner-only permissions is not readable to it. The image downloads the embedding model when it is built. A `workbot_data` volume left by an earlier image that ran as root is not writable to that user: remove it with `docker compose down -v` (this deletes the local container's sessions).
+
+### Optional: hosted demo on AWS
+
+`deploy/` puts the demo on one Amazon EC2 server behind HTTPS, as the hackathon's hosted test link; **Speak** needs a secure page, so plain `http` on a public address would lose it. Keep the guards on: a public demo without `WORKBOT_ACCESS_CODE` and `WORKBOT_DAILY_IDEAS` lets anyone spend your Bedrock budget.
+
+1. In the EC2 console of your Region, create a key pair (`.pem`) for SSH.
+2. In CloudFormation, create a stack from `deploy/workbot-ec2.yaml`, giving the key pair and your own address as `SshCidr` (for example `203.0.113.7/32`), and allow it to create IAM resources. It creates an Ubuntu 24.04 `t3.small` with a 20 GB encrypted disk and 2 GiB of swap, Docker installed at first boot, an Elastic IP, a security group open to all on ports 80 and 443 and to that address alone on 22, and an instance role allowed only `bedrock:InvokeModel` on Nova 2 Lite (through its global inference profile) and Nova 2 Sonic, and `polly:SynthesizeSpeech`. Instance metadata requires tokens with a hop limit of 2, so the role's credentials reach the app inside its container. The stack's `Hostname` output is `<elastic-ip>.sslip.io`, a public DNS name that resolves to that address, so Caddy can get a Let's Encrypt certificate without a domain of your own.
+3. Wait until `ssh ubuntu@<ip> cloud-init status --wait` reports `done` (Docker is installed then; log in again afterwards so the `docker` group applies), and copy the repository to the server without local state, for example `rsync -a --delete --exclude '.env*' --exclude .venv --exclude data --exclude .git --exclude __pycache__ --exclude '.*_cache' ./ ubuntu@<ip>:workbot/`. Excluded files, such as the server's own `.env`, are left in place.
+4. On the server, write `workbot/.env` with `AWS_REGION`, `WORKBOT_HOSTNAME`, `WORKBOT_ACCESS_CODE`, and `WORKBOT_DAILY_IDEAS`, and without `AWS_PROFILE`, so boto3 uses the instance role. Then, in `workbot/`:
+
+```bash
+docker compose -f deploy/compose.yaml --env-file .env up -d --build
+docker compose -f deploy/compose.yaml --env-file .env run --rm app python -m workbot.seed
+```
+
+Only Caddy publishes ports; Qdrant and the app are reachable on the Compose network alone, which is why the app may trust forwarded headers from any address there (`--proxy-headers --forwarded-allow-ips=*`). Caddy redirects `http` to `https` and keeps the `Host` header. The app logs each model call's summary line at `INFO` (see `deploy/logging.json`) and no access log; read it with `docker compose -f deploy/compose.yaml --env-file .env logs app` (every command on this file needs `--env-file .env`, because the file requires `WORKBOT_HOSTNAME`). To update the server, copy the tree again and rerun the first command; reseed only when the fixture changed. At on-demand prices the server, its disk, and its public address cost about $21 a month, before model calls; deleting the stack removes all of it, but not the key pair. Do not update the stack to change `SshCidr` when your address changes: its Ubuntu image is looked up again on every update, and a newer one replaces the server with an empty one; edit the security group's SSH rule instead.
 
 ## Environment variables
 
@@ -104,6 +121,7 @@ The container does not see your AWS profile. Either set `WORKBOT_MODEL_PROVIDER=
 | `WORKBOT_ACCESS_CODE` | *(unset)* | When set, every page asks for this code first (hosted demo) |
 | `WORKBOT_DAILY_IDEAS` | *(unset)* | When set, the most new ideas accepted per UTC day across all visitors |
 | `WORKBOT_HOST_PORT` | `8000` | Host port for the optional app container |
+| `WORKBOT_HOSTNAME` | *(unset)* | Public hostname of the hosted demo; read only by `deploy/compose.yaml`, which needs it |
 
 `.env` can hold secrets and is **git-ignored** — never commit it. Do not leave `AWS_BEARER_TOKEN_BEDROCK` set but empty: botocore then still sends the request with token authentication.
 
@@ -174,6 +192,8 @@ uv pip compile requirements.in --python-version 3.12 -o requirements.txt
 
 ```
 compose.yaml        # Qdrant (default) + optional app container via `--profile app`
+Dockerfile          # app image (also used by the hosted demo)
+deploy/             # hosted demo: CloudFormation template, Compose file, Caddyfile, log config
 requirements.in/txt # dependency pinning
 .env.example        # template; copy to .env (untracked)
 workbot/            # application package (app entrypoint: workbot.main:app)
