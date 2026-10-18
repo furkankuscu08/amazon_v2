@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta
 from threading import Event
 from types import SimpleNamespace
 
@@ -6,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from qdrant_client import QdrantClient
 
+import workbot.main as main_module
 from tests.unit_seed import seed_db
 from workbot.main import DemoRateLimiter, app
 from workbot.models import AreaEvaluation, Impact, Priority
@@ -642,3 +644,157 @@ def test_listen_failure_is_a_plain_message(web, monkeypatch):
     reply = client.get(url + "/speech.mp3")
     assert reply.status_code == 503
     assert "Audio is not available right now." in reply.text
+
+
+def _sessions(path):
+    db = connect(path)
+    try:
+        return db.execute("SELECT COUNT(*) FROM sessions").fetchone()[0]
+    finally:
+        db.close()
+
+
+def test_access_code_gates_every_page_until_it_is_entered(web, monkeypatch):
+    monkeypatch.setenv("WORKBOT_ACCESS_CODE", "judge-2026")
+    client = web.use(ScriptedModel([]))
+    home = client.get("/", follow_redirects=False)
+    assert (home.status_code, home.headers["location"]) == (303, "/access?next=%2F")
+    for path in (
+        "/sessions/any",
+        "/sessions/any/speech.mp3",
+        "/sessions/any/sources/jira:MKT-482",
+    ):
+        reply = client.get(path, follow_redirects=False)
+        assert reply.status_code == 303
+        assert reply.headers["location"].startswith("/access?next=")
+    submit = client.post(
+        "/sessions",
+        data={"idea": "Help plan marketing campaigns", "idempotency_key": "gate"},
+        follow_redirects=False,
+    )
+    assert submit.status_code == 303 and submit.headers["location"].startswith(
+        "/access"
+    )
+    assert _sessions(web.path) == 0
+    assert "Enter the demo access code" in client.get("/access?next=%2F").text
+    wrong = client.post("/access", data={"code": "judge-2025", "next": "/"})
+    assert wrong.status_code == 401
+    assert "That code is not right." in wrong.text
+    assert main_module.ACCESS_COOKIE not in client.cookies
+    # The code is accepted; a target on another site is replaced by the home page.
+    right = client.post(
+        "/access",
+        data={"code": "judge-2026", "next": "//evil.example/x"},
+        follow_redirects=False,
+    )
+    assert (right.status_code, right.headers["location"]) == (303, "/")
+    assert "judge-2026" not in right.headers["set-cookie"]
+    assert "httponly" in right.headers["set-cookie"].lower()
+    assert client.get("/").status_code == 200
+    # A new code invalidates cookies issued for the old one.
+    monkeypatch.setenv("WORKBOT_ACCESS_CODE", "new-code")
+    assert client.get("/", follow_redirects=False).status_code == 303
+
+
+def test_wrong_access_codes_are_limited(web, monkeypatch):
+    monkeypatch.setenv("WORKBOT_ACCESS_CODE", "judge-2026")
+    monkeypatch.setattr(main_module, "access_limiter", DemoRateLimiter(2, 600))
+    client = web.use(ScriptedModel([]))
+    codes = [client.post("/access", data={"code": "x"}).status_code for _ in range(2)]
+    assert codes == [401, 401]
+    # Once the limit is reached, even the right code waits.
+    right = client.post("/access", data={"code": "judge-2026"}, follow_redirects=False)
+    assert right.status_code == 429
+    assert main_module.ACCESS_COOKIE not in client.cookies
+
+
+def test_access_code_ignores_surrounding_spaces_and_odd_targets(web, monkeypatch):
+    monkeypatch.setenv("WORKBOT_ACCESS_CODE", " judge-2026 \n")
+    client = web.use(ScriptedModel([]))
+    assert client.get("/access?next=//[").status_code == 200
+    reply = client.post(
+        "/access",
+        data={"code": "judge-2026", "next": "//["},
+        follow_redirects=False,
+    )
+    assert (reply.status_code, reply.headers["location"]) == (303, "/")
+
+
+@pytest.mark.parametrize("value", ["abc", "-1", "1.5"])
+def test_a_bad_daily_limit_stops_new_ideas_with_a_plain_message(
+    web, monkeypatch, value
+):
+    monkeypatch.setenv("WORKBOT_DAILY_IDEAS", value)
+    client = web.use(ScriptedModel([]))
+    reply = client.post(
+        "/sessions",
+        data={"idea": "Help plan marketing campaigns", "idempotency_key": "bad"},
+    )
+    assert reply.status_code == 503
+    assert "daily idea limit is not set up correctly" in reply.text
+    assert _sessions(web.path) == 0
+
+
+@pytest.mark.parametrize(
+    "target", ["//evil.example/x", "/\\evil.example", "https://evil.example", "/\nx"]
+)
+def test_access_page_only_returns_to_a_path_on_this_site(web, monkeypatch, target):
+    monkeypatch.setenv("WORKBOT_ACCESS_CODE", "judge-2026")
+    client = web.use(ScriptedModel([]))
+    reply = client.post(
+        "/access",
+        data={"code": "judge-2026", "next": target},
+        follow_redirects=False,
+    )
+    assert reply.headers["location"] == "/"
+
+
+def test_non_ascii_code_or_cookie_is_simply_wrong(web, monkeypatch):
+    monkeypatch.setenv("WORKBOT_ACCESS_CODE", "judge-2026")
+    client = web.use(ScriptedModel([]))
+    assert client.post("/access", data={"code": "jüri"}).status_code == 401
+    client.cookies.set(main_module.ACCESS_COOKIE, "not-the-digest")
+    assert client.get("/", follow_redirects=False).status_code == 303
+
+
+def test_without_an_access_code_there_is_no_gate(web):
+    client = web.use(ScriptedModel([]))
+    assert client.get("/").status_code == 200
+    reply = client.get("/access?next=%2Fsessions%2Fx", follow_redirects=False)
+    assert (reply.status_code, reply.headers["location"]) == (303, "/sessions/x")
+
+
+def test_daily_limit_counts_each_new_idea_once(web, monkeypatch):
+    monkeypatch.setenv("WORKBOT_DAILY_IDEAS", "1")
+    client = web.use(
+        ScriptedModel([_person("nina", "direct_contact", ["jira:MKT-482"], "direct")])
+    )
+
+    def submit(key, idea="Help plan marketing campaigns"):
+        return client.post(
+            "/sessions",
+            data={"idea": idea, "idempotency_key": key},
+            follow_redirects=False,
+        )
+
+    # A rejected form counts nothing.
+    assert submit("empty", idea=" ").status_code == 400
+    first = submit("first")
+    assert first.status_code == 303
+    app.state.last_run.join(10)
+    # Submitting the same form again starts nothing and counts nothing.
+    assert submit("first").headers["location"] == first.headers["location"]
+    second = submit("second")
+    assert second.status_code == 429
+    assert "limit of new ideas for this demo has been reached" in second.text
+    assert client.get(first.headers["location"]).status_code == 200
+    assert _sessions(web.path) == 1
+
+    class Tomorrow(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime.now(tz) + timedelta(days=1)
+
+    monkeypatch.setattr(main_module, "datetime", Tomorrow)
+    assert submit("next-day").status_code == 303
+    app.state.last_run.join(10)

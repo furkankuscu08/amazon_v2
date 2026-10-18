@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import os
 import time
 import uuid
 from collections import defaultdict, deque
+from datetime import datetime, timezone
 from functools import lru_cache
 from http import HTTPStatus
 from threading import Lock, Thread
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, quote, urlsplit
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
@@ -35,10 +38,13 @@ from workbot.speech import Speech, SpeechError
 from workbot.storage import (
     connect,
     directory_claims,
+    has_session_key,
     initialize,
     load_session,
     recent_sessions,
+    return_daily_idea,
     source,
+    take_daily_idea,
     valid_card,
 )
 
@@ -110,12 +116,59 @@ class DemoRateLimiter:
 
 
 demo_limiter = DemoRateLimiter()
+# Wrong access codes per client: enough for typos, too few to guess a code.
+access_limiter = DemoRateLimiter(limit=10, window_seconds=600)
+ACCESS_COOKIE = "workbot_access"
 
 
-def _guard_model_request(request: Request) -> None:
+def _access_code() -> str:
+    return os.getenv("WORKBOT_ACCESS_CODE", "").strip()
+
+
+def _daily_limit() -> int:
+    """0 when unset; a value that is not a whole number stops new ideas."""
+    value = (os.getenv("WORKBOT_DAILY_IDEAS") or "").strip()
+    if not value:
+        return 0
+    if not value.isdigit():
+        raise HTTPException(
+            503,
+            "This demo's daily idea limit is not set up correctly, so no new idea "
+            "can be accepted. Earlier plans can still be opened.",
+        )
+    return int(value)
+
+
+def _access_token(code: str) -> str:
+    # The cookie holds a digest, not the code; a new code invalidates old cookies.
+    return hmac.new(code.encode(), b"workbot-access", hashlib.sha256).hexdigest()
+
+
+def _matches(given: str, expected: str) -> bool:
+    # Bytes, because compare_digest refuses non-ASCII text.
+    return hmac.compare_digest(given.encode(), expected.encode())
+
+
+@app.middleware("http")
+async def access_gate(request: Request, call_next):
+    """With WORKBOT_ACCESS_CODE set, every page waits for the code; unset, none does."""
+    code = _access_code()
+    if not code or request.url.path == "/access":
+        return await call_next(request)
+    if _matches(request.cookies.get(ACCESS_COOKIE, ""), _access_token(code)):
+        return await call_next(request)
+    target = request.url.path + (f"?{request.url.query}" if request.url.query else "")
+    return RedirectResponse("/access?next=" + quote(target, safe=""), status_code=303)
+
+
+def _same_origin(request: Request) -> None:
     origin = request.headers.get("origin")
     if origin and origin != str(request.base_url).rstrip("/"):
         raise HTTPException(403, "Requests from other sites are not accepted.")
+
+
+def _guard_model_request(request: Request) -> None:
+    _same_origin(request)
     if not demo_limiter.allow(request.client.host if request.client else "unknown"):
         raise HTTPException(
             429,
@@ -175,6 +228,54 @@ async def _form(request: Request) -> dict[str, str]:
     return {key: values[0] for key, values in fields.items()}
 
 
+def _next(target: str) -> str:
+    # Only a path on this site: browsers read "//host" and "/\\host" as another host.
+    try:
+        parts = urlsplit(target)
+    except ValueError:
+        return "/"
+    safe = target.startswith("/") and not (parts.scheme or parts.netloc)
+    return target if safe and "\\" not in target and target.isprintable() else "/"
+
+
+@app.get("/access", response_class=HTMLResponse)
+def access_page(request: Request, next: str = "/"):
+    if not _access_code():
+        return RedirectResponse(_next(next), status_code=303)
+    return templates.TemplateResponse(
+        request, "access.html", {"next": _next(next), "wrong": False}
+    )
+
+
+@app.post("/access", response_class=HTMLResponse)
+async def access_submit(request: Request):
+    form = await _form(request)
+    _same_origin(request)
+    code = _access_code()
+    target = _next(form.get("next", "/"))
+    if not code:
+        return RedirectResponse(target, status_code=303)
+    # Every attempt counts, so a right guess after many wrong ones is refused too.
+    if not access_limiter.allow(request.client.host if request.client else "unknown"):
+        raise HTTPException(
+            429, "Too many attempts. Wait a few minutes, then try again."
+        )
+    if _matches(form.get("code", "").strip(), code):
+        response = RedirectResponse(target, status_code=303)
+        response.set_cookie(
+            ACCESS_COOKIE,
+            _access_token(code),
+            max_age=30 * 24 * 3600,
+            httponly=True,
+            samesite="lax",
+            secure=request.url.scheme == "https",
+        )
+        return response
+    return templates.TemplateResponse(
+        request, "access.html", {"next": target, "wrong": True}, status_code=401
+    )
+
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     db = _db()
@@ -220,7 +321,25 @@ def _create(key: str, idea: str) -> str:
     try:
         # Checked before anything is stored or sent to the model.
         _searcher().check(db)
-        sid, created = open_session(db, key, idea)
+        limit = _daily_limit()
+        day = datetime.now(timezone.utc).date().isoformat()
+        # A repeated submit of the same form starts nothing and counts nothing.
+        counted = bool(limit) and not has_session_key(db, key)
+        if counted and not take_daily_idea(db, day, limit):
+            raise HTTPException(
+                429,
+                "Today's limit of new ideas for this demo has been reached. Earlier "
+                "plans can still be opened; new ideas are accepted again after "
+                "midnight UTC.",
+            )
+        try:
+            sid, created = open_session(db, key, idea)
+        except BaseException:
+            if counted:
+                return_daily_idea(db, day)
+            raise
+        if counted and not created:
+            return_daily_idea(db, day)  # The same form, submitted twice at once.
     finally:
         db.close()
     if created:

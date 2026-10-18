@@ -11,6 +11,9 @@ def offline_test_environment(tmp_path_factory, monkeypatch):
     # Empty provider settings mean the defaults: Bedrock and its default model.
     monkeypatch.setenv("WORKBOT_MODEL_PROVIDER", "")
     monkeypatch.setenv("WORKBOT_BEDROCK_MODEL", "")
+    # No access code and no daily idea limit unless a test sets one.
+    monkeypatch.setenv("WORKBOT_ACCESS_CODE", "")
+    monkeypatch.setenv("WORKBOT_DAILY_IDEAS", "")
     monkeypatch.setenv("QDRANT_URL", "http://127.0.0.1:9")
     monkeypatch.setenv(
         "WORKBOT_DB_PATH", str(tmp_path_factory.getbasetemp() / "unset.sqlite3")

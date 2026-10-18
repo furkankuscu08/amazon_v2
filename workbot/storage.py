@@ -74,6 +74,7 @@ def initialize(db: sqlite3.Connection) -> None:
             UNIQUE (actor, workspace, idem_key)
         );
         CREATE TABLE IF NOT EXISTS index_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS daily_ideas (day TEXT PRIMARY KEY, count INTEGER NOT NULL);
     """)
     db.commit()
 
@@ -315,6 +316,35 @@ def store_card(db: sqlite3.Connection, session_id: str, card: dict) -> None:
         (json.dumps(card), json.dumps(snapshot, sort_keys=True), session_id),
     )
     db.commit()
+
+
+def has_session_key(db: sqlite3.Connection, idem_key: str) -> bool:
+    return bool(
+        db.execute(
+            "SELECT 1 FROM sessions WHERE actor='maya' AND workspace='demo' AND idem_key=?",
+            (idem_key,),
+        ).fetchone()
+    )
+
+
+def take_daily_idea(db: sqlite3.Connection, day: str, limit: int) -> bool:
+    """Count one new idea for `day`; False, counting nothing, once `limit` is reached."""
+    with db:
+        db.execute(
+            "INSERT INTO daily_ideas (day, count) VALUES (?, 0) ON CONFLICT DO NOTHING",
+            (day,),
+        )
+        taken = db.execute(
+            "UPDATE daily_ideas SET count=count+1 WHERE day=? AND count<?", (day, limit)
+        ).rowcount
+    return taken == 1
+
+
+def return_daily_idea(db: sqlite3.Connection, day: str) -> None:
+    with db:
+        db.execute(
+            "UPDATE daily_ideas SET count=count-1 WHERE day=? AND count>0", (day,)
+        )
 
 
 def load_session(db: sqlite3.Connection, session_id: str) -> dict | None:
