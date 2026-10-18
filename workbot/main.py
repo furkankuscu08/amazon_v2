@@ -50,7 +50,7 @@ from workbot.storage import (
 from workbot.transcribe import MAX_BYTES, Transcriber, TranscriptionError
 
 load_dotenv()
-app = FastAPI(title="Workbot — simulated Alexa+ experience")
+app = FastAPI(title="WorkBot — simulated Alexa+ experience")
 templates = Jinja2Templates(
     directory=os.path.join(os.path.dirname(__file__), "templates")
 )
@@ -82,7 +82,7 @@ async def error_page(request: Request, exc: StarletteHTTPException):
     elif exc.status_code == 404:
         message = "There is nothing to show at this address."
     else:
-        message = "This request could not be completed. Go back to the Workbot page and try again."
+        message = "This request could not be completed. Go back to the WorkBot page and try again."
     return templates.TemplateResponse(
         request,
         "error.html",
@@ -216,7 +216,7 @@ async def _form(request: Request) -> dict[str, str]:
         request.headers.get("content-type", "").split(";", 1)[0].lower()
         != "application/x-www-form-urlencoded"
     ):
-        raise HTTPException(415, "Send the idea from the Workbot page.")
+        raise HTTPException(415, "Send the idea from the WorkBot page.")
     chunks = []
     size = 0
     async for chunk in request.stream():
@@ -230,7 +230,7 @@ async def _form(request: Request) -> dict[str, str]:
         )
     except UnicodeError:
         raise HTTPException(
-            400, "The form could not be read. Try again from the Workbot page."
+            400, "The form could not be read. Try again from the WorkBot page."
         ) from None
     return {key: values[0] for key, values in fields.items()}
 
@@ -470,7 +470,7 @@ async def transcribe(request: Request):
     _same_origin(request)
     content_type = request.headers.get("content-type", "").split(";", 1)[0].lower()
     if content_type != "application/octet-stream":
-        return JSONResponse({"error": "Record from the Workbot page."}, 415)
+        return JSONResponse({"error": "Record from the WorkBot page."}, 415)
     chunks, size = [], 0
     async for chunk in request.stream():
         size += len(chunk)

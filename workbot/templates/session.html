@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Workbot · who to talk to first{% endblock %}
+{% block title %}WorkBot · who to talk to first{% endblock %}
 {% block body_class %}{{ 'busy' if session.state == 'processing' else '' }}{% endblock %}
 {% block body %}<div class="stack">
 <div class="idea"><span class="label">Maya's idea</span><q>{{ session.sentence }}</q></div>
-{% for turn in answers %}<div class="idea"><span class="label">Workbot asked</span><p>{{ turn.question }}</p><span class="label">Maya answered</span><p>{% if turn.answer %}{{ turn.answer }}{% else %}<span class="muted">Continued without answering</span>{% endif %}</p></div>
+{% for turn in answers %}<div class="idea"><span class="label">WorkBot asked</span><p>{{ turn.question }}</p><span class="label">Maya answered</span><p>{% if turn.answer %}{{ turn.answer }}{% else %}<span class="muted">Continued without answering</span>{% endif %}</p></div>
 {% endfor %}
 {% if stale %}<div class="warning stack tight"><h1>This plan is out of date</h1><p>Something it relied on (access, a source, the directory, or the team list) has changed since I prepared it. Ask again to get a current plan.</p></div>
 {% elif session.state == 'question' %}
