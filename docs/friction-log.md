@@ -81,7 +81,7 @@ Setup at the time: a new account created through AWS Settings (projects owned by
 - **Expected:** a Region choice.
 - **Actual:** the dialog asks only for a name; the new project (a separate AWS account) was again placed in Europe (Stockholm) `eu-north-1`.
 - **Severity:** Medium.
-- **Workaround:** none without activating advanced features; the extra project was not used.
+- **Workaround:** none without activating advanced features; the extra project was closed again.
 - **Suggestion:** let the creator pick the project Region, or say how it is chosen.
 
 ## 9. Advanced-feature activation sends a code to an address it then refuses
@@ -101,7 +101,7 @@ Setup at the time: a new account created through AWS Settings (projects owned by
 - **Expected:** the effect of the limit next to it.
 - **Actual:** "Monthly spend limit $0 / $20", with no hint that, per the AWS Account Management guide, a project nearing its limit gets SCPs that deny creating or invoking resources, Bedrock included.
 - **Severity:** Medium.
-- **Workaround:** read the guide; the limit has to be raised before a hosted demo.
+- **Workaround:** read the guide; the limit was raised to $100 before a hosted demo.
 - **Suggestion:** say beside the limit what stops working when it is reached.
 
 ## 11. Nova 2 Lite supports neither structured-output mechanism in the guide
@@ -121,7 +121,7 @@ Setup at the time: a new account created through AWS Settings (projects owned by
 - **Expected:** a few thousand output tokens per call at most.
 - **Actual:** impact and priority calls returned 3,600–8,192 output tokens in 20–46 seconds; two priority calls stopped at `max_tokens` and two impact calls ended after about 46 seconds without a tool call and with zero reported tokens (not reproducible: the same two ideas succeeded four times in a row afterwards). Reasoning tokens are counted in `outputTokens` and redacted, so it is not visible how much of the cap went to reasoning. At `low`, the same impact calls used 1,300–2,100 tokens in 10–14 seconds and stayed valid.
 - **Severity:** Medium (two of six ideas were refused, and two plans fell back to the default choice of whom to talk to first).
-- **Workaround:** `low` effort for all tasks, and the stop reason is now logged.
+- **Workaround:** `low` effort for all tasks, the stop reason is now logged, and a reply that ends without a tool call is requested once more.
 - **Suggestion:** report reasoning tokens separately in `usage`, and document typical output sizes per effort level.
 
 ## 13. An empty bearer-token variable still sends the request
@@ -143,3 +143,33 @@ Setup at the time: a new account created through AWS Settings (projects owned by
 - **Severity:** Low.
 - **Workaround:** WorkBot passes `region_name=os.getenv("AWS_REGION")` explicitly.
 - **Suggestion:** honor `AWS_REGION` in boto3 as the AWS CLI v2 does.
+
+## 15. Without strict schemas, an occasional reply breaks a rule
+
+- **Task:** the same six-idea run after the change in entry 12.
+- **Steps:** forced, non-strict tool use (entry 11) with local Pydantic validation.
+- **Expected:** replies that follow the tool's JSON schema, including its documented cross-field rules.
+- **Actual:** across two runs, 1 of 83 calls returned a reply that broke a cross-field rule of the impact schema (Pydantic `value_error`), so that idea was refused; the other replies validated. Roles also varied between runs for the same idea, for example a person shown as a direct contact in one run and not proposed in the next.
+- **Severity:** Medium (a refused idea is visible to the user).
+- **Workaround:** a reply that fails the schema is requested once more with the same input; a second failure still produces no card.
+- **Suggestion:** support `strict` tools or `outputConfig` for Nova 2 Lite, as for the models the structured-output guide covers.
+
+## 16. The account's plan and the Upgrade button cannot be found
+
+- **Task:** upgrade from the Free plan to the Paid plan to use Amazon Transcribe.
+- **Steps:** followed the AWS Account Management guide: AWS Settings → **Billing** → **Upgrade**. Then looked in Projects → Overview → **Actions** (only "Activate advanced features", "Opt out of data use by AWS AI services", "Close management account") and in the profile menu.
+- **Expected:** an Upgrade button, or a visible statement of the current plan.
+- **Actual:** no Upgrade button anywhere. The Overview, which earlier showed "Days remaining in free plan 183 days" and "Credits remaining", now shows "Current charges", and Billing shows a payment card and per-project spend limits, but no page names the plan. Whether the account was already on the Paid plan could only be inferred from an error message: `transcribe:ListVocabularies` was denied "because no identity-based policy allows" it, not by "an explicit deny in a service control policy", so Transcribe is not blocked by the plan.
+- **Severity:** Medium.
+- **Workaround:** the error-message check above.
+- **Suggestion:** name the current plan on the Billing and Projects pages, and keep the Upgrade entry where the guide says it is (or say why it is missing).
+
+## 17. A short test burst is forecast as nearly hitting the spend limit
+
+- **Task:** watch costs during the live tests.
+- **Steps:** AWS Settings → **Billing** after about two hours of tests.
+- **Expected:** a forecast that reflects occasional use.
+- **Actual:** month-to-date $0.46 (matching our own token-based estimate), but a month-end forecast of $148.13 and the status "Approaching limit · 10 days" against the $100 limit. The guide says that a project nearing its spend limit gets policies that deny Bedrock and other services, and does not say whether the forecast or the actual spend triggers them.
+- **Severity:** Low (nothing has been blocked so far).
+- **Workaround:** none needed yet; Bedrock errors are watched for `AccessDeniedException`.
+- **Suggestion:** state what triggers the spend-limit policies, and base the warning on more than one burst of use.
