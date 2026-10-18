@@ -497,7 +497,53 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
     topic = set(keywords(f"{item['label']} {item['consultation_need']}"))
     teams = {row["id"]: row["name"] for row in db.execute("SELECT * FROM org_units")}
     accepted = []
+    # A direct proposal that names a person or source outside the pool, a person
+    # who is inactive or in another team, or a source no longer visible or current:
+    # the review itself is unreliable.
     rejected_direct = False
+    # A direct proposal on real evidence that does not show direct work. The prompt
+    # tells the model to propose a manager only when it has no direct contact, so
+    # the manager it held back may be added from the directory below.
+    overclaimed = False
+
+    def accept(candidate, role, primary, evidence_ids, facts, confidence, summary):
+        headline = facts[primary][2]
+        if role == "routing_contact":
+            # The reason for routing is added below, once the area's people are known.
+            remit = next(f[2] for f in facts.values() if f[0] == "remit")
+            headline = f"Manages the team. {remit}"
+        ended = _ended_duty(db, candidate["person_id"], topic)
+        accepted.append(
+            {
+                "person_id": candidate["person_id"],
+                "name": candidate["name"],
+                "title": candidate["title"],
+                "org_id": candidate["org_id"],
+                "team": teams.get(candidate["org_id"], candidate["org_id"]),
+                "role": role,
+                "primary_kind": facts[primary][0],
+                # One short audited line for the plan at the top of the card.
+                "headline": headline,
+                # A directory fact the model did not see; its source is tracked so
+                # the card fails closed if that source stops being visible.
+                "ended_duty": ended["text"] if ended else None,
+                "context_ids": [ended["source_id"]] if ended else [],
+                "confidence": confidence,
+                "primary_evidence_id": primary,
+                "evidence_ids": evidence_ids,
+                "why": [facts[primary][1]]
+                + [fact[1] for sid, fact in facts.items() if sid != primary],
+                # Unverified model text, shown labelled as such; None hides the line.
+                "contribution": summary,
+            }
+        )
+
+    def active_in_team(person_id: str, candidate: dict) -> bool:
+        person = db.execute(
+            "SELECT * FROM people WHERE id=? AND active=1", (person_id,)
+        ).fetchone()
+        return bool(person) and person["org_id"] == candidate["org_id"]
+
     for proposal in evaluation.people:
         candidate = candidates.get(proposal.person_id)
         if (
@@ -507,10 +553,7 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
         ):
             rejected_direct |= proposal.role == "direct_contact"
             continue
-        person = db.execute(
-            "SELECT * FROM people WHERE id=? AND active=1", (proposal.person_id,)
-        ).fetchone()
-        if not person or person["org_id"] != candidate["org_id"]:
+        if not active_in_team(proposal.person_id, candidate):
             rejected_direct |= proposal.role == "direct_contact"
             continue
         facts = {sid: _evidence(db, candidate, sid) for sid in proposal.evidence_ids}
@@ -526,15 +569,13 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
             # unrelated record in the same citation list.
             if proposal.relevance == "direct" and primary_kind in DIRECT_KINDS:
                 pass
-            # The model itself judged the link adjacent or weak. Keep an explainable
-            # contact as an advisor rather than dropping it or asserting a direct tie.
-            elif (
-                proposal.relevance in {"adjacent", "weak"}
-                and primary_kind in ADVISOR_KINDS
-            ):
+            # The model judged the link adjacent or weak, or claimed more than the
+            # primary source shows. Keep an explainable contact as an advisor.
+            elif primary_kind in ADVISOR_KINDS:
+                overclaimed = True
                 role = "advisor"
             else:
-                rejected_direct = True
+                overclaimed = True
                 continue
         elif role == "advisor" and primary_kind not in ADVISOR_KINDS:
             # A mention or a manager line as the primary source is not a useful
@@ -542,40 +583,39 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
             continue
         elif role == "routing_contact" and not {"manager", "remit"} <= kinds:
             continue
-        headline = facts[proposal.primary_evidence_id][2]
-        if role == "routing_contact":
-            # The reason for routing is added below, once the area's people are known.
-            remit = next(f[2] for f in facts.values() if f[0] == "remit")
-            headline = f"Manages the team. {remit}"
-        ended = _ended_duty(db, proposal.person_id, topic)
-        accepted.append(
-            {
-                "person_id": proposal.person_id,
-                "name": candidate["name"],
-                "title": candidate["title"],
-                "org_id": candidate["org_id"],
-                "team": teams.get(candidate["org_id"], candidate["org_id"]),
-                "role": role,
-                "primary_kind": primary_kind,
-                # One short audited line for the plan at the top of the card.
-                "headline": headline,
-                # A directory fact the model did not see; its source is tracked so
-                # the card fails closed if that source stops being visible.
-                "ended_duty": ended["text"] if ended else None,
-                "context_ids": [ended["source_id"]] if ended else [],
-                "confidence": proposal.confidence,
-                "primary_evidence_id": proposal.primary_evidence_id,
-                "evidence_ids": proposal.evidence_ids,
-                "why": [facts[proposal.primary_evidence_id][1]]
-                + [
-                    fact[1]
-                    for sid, fact in facts.items()
-                    if sid != proposal.primary_evidence_id
-                ],
-                # Unverified model text, shown labelled as such; None hides the line.
-                "contribution": _shown_contribution(proposal.contribution),
-            }
+        accept(
+            candidate,
+            role,
+            proposal.primary_evidence_id,
+            proposal.evidence_ids,
+            facts,
+            proposal.confidence,
+            _shown_contribution(proposal.contribution),
         )
+    shown = {p["person_id"] for p in accepted}
+    if (
+        overclaimed
+        and not rejected_direct
+        and not any(
+            p["role"] in {"direct_contact", "routing_contact"} for p in accepted
+        )
+    ):
+        # The pool holds at most one manager: the team's single current manager,
+        # with each visible remit that shares a word with the area's search intents.
+        manager = next(
+            (
+                c
+                for c in pool["people"]
+                if any(e["kind"] == "manager" for e in c["evidence"])
+            ),
+            None,
+        )
+        if manager and manager["person_id"] not in shown:
+            refs = [e["id"] for e in manager["evidence"] if e["kind"] == "manager"]
+            refs += [e["id"] for e in manager["evidence"] if e["kind"] == "remit"]
+            facts = {sid: _evidence(db, manager, sid) for sid in refs}
+            if all(facts.values()) and active_in_team(manager["person_id"], manager):
+                accept(manager, "routing_contact", refs[0], refs, facts, "low", None)
     has_direct = any(p["role"] == "direct_contact" for p in accepted)
     accepted = [
         p

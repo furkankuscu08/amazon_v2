@@ -280,8 +280,14 @@ def test_direct_contact_cannot_borrow_strength_from_an_unrelated_record(db):
         [priority("campaign_review")],
     )
     _, card = card_for(db, model, StubSearcher(ids=("jira:MKT-482", "jira:MKT-483")))
-    assert card["areas"][0]["status"] == "review_incomplete"
-    assert card["areas"][0]["people"] == []
+    area = card["areas"][0]
+    # Her reporter tie keeps her as an advisor; the claim of direct work does not
+    # hold, so the team's manager is restored as the routing contact.
+    assert [(p["person_id"], p["role"]) for p in area["people"]] == [
+        ("elena", "advisor"),
+        ("marcus", "routing_contact"),
+    ]
+    assert not area["direct_review_incomplete"]
 
 
 def test_indirect_relevance_keeps_a_useful_contact_as_advisor(db):
@@ -299,8 +305,10 @@ def test_indirect_relevance_keeps_a_useful_contact_as_advisor(db):
     _, card = card_for(db, model)
     area = card["areas"][0]
     assert area["status"] == "people"
+    # A direct_contact the model itself rates adjacent still held the manager back.
     assert [(p["person_id"], p["role"]) for p in area["people"]] == [
-        ("nina", "advisor")
+        ("nina", "advisor"),
+        ("marcus", "routing_contact"),
     ]
 
 
@@ -392,7 +400,7 @@ def test_primary_source_is_first_and_card_has_no_model_question(db):
 
 
 def test_expired_responsibility_and_weak_reporter_do_not_prove_direct_contact(db):
-    for evidence in ("directory:elena-old", "jira:MKT-482"):
+    def card(evidence):
         model = StubModel(
             [impact(AREA)],
             [
@@ -407,16 +415,94 @@ def test_expired_responsibility_and_weak_reporter_do_not_prove_direct_contact(db
             ],
             [priority("campaign_review")],
         )
-        _, card = card_for(db, model, StubSearcher(ids=("jira:MKT-482",)), key=evidence)
-        area = card["areas"][0]
-        assert area["status"] == "review_incomplete"
-        assert area["direct_review_incomplete"]
-        assert not area[
-            "people"
-        ]  # A rejected direct contact cannot trigger a manager fallback.
+        return card_for(db, model, StubSearcher(ids=("jira:MKT-482",)), key=evidence)[
+            1
+        ]["areas"][0]
+
+    # An expired duty is not visible evidence: the review is unreliable, so even the
+    # proposed manager is not shown.
+    area = card("directory:elena-old")
+    assert area["status"] == "review_incomplete"
+    assert area["direct_review_incomplete"]
+    assert not area["people"]
+    # A reporter tie is real but weak: she stays an advisor beside the manager.
+    area = card("jira:MKT-482")
+    assert [(p["person_id"], p["role"]) for p in area["people"]] == [
+        ("elena", "advisor"),
+        ("marcus", "routing_contact"),
+    ]
+    assert area["people"][1]["headline"].startswith(
+        "No direct contact for this was established."
+    )
 
 
-def test_manager_needs_explicit_proposal_current_remit_and_no_direct(db):
+def test_overclaimed_direct_restores_only_a_held_back_manager(db):
+    refs = ["directory:growth-manager", "directory:growth-remit"]
+
+    def card(*proposals, key):
+        model = StubModel(
+            [impact(AREA)], [evaluation(*proposals)], [priority("campaign_review")]
+        )
+        return card_for(db, model, StubSearcher(ids=()), key=key)[1]["areas"][0]
+
+    # A manager line cannot prove direct work. The model, told to propose a manager
+    # only without a direct contact, held him back; the audit adds him from the
+    # directory, with no model summary.
+    area = card(proposal("marcus", "direct_contact", refs), key="manager-as-direct")
+    assert area["status"] == "people"
+    [person] = area["people"]
+    assert (person["person_id"], person["role"]) == ("marcus", "routing_contact")
+    assert person["contribution"] is None
+    assert person["evidence_ids"] == refs
+    assert person["headline"].startswith(
+        "No one was identified from the visible work on this. Manages the team."
+    )
+    # Proposing nobody is a completed review, not an overclaim.
+    assert card(key="nobody")["status"] == "not_found"
+    # A broken proposal beside an overclaim still marks the review unreliable.
+    area = card(
+        proposal("marcus", "direct_contact", refs),
+        proposal("elena", "direct_contact", ["jira:NOT-IN-POOL"]),
+        key="broken-and-overclaimed",
+    )
+    assert (area["status"], area["people"]) == ("review_incomplete", [])
+
+
+@pytest.mark.parametrize(
+    ("case", "expected"),
+    [
+        # A routing contact the model proposed is not added a second time.
+        ("with_routing", [("elena", "advisor"), ("marcus", "routing_contact")]),
+        # An accepted direct contact still keeps the manager out.
+        ("with_direct", [("nina", "direct_contact"), ("elena", "advisor")]),
+        # The manager is checked again at audit time.
+        ("inactive_manager", [("elena", "advisor")]),
+        ("expired_remit", [("elena", "advisor")]),
+    ],
+)
+def test_restored_manager_is_added_once_and_only_when_still_valid(db, case, expected):
+    refs = ["directory:growth-manager", "directory:growth-remit"]
+    proposals = [proposal("elena", "direct_contact", ["jira:MKT-482"])]
+    if case == "with_routing":
+        proposals.append(proposal("marcus", "routing_contact", refs))
+    if case == "with_direct":
+        proposals.append(proposal("nina", "direct_contact", ["jira:MKT-482"]))
+    pool = candidate_pool(db, AREA, [visible_record(db, "jira:MKT-482")])
+    if case == "inactive_manager":
+        db.execute("UPDATE people SET active=0 WHERE id='marcus'")
+    if case == "expired_remit":
+        db.execute(
+            "UPDATE team_remits SET valid_to='2025-12-31' WHERE id='growth-remit'"
+        )
+    item = {"label": AREA["label"], "consultation_need": AREA["consultation_need"]}
+    service.audit_area(
+        db, item, pool, AreaEvaluation.model_validate({"people": proposals})
+    )
+    assert [(p["person_id"], p["role"]) for p in item["people"]] == expected
+    assert item["status"] == "people"
+
+
+def test_routing_contact_needs_a_current_remit_and_no_direct(db):
     refs = ["directory:growth-manager", "directory:growth-remit"]
     model = StubModel(
         [impact(AREA)],
@@ -898,11 +984,12 @@ def test_parallel_review_drops_a_source_revoked_during_model_call(db):
 
 
 def test_rejected_direct_keeps_safe_advisor_but_never_manager(db):
+    # Elena's direct proposal cites a source that is not in her evidence.
     model = StubModel(
         [impact(AREA)],
         [
             evaluation(
-                proposal("elena", "direct_contact", ["jira:MKT-482"]),
+                proposal("elena", "direct_contact", ["jira:NOT-IN-POOL"]),
                 proposal("priya", "advisor", ["docs:campaign-review-2023"]),
                 proposal(
                     "marcus",
