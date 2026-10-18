@@ -114,7 +114,17 @@ Setup at the time: a new account created through AWS Settings (projects owned by
 - **Workaround:** forced tool use (`toolChoice.tool`) without `strict`, with the full JSON schema as the tool's input schema, and local Pydantic validation of the reply. This works together with extended thinking: an area call at low effort took 2.7 s (1,978 input / 258 output tokens), an impact call at medium effort 10.5 s (1,773 / 1,267).
 - **Suggestion:** list the supported models in the structured-output guide itself, and support it for Amazon's own models.
 
-## 12. An empty bearer-token variable still sends the request
+## 12. Medium reasoning effort fills the output cap
+
+- **Task:** run WorkBot's six answer-key ideas end to end on Nova 2 Lite.
+- **Steps:** extended thinking at `low` for area calls and `medium` for impact and priority, with `maxTokens` 8,192 (the `high` setting forbids `maxTokens`).
+- **Expected:** a few thousand output tokens per call at most.
+- **Actual:** impact and priority calls returned 3,600–8,192 output tokens in 20–46 seconds; two priority calls stopped at `max_tokens` and two impact calls ended after about 46 seconds without a tool call and with zero reported tokens (not reproducible: the same two ideas succeeded four times in a row afterwards). Reasoning tokens are counted in `outputTokens` and redacted, so it is not visible how much of the cap went to reasoning. At `low`, the same impact calls used 1,300–2,100 tokens in 10–14 seconds and stayed valid.
+- **Severity:** Medium (two of six ideas were refused, and two plans fell back to the default choice of whom to talk to first).
+- **Workaround:** `low` effort for all tasks, and the stop reason is now logged.
+- **Suggestion:** report reasoning tokens separately in `usage`, and document typical output sizes per effort level.
+
+## 13. An empty bearer-token variable still sends the request
 
 - **Task:** make WorkBot's offline tests unable to reach AWS.
 - **Steps:** set `AWS_BEARER_TOKEN_BEDROCK=""` (and the other credential variables) in the test environment, then called Converse.
@@ -124,7 +134,7 @@ Setup at the time: a new account created through AWS Settings (projects owned by
 - **Workaround:** the test setup deletes these variables instead of blanking them.
 - **Suggestion:** treat empty values as unset.
 
-## 13. boto3 ignores `AWS_REGION`
+## 14. boto3 ignores `AWS_REGION`
 
 - **Task:** configure the Region for WorkBot's Bedrock client.
 - **Steps:** set `AWS_REGION=eu-north-1` with no profile, which the AWS CLI v2 honors.

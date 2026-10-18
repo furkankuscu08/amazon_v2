@@ -114,10 +114,6 @@ def _tokens(value: object) -> int | None:
     return value if type(value) is int and value >= 0 else None
 
 
-def _effort(task: str, other: str) -> str:
-    return "low" if task == "area" else other
-
-
 class _Provider:
     """Runs one task call and writes its single summary log line."""
 
@@ -134,6 +130,7 @@ class _Provider:
             "error": None,
             "validation_error_types": None,
             "http_status": None,
+            "stop_reason": None,
             "truncated": False,
             "prompt_tokens": None,
             "completion_tokens": None,
@@ -175,6 +172,27 @@ class _Provider:
         raise NotImplementedError
 
 
+# Stop reasons are logged only from these fixed values; anything else is "other".
+_OPENROUTER_STOPS = {"stop", "length", "content_filter", "tool_calls", "error"}
+_BEDROCK_STOPS = {
+    "end_turn",
+    "tool_use",
+    "max_tokens",
+    "stop_sequence",
+    "guardrail_intervened",
+    "content_filtered",
+    "malformed_model_output",
+    "malformed_tool_use",
+    "model_context_window_exceeded",
+}
+
+
+def _known(value: object, allowed: set[str]) -> str | None:
+    if value is None:
+        return None
+    return value if isinstance(value, str) and value in allowed else "other"
+
+
 def _incomplete(summary: dict) -> ModelError:
     # A cut-off, filtered, or tool-less reply is never parsed as a partial result.
     summary["error"] = "incomplete"
@@ -195,7 +213,7 @@ class OpenRouter(_Provider):
             raise ModelError("OPENROUTER_API_KEY is not configured")
         request = {
             "model": "z-ai/glm-5.3-flash",
-            "reasoning": {"effort": _effort(task, "high")},
+            "reasoning": {"effort": "low" if task == "area" else "high"},
             "max_tokens": 8192,
             # Structured-output support varies by provider endpoint. Route only
             # to the endpoint validated with our strict local schemas.
@@ -237,6 +255,7 @@ class OpenRouter(_Provider):
                 summary["reasoning_tokens"] = _tokens(details.get("reasoning_tokens"))
         choice = body["choices"][0]
         finish_reason = choice.get("finish_reason")
+        summary["stop_reason"] = _known(finish_reason, _OPENROUTER_STOPS)
         summary["truncated"] = finish_reason == "length"
         if finish_reason != "stop":
             raise _incomplete(summary)
@@ -297,14 +316,11 @@ class Bedrock(_Provider):
                     "content": [{"text": json.dumps(payload, ensure_ascii=False)}],
                 }
             ],
-            # Nova 2 Lite rejects maxTokens with "high" effort, so impact and
-            # priority use "medium" and keep the cut-off guard.
+            # Low effort for every task: in live runs "medium" spent up to the
+            # whole cap on reasoning, and "high" does not allow a cap at all.
             "inferenceConfig": {"maxTokens": 8192},
             "additionalModelRequestFields": {
-                "reasoningConfig": {
-                    "type": "enabled",
-                    "maxReasoningEffort": _effort(task, "medium"),
-                }
+                "reasoningConfig": {"type": "enabled", "maxReasoningEffort": "low"}
             },
             # Nova 2 Lite supports neither outputConfig nor strict tools: the forced
             # tool call carries the schema, and only local validation enforces it.
@@ -336,6 +352,7 @@ class Bedrock(_Provider):
             summary["prompt_tokens"] = _tokens(usage.get("inputTokens"))
             summary["completion_tokens"] = _tokens(usage.get("outputTokens"))
         stop_reason = response.get("stopReason")
+        summary["stop_reason"] = _known(stop_reason, _BEDROCK_STOPS)
         summary["truncated"] = stop_reason == "max_tokens"
         if stop_reason != "tool_use":
             raise _incomplete(summary)

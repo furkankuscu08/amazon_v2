@@ -378,6 +378,7 @@ def test_success_summary_has_only_these_fields(area_exchange, diagnostic_logs):
         "error": None,
         "validation_error_types": None,
         "http_status": 200,
+        "stop_reason": "stop",
         "truncated": False,
         "prompt_tokens": 120,
         "completion_tokens": 480,
@@ -527,10 +528,7 @@ def test_bedrock_requests_carry_model_reasoning_forced_tool_and_messages(
                 ],
                 "inferenceConfig": {"maxTokens": 8192},
                 "additionalModelRequestFields": {
-                    "reasoningConfig": {
-                        "type": "enabled",
-                        "maxReasoningEffort": "low" if task == "area" else "medium",
-                    }
+                    "reasoningConfig": {"type": "enabled", "maxReasoningEffort": "low"}
                 },
                 "toolConfig": {
                     "tools": [
@@ -576,6 +574,7 @@ def test_bedrock_reply_skips_reasoning_and_is_validated_locally(
         "error": None,
         "validation_error_types": None,
         "http_status": 200,
+        "stop_reason": "tool_use",
         "truncated": False,
         "prompt_tokens": 120,
         "completion_tokens": 480,
@@ -584,11 +583,17 @@ def test_bedrock_reply_skips_reasoning_and_is_validated_locally(
 
 
 @pytest.mark.parametrize(
-    ("stop", "truncated"),
-    [("max_tokens", True), ("content_filtered", False), ("end_turn", False)],
+    ("stop", "truncated", "logged"),
+    [
+        ("max_tokens", True, "max_tokens"),
+        ("content_filtered", False, "content_filtered"),
+        ("end_turn", False, "end_turn"),
+        ("malformed_tool_use", False, "malformed_tool_use"),
+        (MARKER, False, "other"),
+    ],
 )
 def test_bedrock_reply_without_a_finished_tool_call_is_incomplete(
-    bedrock, diagnostic_logs, stop, truncated
+    bedrock, diagnostic_logs, stop, truncated, logged
 ):
     model, stubber = bedrock
     stubber.add_response("converse", converse_reply({"people": []}, stop=stop))
@@ -596,8 +601,10 @@ def test_bedrock_reply_without_a_finished_tool_call_is_incomplete(
         model.complete("area", {"idea": "Staging sign-off."})
     [summary] = call_summaries(diagnostic_logs)
     assert summary["error"] == "incomplete"
+    assert summary["stop_reason"] == logged
     assert summary["truncated"] is truncated
     assert summary["completion_tokens"] == 480
+    assert MARKER not in diagnostic_logs.text
 
 
 def _two_calls():
