@@ -27,6 +27,10 @@ class ModelError(Exception):
     pass
 
 
+class _Unusable(ModelError):
+    """A reply arrived but cannot be used; asking once more may give a usable one."""
+
+
 PROMPTS = {
     "impact": """You identify consultation AREAS for an idea, not project owners or solutions.
 Only use the supplied actual org unit IDs for mapped areas. A valid but uncertain area
@@ -120,12 +124,21 @@ class _Provider:
     name = "other"
 
     def complete(self, task: str, payload: dict):
+        # One more request after a reply that failed the local schema or ended
+        # without an answer for a reason other than the output cap.
+        try:
+            return self._call(task, payload, attempt=1)
+        except _Unusable:
+            return self._call(task, payload, attempt=2)
+
+    def _call(self, task: str, payload: dict, attempt: int):
         started = time.monotonic()
         # One log line per call, holding only fixed codes and numbers: never prompts,
         # model or provider text, identities, IDs, or secrets.
         summary = {
             "task": task if isinstance(task, str) and task in SCHEMAS else "other",
             "provider": self.name,
+            "attempt": attempt,
             "outcome": "failure",
             "error": None,
             "validation_error_types": None,
@@ -159,6 +172,7 @@ class _Provider:
                         )
                     }
                 )
+                raise _Unusable("Model call failed") from exc
             raise ModelError("Model call failed") from exc
         finally:
             summary["duration_seconds"] = round(time.monotonic() - started, 3)
@@ -195,8 +209,15 @@ def _known(value: object, allowed: set[str]) -> str | None:
 
 def _incomplete(summary: dict) -> ModelError:
     # A cut-off, filtered, or tool-less reply is never parsed as a partial result.
+    # A reply cut off at the output cap, or an input too long for the model, is not
+    # asked for again: the same input would fail the same way.
     summary["error"] = "incomplete"
-    return ModelError("Model response incomplete")
+    if (
+        summary["truncated"]
+        or summary["stop_reason"] == "model_context_window_exceeded"
+    ):
+        return ModelError("Model response incomplete")
+    return _Unusable("Model response incomplete")
 
 
 class OpenRouter(_Provider):

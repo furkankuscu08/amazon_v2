@@ -820,7 +820,11 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
     ]
     assert len(summaries) == len(requests)
     failures = [s for s in summaries if s["outcome"] == "failure"]
-    assert [s["task"] for s in failures] == ([failed_task] if failed_task else [])
+    # A reply that fails the schema is asked for once more; a cut-off one is not.
+    tries = 2 if failure_mode == "schema" else 1
+    assert [s["task"] for s in failures] == (
+        [failed_task] * tries if failed_task else []
+    )
     for summary in summaries:
         failed = summary["outcome"] == "failure"
         assert summary["truncated"] is (failed and failure_mode == "truncated")
@@ -833,7 +837,8 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
         assert card is None
         assert requests == ["impact"]
         return
-    assert sorted(requests) == ["area", "area", "impact", "priority"]
+    extra = ["area"] if (failed_task, failure_mode) == ("area", "schema") else []
+    assert sorted(requests) == sorted(["area", "area", "impact", "priority"] + extra)
     assert set(card) == {
         "areas",
         "shared_question",

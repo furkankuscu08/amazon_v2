@@ -249,11 +249,14 @@ def test_missing_contribution_is_not_repaired_in_a_live_reply(
     response["content"] = json.dumps(content)
     with pytest.raises(ModelError):
         OpenRouter("test-only-key").complete("area", payload)
-    [summary] = call_summaries(diagnostic_logs)
-    assert summary["error"] == "ValidationError"
-    assert summary["validation_error_types"] == ["missing"]
+    # Asked for once more, the same invalid reply still produces nothing.
+    summaries = call_summaries(diagnostic_logs)
+    assert [s["attempt"] for s in summaries] == [1, 2]
+    for summary in summaries:
+        assert summary["error"] == "ValidationError"
+        assert summary["validation_error_types"] == ["missing"]
     assert "contribution" not in diagnostic_logs.text
-    assert len(requests) == 1
+    assert len(requests) == 2
     person_schema = requests[0]["response_format"]["json_schema"]["schema"]["$defs"][
         "PersonProposal"
     ]
@@ -336,23 +339,45 @@ def _person_field(field, value):
         ),
     ],
 )
-def test_bad_replies_fail_closed_once_and_log_no_provider_text(
+def test_bad_replies_fail_closed_and_log_no_provider_text(
     area_exchange, diagnostic_logs, change, error, types
 ):
     payload, response, requests = area_exchange
     change(response)
     with pytest.raises(ModelError, match="Model call failed"):
         OpenRouter("test-only-key").complete("area", payload)
-    assert len(requests) == 1
-    [summary] = call_summaries(diagnostic_logs)
-    assert summary["outcome"] == "failure"
-    assert summary["error"] == error
-    assert summary["validation_error_types"] == types
-    assert summary["http_status"] == {"HTTPStatusError": 500, "ReadTimeout": None}.get(
-        error, 200
-    )
+    # Only a reply that fails the local schema is asked for again.
+    tries = 2 if error == "ValidationError" else 1
+    assert len(requests) == tries
+    summaries = call_summaries(diagnostic_logs)
+    assert [s["attempt"] for s in summaries] == list(range(1, tries + 1))
+    for summary in summaries:
+        assert summary["outcome"] == "failure"
+        assert summary["error"] == error
+        assert summary["validation_error_types"] == types
+        assert summary["http_status"] == {
+            "HTTPStatusError": 500,
+            "ReadTimeout": None,
+        }.get(error, 200)
     assert MARKER not in diagnostic_logs.text
     assert diagnostic_logs.records[-1].levelno == logging.WARNING
+
+
+@pytest.mark.parametrize("finish_reason", ["content_filter", "error", None])
+def test_openrouter_reply_without_an_answer_is_asked_for_once_more(
+    area_exchange, diagnostic_logs, finish_reason
+):
+    payload, response, requests = area_exchange
+    response["finish_reason"] = finish_reason
+    with pytest.raises(ModelError, match="incomplete"):
+        OpenRouter("test-only-key").complete("area", payload)
+    assert len(requests) == 2
+    summaries = call_summaries(diagnostic_logs)
+    assert [(s["attempt"], s["error"]) for s in summaries] == [
+        (1, "incomplete"),
+        (2, "incomplete"),
+    ]
+    assert all(s["truncated"] is False for s in summaries)
 
 
 def test_missing_api_key_fails_without_an_http_call(area_exchange, diagnostic_logs):
@@ -374,6 +399,7 @@ def test_success_summary_has_only_these_fields(area_exchange, diagnostic_logs):
     assert summary == {
         "task": "area",
         "provider": "openrouter",
+        "attempt": 1,
         "outcome": "success",
         "error": None,
         "validation_error_types": None,
@@ -570,6 +596,7 @@ def test_bedrock_reply_skips_reasoning_and_is_validated_locally(
     assert summary == {
         "task": "area",
         "provider": "bedrock",
+        "attempt": 1,
         "outcome": "success",
         "error": None,
         "validation_error_types": None,
@@ -589,6 +616,7 @@ def test_bedrock_reply_skips_reasoning_and_is_validated_locally(
         ("content_filtered", False, "content_filtered"),
         ("end_turn", False, "end_turn"),
         ("malformed_tool_use", False, "malformed_tool_use"),
+        ("model_context_window_exceeded", False, "model_context_window_exceeded"),
         (MARKER, False, "other"),
     ],
 )
@@ -596,14 +624,34 @@ def test_bedrock_reply_without_a_finished_tool_call_is_incomplete(
     bedrock, diagnostic_logs, stop, truncated, logged
 ):
     model, stubber = bedrock
-    stubber.add_response("converse", converse_reply({"people": []}, stop=stop))
+    # A reply cut off at the cap, or an input too long for the model, is not asked
+    # for again; any other one is, once.
+    tries = 1 if truncated or stop == "model_context_window_exceeded" else 2
+    for _ in range(tries):
+        stubber.add_response("converse", converse_reply({"people": []}, stop=stop))
     with pytest.raises(ModelError, match="incomplete"):
         model.complete("area", {"idea": "Staging sign-off."})
-    [summary] = call_summaries(diagnostic_logs)
-    assert summary["error"] == "incomplete"
-    assert summary["stop_reason"] == logged
-    assert summary["truncated"] is truncated
-    assert summary["completion_tokens"] == 480
+    summaries = call_summaries(diagnostic_logs)
+    assert [s["attempt"] for s in summaries] == list(range(1, tries + 1))
+    for summary in summaries:
+        assert summary["error"] == "incomplete"
+        assert summary["stop_reason"] == logged
+        assert summary["truncated"] is truncated
+        assert summary["completion_tokens"] == 480
+    assert MARKER not in diagnostic_logs.text
+
+
+def test_bedrock_usable_second_reply_is_returned(bedrock, diagnostic_logs):
+    model, stubber = bedrock
+    stubber.add_response("converse", converse_reply({"people": [], "note": MARKER}))
+    stubber.add_response("converse", converse_reply({"people": [PERSON]}))
+    result = model.complete("area", {"idea": "Staging sign-off."})
+    assert result.model_dump() == {"people": [PERSON]}
+    summaries = call_summaries(diagnostic_logs)
+    assert [(s["attempt"], s["outcome"]) for s in summaries] == [
+        (1, "failure"),
+        (2, "success"),
+    ]
     assert MARKER not in diagnostic_logs.text
 
 
@@ -643,12 +691,16 @@ def test_bedrock_bad_replies_fail_closed_and_log_no_provider_text(
     bedrock, diagnostic_logs, reply, error, types
 ):
     model, stubber = bedrock
-    stubber.add_response("converse", reply)
+    tries = 2 if error == "ValidationError" else 1
+    for _ in range(tries):
+        stubber.add_response("converse", reply)
     with pytest.raises(ModelError, match="Model call failed"):
         model.complete("area", {"idea": "Staging sign-off."})
-    [summary] = call_summaries(diagnostic_logs)
-    assert summary["error"] == error
-    assert summary["validation_error_types"] == types
+    summaries = call_summaries(diagnostic_logs)
+    assert len(summaries) == tries
+    for summary in summaries:
+        assert summary["error"] == error
+        assert summary["validation_error_types"] == types
     assert MARKER not in diagnostic_logs.text
     assert diagnostic_logs.records[-1].levelno == logging.WARNING
 
