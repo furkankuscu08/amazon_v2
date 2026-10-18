@@ -26,16 +26,7 @@ services:
 
   app:
     profiles: ["app"] # opt-in: plain `up -d` starts Qdrant only
-    build:
-      context: . # requires the workbot/ package to exist at build time
-      dockerfile_inline: |
-        FROM python:3.12-slim
-        WORKDIR /app
-        ENV PIP_DISABLE_PIP_VERSION_CHECK=1 PYTHONDONTWRITEBYTECODE=1
-        COPY requirements.txt ./
-        RUN python -m pip install --no-cache-dir -r requirements.txt
-        COPY workbot/ ./workbot/
-        CMD ["uvicorn", "workbot.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    build: . # Dockerfile; requires the workbot/ package at build time
     container_name: workbot-app
     restart: unless-stopped
     ports:

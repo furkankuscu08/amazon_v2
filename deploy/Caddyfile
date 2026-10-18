@@ -1,0 +1,6 @@
+# Caddy gets and renews the certificate itself. reverse_proxy keeps the Host header and
+# sets X-Forwarded-For and X-Forwarded-Proto, which the app's same-origin check needs.
+{$WORKBOT_HOSTNAME} {
+	encode gzip
+	reverse_proxy app:8000
+}
