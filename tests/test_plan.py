@@ -199,22 +199,54 @@ def test_plan_lines_are_shortened_and_people_grouped_by_area():
     # The full note stays for the full list.
     assert plan["people"]["omar"]["ended_duty"] == note
     assert plan["people"]["tara"]["ended_short"] is None
-    # Areas follow their first chosen person; people keep the chosen order.
+    # Areas follow their first chosen person; people keep the chosen order, except
+    # that Omar, whose approver role has ended, follows Tara.
     groups = [
         (g["area"], g["need"], [e["person_id"] for e in g["people"]])
         for g in plan["groups"]
     ]
     assert groups == [
         ("Growth", "Volumes?", ["marcus"]),
-        ("Finance", "Limits?", ["omar", "tara"]),
+        ("Finance", "Limits?", ["tara", "omar"]),
     ]
-    assert [e["initials"] for e in plan["first"]] == ["M", "O", "TR"]
+    assert [e["initials"] for e in plan["first"]] == ["M", "TR", "O"]
+    assert plan["lead"].startswith("Start with Marcus in Growth. Then Tara Lee Reed")
     # An older card without a headline or a question shows neither.
     old = build_plan(
         {"areas": [area("Growth", "growth", person("leo", "advisor", "g"))]}
     )
     assert old["first"][0]["short"] is None
     assert old["groups"][0]["need"] is None
+
+
+def test_people_whose_duty_ended_are_not_who_to_start_with():
+    note = "An earlier responsibility ended on 2025-06-30: approver."
+    omar = {**person("omar", "direct_contact", "finance"), "ended_duty": note}
+    tara = person("tara", "direct_contact", "finance", kind="responsibility")
+    ivan = {**person("ivan", "advisor", "legal"), "ended_duty": note}
+    jules = person("jules", "direct_contact", "growth", kind="responsibility")
+    card = {
+        "areas": [
+            area("Legal", "legal", ivan),
+            area("Finance", "finance", omar, tara),
+            area("Growth", "growth", jules),
+        ],
+        "first_conversations": ["ivan", "omar", "tara", "jules"],
+    }
+    plan = build_plan(card)
+    # Inside an area the others come first; an area with only such people goes
+    # last; everything else keeps the model's order.
+    assert [[e["person_id"] for e in g["people"]] for g in plan["groups"]] == [
+        ["tara", "omar"],
+        ["jules"],
+        ["ivan"],
+    ]
+    assert [e["person_id"] for e in plan["first"]] == ["tara", "omar", "jules", "ivan"]
+    assert plan["lead"].startswith(
+        "Start with Tara and Omar in Finance. Then Jules in Growth, and Ivan in Legal."
+    )
+    # The full list is unchanged.
+    assert set(plan["people"]) == {"omar", "tara", "ivan", "jules"}
 
 
 def test_first_sentence_skips_abbreviations():
