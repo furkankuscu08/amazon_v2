@@ -1,6 +1,6 @@
 # Build, Ship, Shape: Amazon Developer Hackathon
 
-Working brief for the **Alexa+ track**, including both the real Agent Skill/MCP route and the simulated-web-experience route. Both mini-challenges remain possible. Sources checked **2026-09-26**; Rules, FAQs, Updates, and homepage rechecked **2026-10-14** (see [changes found](#changes-found-on-2026-10-14)). Recheck live pages before making a submission because the Rules can change (§11.5).
+Working brief for the **Alexa+ track**, including both the real Agent Skill/MCP route and the simulated-web-experience route. Both mini-challenges remain possible. Sources checked **2026-09-26**; Rules, FAQs, Updates, and homepage rechecked **2026-10-14** (see [changes found](#changes-found-on-2026-10-14)). Rules and FAQs rechecked **2026-10-18** without changes, and organizer replies in the Discussions read the same day (see [organizer answers](#organizer-answers-read-on-2026-10-18)). Recheck live pages before making a submission because the Rules can change (§11.5).
 
 ## Source precedence
 
@@ -41,5 +41,15 @@ The live Rules, FAQs, Updates, and homepage were compared with the 2026-09-26 ex
 - **FAQ wording on the simulated route:** one answer calls a web MCP client "the simulated-experience path". The Rules' separate simulation alternative is unchanged and prevails ([Alexa+ routes](competition/alexa.md#simulated-web-experience-route)).
 - **Judges may run the project themselves** (FAQs), so the README setup and the credentials a judge needs must work from a clean checkout ([checklist](competition/submission.md#testing-rights-and-final-checks)).
 - **Submission tips** (Updates, informative): name the track's tool in the description, Built With, and video; pitch the problem first; keep keys out of the repository ([judging](competition/judging.md)).
+
+## Organizer answers read on 2026-10-18
+
+The live Rules and FAQs match the files in `competition/`. Replies by the Amazon and Devpost team in the [Discussions](https://amazonappdev2026.devpost.com/forum_topics) are informative, not the contract (see [source precedence](#source-precedence)), but they show how the organizers read the Rules.
+
+- **Alexa+ fit:** a strong entry is something people would actually use on Alexa+ and that is new rather than a latent LLM capability; Alexa+ is mostly consumer-focused, so enterprise use cases are valid but less typical; Alexa is voice-first, not voice-only, and a polished UI that could plausibly run on an Echo device is likely to score higher. Voice, an Alexa-like look, and a live model are not required for the simulated route ([details](competition/alexa.md#organizer-guidance-from-the-discussions)).
+- **Judge access:** a judge who wants to try a project should not have to paste in their own token; a labelled replay mode is fine as the default. The FAQs say hosting is not required, while forum replies say a hosted endpoint must stay live until judging ends ([details](competition/submission.md#testing-rights-and-final-checks)).
+- **Bedrock on new AWS accounts:** several entrants report blocked or suspended Bedrock access, and the organizers have no escalation path; Claude Code running on Bedrock counts for AWS Builder ([details](competition/mini-challenges.md#aws-builder)).
+- **Open Source:** the primary-track project's own repository does not count ([details](competition/mini-challenges.md#open-source)).
+- **Friction log:** a link in the description is enough; keeping it in the repository is easier for judges ([checklist](competition/submission.md#optional-but-useful)).
 
 Questions: [Devpost discussions](https://amazonappdev2026.devpost.com/forum_topics), `janet@devpost.com` (homepage), or `support@devpost.com` (Rules). [Discord](https://discord.gg/devpost), `#amazon-developer-checkin`, is for informal help; use a written request for a Rules ambiguity.
