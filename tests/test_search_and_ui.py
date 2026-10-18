@@ -256,7 +256,7 @@ def test_web_card_reload_and_source_visibility(web):
     db.close()
     # No run is working on it (a restart, say): it must not wait forever.
     running = client.get("/sessions/running")
-    assert "I could not evaluate this idea" in running.text
+    assert "Alexa could not evaluate this idea" in running.text
     assert "Working on it" not in running.text
     home = client.get("/").text
     assert "Your earlier ideas" in home
@@ -890,4 +890,36 @@ def test_question_form_offers_speak_for_the_answer(web):
         question="Which campaigns are in scope?",
     )
     client, url = _submit(web, model)
-    assert 'data-voice-for="answer"' in client.get(url).text
+    page = client.get(url).text
+    assert 'data-voice-for="answer"' in page
+    # Alexa asks in the same panel as the plan, with the words Listen reads.
+    panel = page.split('<section class="screen"', 1)[1].split("</section>", 1)[0]
+    assert "Alexa asks" in panel
+    assert "One clarification before searching." in panel
+    assert "Which campaigns are in scope?" in panel
+    client.post(url + "/answer", data={"answer": "Retail"}, follow_redirects=False)
+    app.state.last_run.join(10)
+    assert "Alexa asked</span><p>Which campaigns are in scope?" in client.get(url).text
+
+
+def test_plan_names_the_areas_it_leaves_to_the_full_list(web, monkeypatch):
+    build_plan = main_module.build_plan
+
+    def with_more(card):
+        plan = build_plan(card)
+        plan["more"] = [
+            {"area": "Legal and Compliance", "names": ["Anders Holm", "Zoe Park"]},
+            {"area": "Data", "names": []},
+        ]
+        return plan
+
+    model = ScriptedModel(
+        [_person("nina", "direct_contact", ["jira:MKT-482"], "direct")]
+    )
+    client, url = _submit(web, model)
+    monkeypatch.setattr(main_module, "build_plan", with_more)
+    plan, _ = client.get(url).text.split('<details class="all">')
+    assert (
+        "Also in the full list: Legal and Compliance (Anders Holm, Zoe Park); Data."
+        in plan
+    )
