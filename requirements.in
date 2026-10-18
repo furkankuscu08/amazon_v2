@@ -8,6 +8,7 @@ uvicorn[standard]
 jinja2
 pydantic
 httpx
+boto3
 qdrant-client
 fastembed
 python-dotenv

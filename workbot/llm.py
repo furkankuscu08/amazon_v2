@@ -5,9 +5,19 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
 import time
 
+import boto3
 import httpx
+from botocore.config import Config
+from botocore.exceptions import (
+    ClientError,
+    NoCredentialsError,
+    NoRegionError,
+    PartialCredentialsError,
+    ProfileNotFound,
+)
 from pydantic import ValidationError
 
 from workbot.models import AreaEvaluation, Impact, Priority
@@ -104,11 +114,14 @@ def _tokens(value: object) -> int | None:
     return value if type(value) is int and value >= 0 else None
 
 
-class OpenRouter:
-    def __init__(self, api_key: str | None = None):
-        self.api_key = (
-            api_key if api_key is not None else os.getenv("OPENROUTER_API_KEY", "")
-        )
+def _effort(task: str, other: str) -> str:
+    return "low" if task == "area" else other
+
+
+class _Provider:
+    """Runs one task call and writes its single summary log line."""
+
+    name = "other"
 
     def complete(self, task: str, payload: dict):
         started = time.monotonic()
@@ -116,6 +129,7 @@ class OpenRouter:
         # model or provider text, identities, IDs, or secrets.
         summary = {
             "task": task if isinstance(task, str) and task in SCHEMAS else "other",
+            "provider": self.name,
             "outcome": "failure",
             "error": None,
             "validation_error_types": None,
@@ -126,66 +140,11 @@ class OpenRouter:
             "reasoning_tokens": None,
         }
         try:
-            if not self.api_key:
-                summary["error"] = "not_configured"
-                raise ModelError("OPENROUTER_API_KEY is not configured")
-            schema = SCHEMAS[task]
-            request = {
-                "model": "z-ai/glm-5.3-flash",
-                "reasoning": {"effort": "low" if task == "area" else "high"},
-                "max_tokens": 8192,
-                # Structured-output support varies by provider endpoint. Route only
-                # to the endpoint validated with our strict local schemas.
-                "provider": {
-                    "only": ["open-inference/fp4"],
-                    "require_parameters": True,
-                },
-                "response_format": {
-                    "type": "json_schema",
-                    "json_schema": {
-                        "name": task + "_response",
-                        "strict": True,
-                        "schema": schema.model_json_schema(),
-                    },
-                },
-                "messages": [
-                    {"role": "system", "content": PROMPTS[task]},
-                    {
-                        "role": "user",
-                        "content": json.dumps(payload, ensure_ascii=False),
-                    },
-                ],
-            }
-            with httpx.Client(timeout=90) as client:
-                response = client.post(
-                    "https://openrouter.ai/api/v1/chat/completions",
-                    headers={"Authorization": "Bearer " + self.api_key},
-                    json=request,
-                )
-            summary["http_status"] = response.status_code
-            response.raise_for_status()
-            body = response.json()
-            usage = body.get("usage")
-            if isinstance(usage, dict):
-                details = usage.get("completion_tokens_details")
-                summary["prompt_tokens"] = _tokens(usage.get("prompt_tokens"))
-                summary["completion_tokens"] = _tokens(usage.get("completion_tokens"))
-                if isinstance(details, dict):
-                    summary["reasoning_tokens"] = _tokens(
-                        details.get("reasoning_tokens")
-                    )
-            choice = body["choices"][0]
-            finish_reason = choice.get("finish_reason")
-            summary["truncated"] = finish_reason == "length"
-            if finish_reason != "stop":
-                # A cut-off or filtered reply is never parsed as a partial result.
-                summary["error"] = "incomplete"
-                raise ModelError("Model response incomplete")
-            result = schema.model_validate_json(choice["message"]["content"])
+            result = self._complete(task, payload, SCHEMAS[task], summary)
             summary["outcome"] = "success"
             return result
         except ModelError:
-            raise  # Raised above with its own fixed error code.
+            raise  # Raised by the provider with its own fixed error code.
         except Exception as exc:
             # Any other failure, including an unexpected provider response shape.
             # Only the class name is logged; the message may quote provider text.
@@ -211,3 +170,195 @@ class OpenRouter:
                 "model_call_summary %s",
                 json.dumps(summary),
             )
+
+    def _complete(self, task: str, payload: dict, schema, summary: dict):
+        raise NotImplementedError
+
+
+def _incomplete(summary: dict) -> ModelError:
+    # A cut-off, filtered, or tool-less reply is never parsed as a partial result.
+    summary["error"] = "incomplete"
+    return ModelError("Model response incomplete")
+
+
+class OpenRouter(_Provider):
+    name = "openrouter"
+
+    def __init__(self, api_key: str | None = None):
+        self.api_key = (
+            api_key if api_key is not None else os.getenv("OPENROUTER_API_KEY", "")
+        )
+
+    def _complete(self, task: str, payload: dict, schema, summary: dict):
+        if not self.api_key:
+            summary["error"] = "not_configured"
+            raise ModelError("OPENROUTER_API_KEY is not configured")
+        request = {
+            "model": "z-ai/glm-5.3-flash",
+            "reasoning": {"effort": _effort(task, "high")},
+            "max_tokens": 8192,
+            # Structured-output support varies by provider endpoint. Route only
+            # to the endpoint validated with our strict local schemas.
+            "provider": {
+                "only": ["open-inference/fp4"],
+                "require_parameters": True,
+            },
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": task + "_response",
+                    "strict": True,
+                    "schema": schema.model_json_schema(),
+                },
+            },
+            "messages": [
+                {"role": "system", "content": PROMPTS[task]},
+                {
+                    "role": "user",
+                    "content": json.dumps(payload, ensure_ascii=False),
+                },
+            ],
+        }
+        with httpx.Client(timeout=90) as client:
+            response = client.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={"Authorization": "Bearer " + self.api_key},
+                json=request,
+            )
+        summary["http_status"] = response.status_code
+        response.raise_for_status()
+        body = response.json()
+        usage = body.get("usage")
+        if isinstance(usage, dict):
+            details = usage.get("completion_tokens_details")
+            summary["prompt_tokens"] = _tokens(usage.get("prompt_tokens"))
+            summary["completion_tokens"] = _tokens(usage.get("completion_tokens"))
+            if isinstance(details, dict):
+                summary["reasoning_tokens"] = _tokens(details.get("reasoning_tokens"))
+        choice = body["choices"][0]
+        finish_reason = choice.get("finish_reason")
+        summary["truncated"] = finish_reason == "length"
+        if finish_reason != "stop":
+            raise _incomplete(summary)
+        return schema.model_validate_json(choice["message"]["content"])
+
+
+BEDROCK_MODEL = "global.amazon.nova-2-lite-v1:0"
+# Missing local AWS setup: reported as not_configured, before any network request.
+_AWS_SETUP_ERRORS = (
+    NoCredentialsError,
+    NoRegionError,
+    PartialCredentialsError,
+    ProfileNotFound,
+)
+
+
+def _http_status(response: object) -> int | None:
+    meta = response.get("ResponseMetadata") if isinstance(response, dict) else None
+    return _tokens(meta.get("HTTPStatusCode")) if isinstance(meta, dict) else None
+
+
+class Bedrock(_Provider):
+    """Amazon Bedrock Converse. Credentials and Region come from the standard AWS
+    chain (AWS_PROFILE and AWS_REGION locally, an instance role on a server)."""
+
+    name = "bedrock"
+
+    def __init__(self, model_id: str | None = None, client=None):
+        self.model_id = model_id or os.getenv("WORKBOT_BEDROCK_MODEL") or BEDROCK_MODEL
+        self._client = client
+        self._lock = threading.Lock()
+
+    def _runtime(self):
+        # Area calls run on several threads; they share one thread-safe client.
+        with self._lock:
+            if self._client is None:
+                # boto3 reads only AWS_DEFAULT_REGION or the profile's Region.
+                self._client = boto3.session.Session().client(
+                    "bedrock-runtime",
+                    region_name=os.getenv("AWS_REGION") or None,
+                    config=Config(
+                        connect_timeout=10,
+                        read_timeout=90,
+                        retries={"mode": "standard", "max_attempts": 3},
+                        max_pool_connections=10,
+                    ),
+                )
+            return self._client
+
+    def _complete(self, task: str, payload: dict, schema, summary: dict):
+        name = task + "_response"
+        request = {
+            "modelId": self.model_id,
+            "system": [{"text": PROMPTS[task]}],
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [{"text": json.dumps(payload, ensure_ascii=False)}],
+                }
+            ],
+            # Nova 2 Lite rejects maxTokens with "high" effort, so impact and
+            # priority use "medium" and keep the cut-off guard.
+            "inferenceConfig": {"maxTokens": 8192},
+            "additionalModelRequestFields": {
+                "reasoningConfig": {
+                    "type": "enabled",
+                    "maxReasoningEffort": _effort(task, "medium"),
+                }
+            },
+            # Nova 2 Lite supports neither outputConfig nor strict tools: the forced
+            # tool call carries the schema, and only local validation enforces it.
+            "toolConfig": {
+                "tools": [
+                    {
+                        "toolSpec": {
+                            "name": name,
+                            "description": "Return the complete answer as this tool's input.",
+                            "inputSchema": {"json": schema.model_json_schema()},
+                        }
+                    }
+                ],
+                "toolChoice": {"tool": {"name": name}},
+            },
+        }
+        try:
+            response = self._runtime().converse(**request)
+        except _AWS_SETUP_ERRORS as exc:
+            summary["error"] = "not_configured"
+            raise ModelError("Bedrock is not configured") from exc
+        except ClientError as exc:
+            summary["http_status"] = _http_status(exc.response)
+            raise
+        summary["http_status"] = _http_status(response)
+        usage = response.get("usage")
+        if isinstance(usage, dict):
+            # Bedrock counts reasoning tokens within outputTokens.
+            summary["prompt_tokens"] = _tokens(usage.get("inputTokens"))
+            summary["completion_tokens"] = _tokens(usage.get("outputTokens"))
+        stop_reason = response.get("stopReason")
+        summary["truncated"] = stop_reason == "max_tokens"
+        if stop_reason != "tool_use":
+            raise _incomplete(summary)
+        [call] = [
+            block["toolUse"]
+            for block in response["output"]["message"]["content"]
+            if "toolUse" in block
+        ]
+        if call["name"] != name:
+            raise ValueError("Unexpected tool")
+        return schema.model_validate_json(json.dumps(call["input"]))
+
+
+class _UnknownProvider(_Provider):
+    def _complete(self, task: str, payload: dict, schema, summary: dict):
+        summary["error"] = "not_configured"
+        raise ModelError("WORKBOT_MODEL_PROVIDER is not bedrock or openrouter")
+
+
+def default_model() -> _Provider:
+    """Bedrock unless WORKBOT_MODEL_PROVIDER selects the OpenRouter fallback."""
+    provider = os.getenv("WORKBOT_MODEL_PROVIDER", "").strip().lower()
+    if provider in ("", "bedrock"):
+        return Bedrock()
+    # A misspelt choice sends nothing rather than prompts to the other provider.
+    return OpenRouter() if provider == "openrouter" else _UnknownProvider()
