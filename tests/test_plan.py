@@ -242,8 +242,12 @@ def test_people_whose_duty_ended_are_not_who_to_start_with():
         ["ivan"],
     ]
     assert [e["person_id"] for e in plan["first"]] == ["tara", "omar", "jules", "ivan"]
-    assert plan["lead"].startswith(
-        "Start with Tara and Omar in Finance. Then Jules in Growth, and Ivan in Legal."
+    # The voice says what the plan shows about them: role and month, after the
+    # sentence that names them.
+    assert plan["lead"] == (
+        "Start with Tara and Omar in Finance. Omar's approver role ended in June"
+        " 2025. Then Jules in Growth, and Ivan in Legal. Ivan's approver role ended"
+        " in June 2025."
     )
     # The full list is unchanged.
     assert set(plan["people"]) == {"omar", "tara", "ivan", "jules"}
@@ -323,4 +327,84 @@ def test_spoken_summary_without_people_reports_only_the_open_areas():
 def test_spoken_summary_does_not_promise_what_to_find_out_on_older_cards():
     # Cards stored before areas had a consultation need show no such block.
     plan = build_plan({**CARD, "first_conversations": ["tara"]})
-    assert plan["lead"] == "Start with Tara in Finance. Two areas are still open."
+    assert plan["lead"] == (
+        "Start with Tara in Finance. Four more areas are in the full list. Two areas"
+        " are still open."
+    )
+
+
+def test_spoken_notes_name_ended_duties_and_routing_contacts():
+    note = "An earlier responsibility ended on 2025-01-01: operator — running launches."
+    elena = {**person("elena", "advisor", "growth"), "ended_duty": note}
+    jules = person("jules", "direct_contact", "growth", kind="responsibility")
+    anders = person("anders", "routing_contact", "legal")
+    dan = person("dan", "routing_contact", "commerce")
+    card = {
+        "areas": [
+            area("Growth", "growth", jules, elena),
+            area("Legal and Compliance", "legal", anders),
+            area("Commerce", "commerce", dan),
+        ],
+        "first_conversations": ["jules", "elena", "anders", "dan"],
+    }
+    plan = build_plan(card)
+    # Routing contacts named in the same sentence share one note.
+    assert plan["lead"] == (
+        "Start with Jules and Elena in Growth. Elena's operator role ended in January"
+        " 2025. Then Anders in Legal and Compliance, and Dan in Commerce. Anders and"
+        " Dan can point you to the right person."
+    )
+    # The plan line keeps the date as written; only the voice says the month.
+    assert plan["first"][1]["ended_short"] == "Operator role ended on 2025-01-01."
+    # A note the plan cannot read adds nothing to the voice; the screen shows it.
+    for odd in ("An earlier responsibility ended on soon: operator.", "Moved teams."):
+        oddly = {**elena, "ended_duty": odd}
+        lead = build_plan(
+            {
+                "areas": [area("Growth", "growth", jules, oddly)],
+                "first_conversations": ["jules", "elena"],
+            }
+        )
+        assert lead["lead"] == "Start with Jules and Elena in Growth."
+        assert lead["first"][1]["ended_short"]
+
+
+def test_areas_left_out_of_the_plan_are_named_below_it():
+    plan = build_plan({**CARD, "first_conversations": ["tara", "nina"]})
+    # Growth has a card (Nina), Finance too; Commerce and Data have no one chosen.
+    # Platform's only person is Nina, who is in the plan, so it is not named.
+    assert plan["more"] == [
+        {"area": "Commerce", "names": ["Dan"]},
+        {"area": "Data", "names": ["Omar"]},
+    ]
+    assert "Two more areas are in the full list." in plan["lead"]
+    # A left-out person is named even when their home is another area.
+    alone = build_plan({**CARD, "first_conversations": ["tara", "leo", "dan", "omar"]})
+    assert alone["more"] == [{"area": "Platform", "names": ["Nina"]}]
+    assert "One more area is in the full list." in alone["lead"]
+    # Gaps stay under "Still open" and never count as more areas.
+    assert all(m["area"] not in ("Legal", "Brand") for m in plan["more"])
+
+
+def test_spoken_summary_stays_short_with_four_people_and_every_note():
+    note = "An earlier responsibility ended on 2025-06-30: approver."
+    people = [
+        {
+            **person(pid, "routing_contact", pid),
+            "name": f"{pid.title()} Example",
+            "ended_duty": note,
+        }
+        for pid in ("aa", "bb", "cc", "dd")
+    ]
+    areas = [
+        {
+            **area(f"Team {p['person_id']}", p["person_id"], p),
+            "consultation_need": "Need?",
+        }
+        for p in people
+    ]
+    areas += [area("Spare", "spare", person("ee", "advisor", "spare"))]
+    areas += [area(f"Gap {n}", None, status="not_found") for n in range(3)]
+    plan = build_plan({"areas": areas, "first_conversations": ["aa", "bb", "cc", "dd"]})
+    # Every note at once is unlikely; even then the voice stays under a minute.
+    assert len(plan["spoken"].split()) <= 120

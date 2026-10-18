@@ -7,6 +7,7 @@ plan only reorders and groups people the audit already accepted.
 from __future__ import annotations
 
 import re
+from datetime import date
 
 MAX_FIRST_CONVERSATIONS = 4
 ROLE_ORDER = {"direct_contact": 0, "advisor": 1, "routing_contact": 2}
@@ -41,6 +42,21 @@ _KIND = {
 _SENTENCE_END = re.compile(r"[.!?](?=\s+[A-Z‘“]|$)")
 _ABBREVIATION = re.compile(r"(?:\b(?:[A-Za-z]\.){2,}|\b(?:etc|vs|Dr|Mr|Mrs|Ms)\.)$")
 _ENDED = re.compile(r"^An earlier responsibility ended on (\S+): (.+?)(?: — .*)?\.$")
+# Spelled out here, not by the locale, so the spoken date never depends on the server.
+_MONTHS = (
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+)
 
 
 def _short(headline: str | None) -> str | None:
@@ -62,6 +78,18 @@ def _first_sentence(quote: str) -> str:
 def _ended_short(note: str | None) -> str | None:
     match = _ENDED.match(note or "")
     return f"{match[2].capitalize()} role ended on {match[1]}." if match else note
+
+
+def _ended_spoken(name: str, note: str | None) -> str | None:
+    """The ended-duty note as a sentence to hear: role and month, not an ISO date."""
+    match = _ENDED.match(note or "")
+    try:
+        ended = date.fromisoformat(match[1]) if match else None
+    except ValueError:
+        ended = None
+    if not ended:
+        return None
+    return f"{name}'s {match[2]} role ended in {_MONTHS[ended.month - 1]} {ended.year}."
 
 
 def _initials(name: str) -> str:
@@ -132,8 +160,19 @@ def _and(items: list[str]) -> str:
     return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
 
 
-def _spoken(groups: list[dict], open_areas: int) -> tuple[str, str]:
-    """The plan's heading and the sentence after it, which together are read aloud.
+def _notes(groups: list[dict]) -> list[str]:
+    """What the plan shows about these groups' people beyond their names, said
+    after the sentence that names them: ended duties, then who can route you."""
+    people = [person for group in groups for person in group["people"]]
+    notes = [_ended_spoken(p["name"], p["ended_duty"]) for p in people]
+    routing = [p["name"] for p in people if p["role"] == "routing_contact"]
+    if routing:
+        notes.append(f"{_and(routing)} can point you to the right person.")
+    return [note for note in notes if note]
+
+
+def _spoken(groups: list[dict], more: int, open_areas: int) -> tuple[str, str]:
+    """The plan's heading and the sentences after it, which together are read aloud.
 
     Both are built only from what the plan shows, so the voice cannot say more.
     """
@@ -147,13 +186,20 @@ def _spoken(groups: list[dict], open_areas: int) -> tuple[str, str]:
             f"{_and([p['name'] for p in group['people']])} in {group['area']}"
             for group in groups
         ]
-        lead = [f"Start with {places[0]}."]
+        lead = [f"Start with {places[0]}.", *_notes(groups[:1])]
         if len(places) == 2:
             lead.append(f"Then {places[1]}.")
         elif len(places) > 2:
             lead.append(f"Then {', '.join(places[1:-1])}, and {places[-1]}.")
+        lead.extend(_notes(groups[1:]))
         if all(group["need"] for group in groups):
             lead.append("Each card says what to find out.")
+    if more:
+        lead.append(
+            "One more area is in the full list."
+            if more == 1
+            else f"{_NUMBERS.get(more, str(more))} more areas are in the full list."
+        )
     if open_areas:
         lead.append(
             "One area is still open."
@@ -219,11 +265,27 @@ def build_plan(card: dict) -> dict:
     for group in ordered:
         group["people"].sort(key=lambda e: bool(e["ended_duty"]))
     first = [entry for group in ordered for entry in group["people"]]
+    # Areas with people where nobody chosen has their home and somebody was left
+    # out, named with those people under the cards so the plan does not seem to
+    # have lost them.
+    shown = {home[pid] for pid in chosen}
+    more = [
+        {
+            "area": area["label"],
+            "names": [
+                p["name"] for p in area["people"] if p["person_id"] not in chosen
+            ],
+        }
+        for index, area in enumerate(areas)
+        if area["status"] == "people"
+        and index not in shown
+        and any(p["person_id"] not in chosen for p in area["people"])
+    ]
     gaps: dict[str, list[str]] = {name: [] for name in _GAPS.values()}
     for area in areas:
         if area["status"] in _GAPS:
             gaps[_GAPS[area["status"]]].append(area["label"])
-    headline, lead = _spoken(ordered, sum(map(len, gaps.values())))
+    headline, lead = _spoken(ordered, len(more), sum(map(len, gaps.values())))
     return {
         "headline": headline,
         # Said after the headline; the two are the text read aloud.
@@ -231,6 +293,7 @@ def build_plan(card: dict) -> dict:
         "spoken": f"{headline} {lead}".strip(),
         "first": first,
         "groups": ordered,
+        "more": more,
         "gaps": gaps,
         # Everyone on the card once, as shown in their home area.
         "people": entries,
