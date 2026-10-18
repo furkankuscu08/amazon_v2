@@ -7,7 +7,7 @@
 {% endfor %}
 {% if stale %}<div class="warning stack tight"><h1>This plan is out of date</h1><p>Something it relied on (access, a source, the directory, or the team list) has changed since I prepared it. Ask again to get a current plan.</p></div>
 {% elif session.state == 'question' %}
-<form class="panel stack tight" method="post" action="/sessions/{{ session.id }}/answer"><h1>One clarification before searching</h1><p>{{ session.question }}</p>
+<form class="panel stack tight" method="post" action="/sessions/{{ session.id }}/answer"><div class="say-head"><h1>One clarification before searching</h1><button class="listen" type="button" data-speech="/sessions/{{ session.id }}/speech.mp3" hidden><svg class="i-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6L12.6 8z"/></svg><svg class="i-stop" viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.2"/></svg><span>Listen</span></button><span class="small muted" data-speech-status role="status"></span></div><p>{{ session.question }}</p>
 <label for="answer">Your answer<textarea name="answer" id="answer" maxlength="500" required></textarea></label>
 <div class="row"><button type="submit">Continue</button><button type="submit" form="skip" class="quiet">Continue without answering</button></div></form>
 <form id="skip" method="post" action="/sessions/{{ session.id }}/answer" hidden><input type="hidden" name="skip" value="1"></form>
@@ -23,7 +23,8 @@
 <noscript><meta http-equiv="refresh" content="5"></noscript>
 {% elif card %}
 {% set count = plan.first | length %}
-<h1>{% if count == 0 %}I found no one to point you to from the work I can see.{% elif count == 1 %}Before you start, talk to one person.{% else %}Before you start, talk to {{ ['two', 'three', 'four'][count - 2] }} people.{% endif %}</h1>
+<section class="screen" aria-labelledby="spoken"><div class="screen-top"><span class="orb" aria-hidden="true"></span><span class="screen-label">Alexa says</span><button class="listen" type="button" data-speech="/sessions/{{ session.id }}/speech.mp3" hidden><svg class="i-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6L12.6 8z"/></svg><svg class="i-stop" viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.2"/></svg><span>Listen</span></button></div>
+<h1 id="spoken">{{ plan.headline }}</h1>{% if plan.lead %}<p class="screen-sub">{{ plan.lead }}</p>{% endif %}<span class="screen-sub" data-speech-status role="status"></span></section>
 {% if count %}<ol class="cards">{% for group in plan.groups %}<li class="card"><div class="ask"><h2>{{ group.area }}</h2>{% if group.need %}<span class="label">What to find out</span><p>{{ group.need }}</p>{% endif %}</div>
 <ul class="ppl">{% for person in group.people %}<li class="p"><span class="av" aria-hidden="true">{{ person.initials }}</span><div class="head"><h3>{{ person.name }}{% if person.team and person.team != group.area %}<span class="team">{{ person.team }}</span>{% endif %}</h3><span class="badge {{ person.role }}">{{ person.label }}</span></div>
 <p class="ev">{{ person.short or person.evidence[0].text }}{% if person.role != 'routing_contact' and person.primary_evidence_id and not person.primary_evidence_id.startswith('directory:') %} <a href="/sessions/{{ session.id }}/sources/{{ person.primary_evidence_id | urlencode }}" aria-label="Source for {{ person.name }}">Source</a>{% endif %}</p>
@@ -52,4 +53,25 @@
 <p class="caution">The people shown were proposed by the model, and their cited links were checked against this synthetic directory. Whether the cited work answers an area's question, and who owns the new idea, has not been established. Model summaries are the model's own reading of a source and were not checked against it.</p></div></details>
 {% endif %}
 {% if session.state in ('card', 'refusal') or stale %}<p><a class="btn quiet" href="/">Ask about another idea</a></p>{% endif %}
+<script>document.querySelectorAll('[data-speech]').forEach((button) => {
+  // Shown only with script; the audio is fetched when Listen is pressed.
+  const box = button.closest('.screen, .panel');
+  const status = box.querySelector('[data-speech-status]');
+  const label = button.querySelector('span');
+  let audio = null;
+  const idle = () => { audio = null; label.textContent = 'Listen'; box.classList.remove('speaking'); };
+  const failed = () => { idle(); status.textContent = 'Audio is not available right now.'; };
+  button.hidden = false;
+  button.addEventListener('click', () => {
+    if (audio) { audio.pause(); idle(); return; }
+    status.textContent = '';
+    const mine = audio = new Audio(button.dataset.speech);
+    // A clip that was stopped must not reset a newer one.
+    mine.addEventListener('ended', () => { if (audio === mine) idle(); });
+    mine.addEventListener('error', () => { if (audio === mine) failed(); });
+    label.textContent = 'Stop';
+    box.classList.add('speaking');
+    mine.play().catch((error) => { if (audio === mine && error.name !== 'AbortError') failed(); });
+  });
+});</script>
 </div>{% endblock %}

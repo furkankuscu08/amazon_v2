@@ -124,6 +124,45 @@ def placements(areas: list[dict]) -> dict[str, int]:
     return {person_id: key[-1] for person_id, key in best.items()}
 
 
+_COUNTS = ["one person", "two people", "three people", "four people"]
+_NUMBERS = {2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six"}
+
+
+def _and(items: list[str]) -> str:
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
+
+
+def _spoken(groups: list[dict], open_areas: int) -> tuple[str, str]:
+    """The plan's heading and the sentence after it, which together are read aloud.
+
+    Both are built only from what the plan shows, so the voice cannot say more.
+    """
+    count = sum(len(group["people"]) for group in groups)
+    if not count:
+        headline = "I found no one to point you to from the work I can see."
+        lead = []
+    else:
+        headline = f"Before you start, talk to {_COUNTS[count - 1]}."
+        places = [
+            f"{_and([p['name'] for p in group['people']])} in {group['area']}"
+            for group in groups
+        ]
+        lead = [f"Start with {places[0]}."]
+        if len(places) == 2:
+            lead.append(f"Then {places[1]}.")
+        elif len(places) > 2:
+            lead.append(f"Then {', '.join(places[1:-1])}, and {places[-1]}.")
+        if all(group["need"] for group in groups):
+            lead.append("Each card says what to find out.")
+    if open_areas:
+        lead.append(
+            "One area is still open."
+            if open_areas == 1
+            else f"{_NUMBERS.get(open_areas, str(open_areas))} areas are still open."
+        )
+    return headline, " ".join(lead)
+
+
 def build_plan(card: dict) -> dict:
     areas = card["areas"]
     home = placements(areas)
@@ -172,7 +211,12 @@ def build_plan(card: dict) -> dict:
     for area in areas:
         if area["status"] in _GAPS:
             gaps[_GAPS[area["status"]]].append(area["label"])
+    headline, lead = _spoken(list(groups.values()), sum(map(len, gaps.values())))
     return {
+        "headline": headline,
+        # Said after the headline; the two are the text read aloud.
+        "lead": lead,
+        "spoken": f"{headline} {lead}".strip(),
         "first": first,
         "groups": list(groups.values()),
         "gaps": gaps,

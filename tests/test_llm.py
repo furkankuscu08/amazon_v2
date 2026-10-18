@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 
@@ -772,3 +773,38 @@ def test_misspelt_provider_sends_nothing(monkeypatch, diagnostic_logs):
         default_model().complete("area", {"idea": "Staging sign-off."})
     [summary] = call_summaries(diagnostic_logs)
     assert (summary["provider"], summary["error"]) == ("other", "not_configured")
+
+
+# --- Amazon Polly ---------------------------------------------------------------
+
+
+def test_speech_asks_polly_once_per_text_and_logs_no_text(monkeypatch, caplog):
+    from workbot.speech import Speech, SpeechError
+
+    monkeypatch.delenv("AWS_PROFILE")
+    client = boto3.session.Session(
+        aws_access_key_id="test-only",
+        aws_secret_access_key="test-only",
+        region_name="eu-north-1",
+    ).client("polly")
+    with Stubber(client) as stubber:
+        stubber.add_response(
+            "synthesize_speech",
+            {"AudioStream": io.BytesIO(b"ID3-audio"), "ContentType": "audio/mpeg"},
+            {
+                "Text": "Before you start, talk to one person.",
+                "OutputFormat": "mp3",
+                "VoiceId": "Joanna",
+                "Engine": "standard",
+            },
+        )
+        stubber.add_client_error("synthesize_speech", service_message=MARKER)
+        speech = Speech(client=client)
+        assert speech.audio("Before you start, talk to one person.") == b"ID3-audio"
+        # The same text again is served from memory, with no second request.
+        assert speech.audio("Before you start, talk to one person.") == b"ID3-audio"
+        with pytest.raises(SpeechError, match="not available"):
+            speech.audio(MARKER)
+        stubber.assert_no_pending_responses()
+    assert MARKER not in caplog.text
+    assert "speech_failed type=ClientError" in caplog.text

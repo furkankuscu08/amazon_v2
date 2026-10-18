@@ -14,7 +14,7 @@ from urllib.parse import parse_qs
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -31,6 +31,7 @@ from workbot.service import (
     record_answer,
     run_safely,
 )
+from workbot.speech import Speech, SpeechError
 from workbot.storage import (
     connect,
     directory_claims,
@@ -58,6 +59,7 @@ _ERROR_TITLES = {
     413: "That form is too large",
     415: "Request not accepted",
     429: "Please wait a moment",
+    503: "Not available right now",
 }
 
 
@@ -138,6 +140,15 @@ def _default_searcher():
 
 def _searcher():
     return getattr(app.state, "searcher", None) or _default_searcher()
+
+
+@lru_cache(maxsize=1)
+def _default_speech():
+    return Speech()
+
+
+def _speech():
+    return getattr(app.state, "speech", None) or _default_speech()
 
 
 async def _form(request: Request) -> dict[str, str]:
@@ -322,6 +333,25 @@ async def answer(request: Request, sid: str):
     except SetupError as exc:
         return _setup_page(request, exc)
     return RedirectResponse(f"/sessions/{sid}", status_code=303)
+
+
+@app.get("/sessions/{sid}/speech.mp3")
+def speech(sid: str):
+    """The page's spoken text, read by Polly: the plan summary or the question."""
+    session, card = _get_session(sid)
+    if session and card:
+        text = build_plan(card)["spoken"]
+    elif session and session["state"] == "question" and session["question"]:
+        text = f"One clarification before searching. {session['question']}"
+    else:
+        raise HTTPException(404, "There is nothing to read aloud at this address.")
+    try:
+        audio = _speech().audio(text)
+    except SpeechError as exc:
+        raise HTTPException(503, str(exc)) from None
+    return Response(
+        audio, media_type="audio/mpeg", headers={"Cache-Control": "no-store"}
+    )
 
 
 @app.get("/sessions/{sid}/sources/{source_id:path}", response_class=HTMLResponse)
