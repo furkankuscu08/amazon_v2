@@ -1,12 +1,16 @@
 import json
 import logging
 
+import boto3
+import botocore.httpsession
 import httpx
 import pytest
+from botocore.exceptions import NoCredentialsError
+from botocore.stub import Stubber
 from pydantic import ValidationError
 
 from workbot import llm
-from workbot.llm import PROMPTS, ModelError, OpenRouter
+from workbot.llm import PROMPTS, Bedrock, ModelError, OpenRouter, default_model
 from workbot.models import AreaEvaluation, Impact
 
 USAGE = {
@@ -369,10 +373,12 @@ def test_success_summary_has_only_these_fields(area_exchange, diagnostic_logs):
     assert summary.pop("duration_seconds") >= 0
     assert summary == {
         "task": "area",
+        "provider": "openrouter",
         "outcome": "success",
         "error": None,
         "validation_error_types": None,
         "http_status": 200,
+        "stop_reason": "stop",
         "truncated": False,
         "prompt_tokens": 120,
         "completion_tokens": 480,
@@ -453,3 +459,264 @@ def test_schema_rules_the_provider_cannot_enforce_are_checked_locally():
     }
     with pytest.raises(ValidationError):
         AreaEvaluation.model_validate({"people": [person, person]})
+
+
+# --- Amazon Bedrock -------------------------------------------------------------
+
+PERSON = {
+    "person_id": "riley",
+    "contribution": "The staging callback author can explain that change as release-review context, not sign-off ownership.",
+    "role": "advisor",
+    "primary_evidence_id": "github:release-hook-12",
+    "relevance": "adjacent",
+    "evidence_ids": ["github:release-hook-12"],
+    "confidence": "medium",
+}
+
+
+def converse_reply(answer=None, stop="tool_use", name="area_response"):
+    content = [{"reasoningContent": {"reasoningText": {"text": "[REDACTED]"}}}]
+    if answer is not None:
+        content.append({"toolUse": {"toolUseId": "t1", "name": name, "input": answer}})
+    return {
+        "output": {"message": {"role": "assistant", "content": content}},
+        "stopReason": stop,
+        "usage": {"inputTokens": 120, "outputTokens": 480, "totalTokens": 600},
+        "metrics": {"latencyMs": 100},
+        "ResponseMetadata": {"HTTPStatusCode": 200},
+    }
+
+
+@pytest.fixture
+def bedrock(monkeypatch):
+    """A stubbed client checks each request against the Bedrock API model offline."""
+    monkeypatch.delenv("AWS_PROFILE")
+    client = boto3.session.Session(
+        aws_access_key_id="test-only",
+        aws_secret_access_key="test-only",
+        region_name="eu-north-1",
+    ).client("bedrock-runtime")
+    with Stubber(client) as stubber:
+        yield Bedrock(client=client), stubber
+        stubber.assert_no_pending_responses()
+
+
+def test_bedrock_requests_carry_model_reasoning_forced_tool_and_messages(
+    bedrock, diagnostic_logs
+):
+    model, stubber = bedrock
+    replies = {
+        "impact": {"question": "Which staging release is in scope?", "areas": []},
+        "area": {"people": []},
+        "priority": {"order": [], "shared_question": None, "first_conversations": []},
+    }
+    payload = {"idea": "We want to simplify staging release review."}
+    tasks = ["priority", "area", "impact"]
+    for task in tasks:
+        name = task + "_response"
+        stubber.add_response(
+            "converse",
+            converse_reply(replies[task], name=name),
+            {
+                "modelId": "global.amazon.nova-2-lite-v1:0",
+                "system": [{"text": PROMPTS[task]}],
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [{"text": json.dumps(payload, ensure_ascii=False)}],
+                    }
+                ],
+                "inferenceConfig": {"maxTokens": 8192},
+                "additionalModelRequestFields": {
+                    "reasoningConfig": {"type": "enabled", "maxReasoningEffort": "low"}
+                },
+                "toolConfig": {
+                    "tools": [
+                        {
+                            "toolSpec": {
+                                "name": name,
+                                "description": "Return the complete answer as this tool's input.",
+                                "inputSchema": {
+                                    "json": llm.SCHEMAS[task].model_json_schema()
+                                },
+                            }
+                        }
+                    ],
+                    "toolChoice": {"tool": {"name": name}},
+                },
+            },
+        )
+    results = [model.complete(task, payload) for task in tasks]
+    assert [result.model_dump() for result in results] == [
+        replies[task] for task in tasks
+    ]
+    summaries = call_summaries(diagnostic_logs)
+    assert [(s["task"], s["provider"]) for s in summaries] == [
+        (task, "bedrock") for task in tasks
+    ]
+
+
+def test_bedrock_reply_skips_reasoning_and_is_validated_locally(
+    bedrock, diagnostic_logs
+):
+    model, stubber = bedrock
+    stubber.add_response("converse", converse_reply({"people": [PERSON]}))
+    result = model.complete("area", {"idea": "Staging sign-off."})
+    assert isinstance(result, AreaEvaluation)
+    assert result.model_dump() == {"people": [PERSON]}
+    [summary] = call_summaries(diagnostic_logs)
+    assert summary.pop("duration_seconds") >= 0
+    # Bedrock counts reasoning tokens inside outputTokens and reports no split.
+    assert summary == {
+        "task": "area",
+        "provider": "bedrock",
+        "outcome": "success",
+        "error": None,
+        "validation_error_types": None,
+        "http_status": 200,
+        "stop_reason": "tool_use",
+        "truncated": False,
+        "prompt_tokens": 120,
+        "completion_tokens": 480,
+        "reasoning_tokens": None,
+    }
+
+
+@pytest.mark.parametrize(
+    ("stop", "truncated", "logged"),
+    [
+        ("max_tokens", True, "max_tokens"),
+        ("content_filtered", False, "content_filtered"),
+        ("end_turn", False, "end_turn"),
+        ("malformed_tool_use", False, "malformed_tool_use"),
+        (MARKER, False, "other"),
+    ],
+)
+def test_bedrock_reply_without_a_finished_tool_call_is_incomplete(
+    bedrock, diagnostic_logs, stop, truncated, logged
+):
+    model, stubber = bedrock
+    stubber.add_response("converse", converse_reply({"people": []}, stop=stop))
+    with pytest.raises(ModelError, match="incomplete"):
+        model.complete("area", {"idea": "Staging sign-off."})
+    [summary] = call_summaries(diagnostic_logs)
+    assert summary["error"] == "incomplete"
+    assert summary["stop_reason"] == logged
+    assert summary["truncated"] is truncated
+    assert summary["completion_tokens"] == 480
+    assert MARKER not in diagnostic_logs.text
+
+
+def _two_calls():
+    reply = converse_reply({"people": []})
+    reply["output"]["message"]["content"].append(
+        {"toolUse": {"toolUseId": "t2", "name": "area_response", "input": {}}}
+    )
+    return reply
+
+
+@pytest.mark.parametrize(
+    ("reply", "error", "types"),
+    [
+        (
+            converse_reply({"people": [{**PERSON, "role": MARKER}]}),
+            "ValidationError",
+            ["literal_error"],
+        ),
+        # The provider does not enforce maxLength; the local schema does.
+        (
+            converse_reply({"people": [{**PERSON, "contribution": MARKER * 40}]}),
+            "ValidationError",
+            ["string_too_long"],
+        ),
+        (
+            converse_reply({"people": [], "note": MARKER}),
+            "ValidationError",
+            ["extra_forbidden"],
+        ),
+        (converse_reply(None), "ValueError", None),
+        (_two_calls(), "ValueError", None),
+        (converse_reply({"people": []}, name="other_tool"), "ValueError", None),
+    ],
+)
+def test_bedrock_bad_replies_fail_closed_and_log_no_provider_text(
+    bedrock, diagnostic_logs, reply, error, types
+):
+    model, stubber = bedrock
+    stubber.add_response("converse", reply)
+    with pytest.raises(ModelError, match="Model call failed"):
+        model.complete("area", {"idea": "Staging sign-off."})
+    [summary] = call_summaries(diagnostic_logs)
+    assert summary["error"] == error
+    assert summary["validation_error_types"] == types
+    assert MARKER not in diagnostic_logs.text
+    assert diagnostic_logs.records[-1].levelno == logging.WARNING
+
+
+@pytest.mark.parametrize(
+    ("code", "status"), [("ThrottlingException", 429), ("AccessDeniedException", 403)]
+)
+def test_bedrock_service_errors_log_the_code_and_status_only(
+    bedrock, diagnostic_logs, code, status
+):
+    model, stubber = bedrock
+    stubber.add_client_error(
+        "converse",
+        service_error_code=code,
+        service_message=MARKER,
+        http_status_code=status,
+    )
+    with pytest.raises(ModelError, match="Model call failed"):
+        model.complete("area", {"idea": "Staging sign-off."})
+    [summary] = call_summaries(diagnostic_logs)
+    assert summary["error"] == code
+    assert summary["http_status"] == status
+    assert MARKER not in diagnostic_logs.text
+
+
+def test_bedrock_without_aws_setup_fails_before_any_request(
+    monkeypatch, diagnostic_logs
+):
+    # The shared test setup leaves no AWS credentials to find.
+    def no_network(*args, **kwargs):
+        raise AssertionError("network request attempted")
+
+    monkeypatch.setattr(botocore.httpsession.URLLib3Session, "send", no_network)
+    # First with the unknown profile the shared setup names, then with no profile
+    # but a Region, so credential lookup itself is what finds nothing.
+    with pytest.raises(ModelError, match="not configured"):
+        Bedrock().complete("area", {"idea": "Staging sign-off."})
+    monkeypatch.delenv("AWS_PROFILE")
+    monkeypatch.setenv("AWS_REGION", "eu-north-1")
+    model = Bedrock()
+    with pytest.raises(ModelError, match="not configured") as failure:
+        model.complete("area", {"idea": "Staging sign-off."})
+    # boto3 ignores AWS_REGION by itself; WorkBot passes it to the client.
+    assert isinstance(failure.value.__cause__, NoCredentialsError)
+    assert model._runtime().meta.region_name == "eu-north-1"
+    summaries = call_summaries(diagnostic_logs)
+    assert [s["error"] for s in summaries] == ["not_configured", "not_configured"]
+    assert all(s["http_status"] is None for s in summaries)
+
+
+def test_default_model_is_bedrock_unless_openrouter_is_selected(monkeypatch):
+    model = default_model()
+    assert isinstance(model, Bedrock)
+    assert model.model_id == "global.amazon.nova-2-lite-v1:0"
+    monkeypatch.setenv("WORKBOT_BEDROCK_MODEL", "eu.amazon.nova-2-lite-v1:0")
+    assert default_model().model_id == "eu.amazon.nova-2-lite-v1:0"
+    monkeypatch.setenv("WORKBOT_MODEL_PROVIDER", " OpenRouter ")
+    assert isinstance(default_model(), OpenRouter)
+
+
+def test_misspelt_provider_sends_nothing(monkeypatch, diagnostic_logs):
+    def no_network(*args, **kwargs):
+        raise AssertionError("network request attempted")
+
+    monkeypatch.setattr(botocore.httpsession.URLLib3Session, "send", no_network)
+    monkeypatch.setattr(httpx.Client, "send", no_network)
+    monkeypatch.setenv("WORKBOT_MODEL_PROVIDER", "openroutr")
+    with pytest.raises(ModelError, match="not bedrock or openrouter"):
+        default_model().complete("area", {"idea": "Staging sign-off."})
+    [summary] = call_summaries(diagnostic_logs)
+    assert (summary["provider"], summary["error"]) == ("other", "not_configured")

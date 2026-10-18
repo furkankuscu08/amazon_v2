@@ -9,6 +9,12 @@ anyio==4.15.1
     #   httpx
     #   starlette
     #   watchfiles
+boto3==1.43.114
+    # via -r requirements.in
+botocore==1.43.114
+    # via
+    #   boto3
+    #   s3transfer
 certifi==2026.7.22
     # via
     #   httpcore
@@ -66,6 +72,10 @@ iniconfig==2.3.0
     # via pytest
 jinja2==3.1.6
     # via -r requirements.in
+jmespath==1.1.0
+    # via
+    #   boto3
+    #   botocore
 loguru==0.7.3
     # via fastembed
 markupsafe==3.0.3
@@ -107,6 +117,8 @@ pygments==2.21.0
     # via pytest
 pytest==9.1.1
     # via -r requirements.in
+python-dateutil==2.9.0.post0
+    # via botocore
 python-dotenv==1.2.3
     # via
     #   -r requirements.in
@@ -121,6 +133,10 @@ requests==2.34.2
     # via fastembed
 ruff==0.16.9
     # via -r requirements.in
+s3transfer==0.19.2
+    # via boto3
+six==1.17.0
+    # via python-dateutil
 starlette==1.7.0
     # via fastapi
 tokenizers==0.23.2
@@ -145,6 +161,7 @@ typing-inspection==0.4.4
     #   pydantic
 urllib3==2.8.0
     # via
+    #   botocore
     #   qdrant-client
     #   requests
 uvicorn==0.54.0

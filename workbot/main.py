@@ -19,7 +19,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from workbot.llm import OpenRouter
+from workbot.llm import default_model
 from workbot.plan import build_plan
 from workbot.search import Searcher, SetupError
 from workbot.service import (
@@ -128,7 +128,7 @@ def _db():
 
 
 def _model():
-    return getattr(app.state, "model", None) or OpenRouter()
+    return getattr(app.state, "model", None) or default_model()
 
 
 @lru_cache(maxsize=1)

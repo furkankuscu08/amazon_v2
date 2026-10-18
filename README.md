@@ -6,9 +6,9 @@ Before you change how something works at a company, you need to know who to invo
 
 WorkBot is a simulated Alexa+ experience: Maya describes a project idea and gets, as a short conversation, a plan of who to talk to first, with evidence-backed contacts, what to find out from each, and explicit gaps. The home page offers three example ideas that only fill the idea box (sending one is still a live model call) and lists her earlier ideas; a plan whose evidence or access has changed since is not shown when opened and is reported as no longer valid instead. It searches synthetic work traces and a structured directory; it does not make project decisions or contact people.
 
-For example, Maya asks: *"Raise the approval threshold for marketing spend requests so small changes need no review."* In one stored run, WorkBot answered "Before you start, talk to four people." These were the Finance reviewer who currently handles such requests, the author of the 2024 approval policy (shown with a directory note that this person's approver duty has ended), the marketer who requested the Q4 budget reforecast, and a Legal colleague who wrote notes on when supplier agreements still need a wet signature. Each comes with its evidence, linked to the source records, and what to find out from that area. The people and wording vary from run to run.
+For example, Maya asks: *"Raise the approval threshold for marketing spend requests so small changes need no review."* In one stored run, made with the earlier OpenRouter model, WorkBot answered "Before you start, talk to four people." These were the Finance reviewer who currently handles such requests, the author of the 2024 approval policy (shown with a directory note that this person's approver duty has ended), the marketer who requested the Q4 budget reforecast, and a Legal colleague who wrote notes on when supplier agreements still need a wet signature. Each comes with its evidence, linked to the source records, and what to find out from that area. The people and wording vary from run to run.
 
-> ⚠️ **Disclaimer:** This is **not** an official Alexa integration or Amazon API integration. Use **synthetic project ideas only**: prompts are sent to OpenRouter. The directory and work traces are fictional. No messages or invitations are sent to anyone. WorkBot's input and output language is **English**: enter ideas and clarification answers in English; synthetic records, search intents, prompts, and displayed questions/cards are written in English. This is a product convention, not automatic detection or rejection of other languages at runtime.
+> ⚠️ **Disclaimer:** This is **not** an official Alexa integration and uses no Alexa API; Amazon Bedrock serves only as the model provider. Use **synthetic project ideas only**: prompts are sent to Amazon Bedrock (or to OpenRouter when it is selected). The directory and work traces are fictional. No messages or invitations are sent to anyone. WorkBot's input and output language is **English**: enter ideas and clarification answers in English; synthetic records, search intents, prompts, and displayed questions/cards are written in English. This is a product convention, not automatic detection or rejection of other languages at runtime.
 
 ## Documentation
 
@@ -17,6 +17,7 @@ For example, Maya asks: *"Raise the approval threshold for marketing spend reque
 - [`docs/archive/`](docs/archive/) preserves the original non-binding Turkish design proposal; it is not current behavior or an active implementation plan.
 - [`docs/competition.md`](docs/competition.md) is a dated working brief for the hackathon; recheck the [live official rules](https://amazonappdev2026.devpost.com/rules) before submitting.
 - [`docs/demo-video.md`](docs/demo-video.md) is a working draft of the demo-video script; it is not final and will change.
+- [`docs/friction-log.md`](docs/friction-log.md) records the friction met while building on AWS and Amazon Bedrock, for the hackathon's optional friction-log bonus.
 - [`docs/competition-winner-patterns.md`](docs/competition-winner-patterns.md) compares other competition winners for inspiration, not requirements or proof of what wins.
 - [`opencode.jsonc`](opencode.jsonc) holds OpenCode configuration, including optional built-in subagent model preferences.
 
@@ -25,7 +26,7 @@ For example, Maya asks: *"Raise the approval threshold for marketing spend reque
 | Layer | Choice |
 | --- | --- |
 | Web | FastAPI + Jinja2 templating, served by **uvicorn** (`workbot.main:app`) |
-| LLM | OpenRouter — `z-ai/glm-5.3-flash` (area low; impact/priority high), routed to the tested `open-inference/fp4` endpoint via `OPENROUTER_API_KEY` |
+| LLM | Amazon Bedrock — Amazon Nova 2 Lite through the `global.amazon.nova-2-lite-v1:0` cross-Region inference profile, Converse API with extended thinking at low effort for all three tasks. Fallback: OpenRouter — `z-ai/glm-5.3-flash` (area low; impact/priority high) on the tested `open-inference/fp4` endpoint |
 | Vectors | Local Qdrant (Docker, REST 6333, bound to localhost) |
 | Embeddings | Local FastEmbed / all-MiniLM-L6-v2 (no cloud embedding calls) |
 | Relational data | SQLite via `WORKBOT_DB_PATH` (default `data/workbot.sqlite3`) |
@@ -34,13 +35,14 @@ For example, Maya asks: *"Raise the approval threshold for marketing spend reque
 
 - Docker (Compose v2.22+) — for Qdrant, and optionally the app container
 - Python 3.12 + [uv](https://docs.astral.sh/uv/) (or plain `pip`)
-- An OpenRouter API key (https://openrouter.ai/keys)
+- An AWS account where Amazon Nova 2 Lite can be invoked on Amazon Bedrock, and credentials for it in a named AWS CLI profile (below). Only for the fallback: an OpenRouter API key (https://openrouter.ai/keys)
 
 ## Setup
 
 ```bash
 # 1) Environment & dependencies (the application loads .env automatically)
-cp .env.example .env          # then edit: set OPENROUTER_API_KEY
+cp .env.example .env          # then edit: set AWS_PROFILE and AWS_REGION
+aws configure --profile workbot   # once: the IAM user's access key, Region, json
 uv venv --python 3.12 && source .venv/bin/activate   # or: python3.12 -m venv .venv
 uv pip install -r requirements.txt     # or: pip install -r requirements.txt
 
@@ -57,6 +59,23 @@ uvicorn workbot.main:app --host 127.0.0.1 --port 8000
 
 Web UI: **http://localhost:8000** — vector DB dashboard: http://localhost:6333/dashboard If host port 6333 is occupied, set `QDRANT_HOST_PORT=6335` and `QDRANT_URL=http://localhost:6335` in `.env` before starting Compose and seeding.
 
+`.env` needs no AWS key: boto3 finds the credentials of the profile named by `AWS_PROFILE` in `~/.aws/`. WorkBot itself calls only the Bedrock Converse API, which needs `bedrock:InvokeModel`, so the profile can belong to an IAM user with no more than this policy:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "bedrock:InvokeModel",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+Nova 2 Lite is reached through an inference profile, which can route a request to another Region; `Resource: "*"` covers the profile and the model in each Region it may use. In an AWS account whose Regions are restricted by an organization policy, Bedrock inference must be allowed in those Regions.
+
 ### Optional: everything in Docker
 
 ```bash
@@ -64,17 +83,25 @@ docker compose --profile app up -d --build                     # app on :8000 + 
 docker compose --profile app run --rm app python -m workbot.seed
 ```
 
+The container does not see your AWS profile. Either set `WORKBOT_MODEL_PROVIDER=openrouter` and `OPENROUTER_API_KEY` in `.env`, or give the container AWS credentials yourself, for example a read-only mount of `~/.aws` at `/root/.aws`.
+
 ## Environment variables
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `OPENROUTER_API_KEY` | *(required)* | OpenRouter API key for the LLM |
+| `WORKBOT_MODEL_PROVIDER` | `bedrock` | `bedrock`, or `openrouter` for the fallback |
+| `AWS_PROFILE` | *(unset)* | AWS CLI profile whose credentials boto3 uses; unset, the standard AWS credential chain applies (for example an instance role) |
+| `AWS_REGION` | *(the profile's)* | Region of the Bedrock endpoint; boto3 itself reads only `AWS_DEFAULT_REGION` or the profile, so WorkBot passes this one explicitly |
+| `WORKBOT_BEDROCK_MODEL` | `global.amazon.nova-2-lite-v1:0` | Bedrock model or inference profile ID |
+| `OPENROUTER_API_KEY` | *(unset)* | OpenRouter API key; needed only with `WORKBOT_MODEL_PROVIDER=openrouter` |
 | `QDRANT_URL` | `http://localhost:6333` | Qdrant endpoint |
 | `QDRANT_HOST_PORT` | `6333` | Host port exposed by Compose for local Python |
 | `WORKBOT_DB_PATH` | `data/workbot.sqlite3` | SQLite database file |
 | `WORKBOT_HOST_PORT` | `8000` | Host port for the optional app container |
 
-`.env` contains secrets and is **git-ignored** — never commit it. Model requests use parameter-compatible routing to the tested `open-inference/fp4` endpoint, an 8,192-token output cap, and strict JSON-schema requests with local validation. If the pinned endpoint is unavailable, WorkBot fails closed rather than silently selecting an untested provider. These settings do not guarantee schema completion or semantic correctness across future responses/model/provider changes. Do not use confidential inputs; live calls consume your own API budget.
+`.env` can hold secrets and is **git-ignored** — never commit it. Do not leave `AWS_BEARER_TOKEN_BEDROCK` set but empty: botocore then still sends the request with token authentication.
+
+Both providers cap each reply at 8,192 output tokens and validate it locally against the same Pydantic schemas; a reply cut off at the cap, filtered, or failing the schema produces no card. On Bedrock, each task is one Converse call whose only tool is the task's schema and whose tool choice forces that tool; Nova 2 Lite rejects both `outputConfig` JSON-schema output and `strict` tools, so the provider does not enforce the schema and the local validation is what does. Its extended thinking runs at low effort for all three tasks: in live runs, medium effort spent up to the whole output cap on reasoning (impact and priority calls of 3,600–8,192 output tokens and 20–46 seconds, two of them cut off), while low effort used 1,300–2,100 tokens and 10–14 seconds for the same impact calls; high effort does not allow an output cap at all. The AWS SDK retries throttling, other transient errors, and read timeouts (90 seconds each), up to three attempts in all, so one slow call can take several minutes and a retried prompt is billed again. On OpenRouter, requests use parameter-compatible routing to the tested `open-inference/fp4` endpoint and strict JSON-schema output; if that endpoint is unavailable, WorkBot fails closed rather than silently selecting an untested provider. Missing setup (no AWS credentials, an unknown profile, no Region, no OpenRouter key, or a `WORKBOT_MODEL_PROVIDER` other than `bedrock` or `openrouter`) fails the call as `not_configured` before any prompt is sent; on a machine with no AWS credentials, boto3's own credential search may still ask the EC2 instance metadata address. Other AWS sign-in problems, such as an expired SSO session, are logged under their exception class name. These settings do not guarantee schema completion or semantic correctness across future responses/model/provider changes. Do not use confidential inputs; live calls consume your own AWS or OpenRouter budget.
 
 ## Current behavior and limitations
 
@@ -102,7 +129,7 @@ The contribution field does not verify that a cited source actually addresses th
 
 ### Model call log
 
-`workbot.llm` writes one `model_call_summary` JSON log line per model call: `INFO` on success, `WARNING` on failure. It holds the task, the outcome, an `error` (the exception class name, or WorkBot's own `not_configured` or `incomplete`), `validation_error_types` (Pydantic's codes such as `missing` or `json_invalid` when a reply fails the schema), the HTTP status, whether the reply was cut off at the token cap, the duration, and the provider-reported prompt, completion, and reasoning token counts (`null` unless the provider sent a non-negative integer). It never holds prompts, answers, names, IDs, model or provider text, or keys, and nothing from it is stored in cards or passed to the priority call. It tells you how a call went, not why WorkBot proposed a person.
+`workbot.llm` writes one `model_call_summary` JSON log line per model call: `INFO` on success, `WARNING` on failure. It holds the task, the provider (`bedrock` or `openrouter`), the outcome, an `error` (the exception class name, such as Bedrock's `ThrottlingException`, or WorkBot's own `not_configured` or `incomplete`), `validation_error_types` (Pydantic's codes such as `missing` or `json_invalid` when a reply fails the schema), the HTTP status, the stop reason (only from each provider's fixed list of values, otherwise `other`), whether the reply was cut off at the token cap, the duration, and the provider-reported prompt, completion, and reasoning token counts (`null` unless the provider sent a non-negative integer; Bedrock includes reasoning tokens in the completion count and reports no separate reasoning count). It never holds prompts, answers, names, IDs, model or provider text, or keys, and nothing from it is stored in cards or passed to the priority call. It tells you how a call went, not why WorkBot proposed a person. Do not enable `DEBUG` logging for `botocore`: at that level it logs whole Bedrock requests and replies, prompts included.
 
 To see successful calls, enable `INFO` for the `workbot.llm` logger, for example in a Python launcher:
 
@@ -129,7 +156,7 @@ ruff format --check workbot tests conftest.py
 git diff --check
 ```
 
-The formatting command above only checks files; use `ruff format` on affected files when an edit is needed. Without a `.venv`, prefix each Python command with `uv run --python 3.12 --no-project --with-requirements requirements.txt`, which provides Python 3.12 with the pinned requirements from uv's cache. Tests use offline stubs/local fixtures, including a local in-memory Qdrant client for search tests; `conftest.py` blanks the OpenRouter key and points the database and Qdrant settings away from your real ones for every test. A live run additionally requires Docker/Qdrant, an OpenRouter key, and explicit approval of the test scope/budget: submitting a synthetic idea in the web UI makes paid model calls. After approval, inspect its area/source card and reload without regenerating it. Keep this guide current when setup, behavior, or limitations change. Review `AGENTS.md` alongside relevant code changes and update agent instructions when needed; neither file requires an unrelated edit just for the sake of touching it.
+The formatting command above only checks files; use `ruff format` on affected files when an edit is needed. Without a `.venv`, prefix each Python command with `uv run --python 3.12 --no-project --with-requirements requirements.txt`, which provides Python 3.12 with the pinned requirements from uv's cache. Tests use offline stubs/local fixtures, including a local in-memory Qdrant client for search tests; `conftest.py` blanks the OpenRouter key, leaves boto3 no AWS credentials to find (no profile files, keys, tokens, or instance and container metadata), and points the database and Qdrant settings away from your real ones for every test. Bedrock tests check each request against the AWS API model with botocore's offline `Stubber`. A live run additionally requires Docker/Qdrant, working Bedrock credentials (or an OpenRouter key for the fallback), and explicit approval of the test scope/budget: submitting a synthetic idea in the web UI makes paid model calls. After approval, inspect its area/source card and reload without regenerating it. Keep this guide current when setup, behavior, or limitations change. Review `AGENTS.md` alongside relevant code changes and update agent instructions when needed; neither file requires an unrelated edit just for the sake of touching it.
 
 `requirements.in` lists direct dependencies (lightweight ONNX/CPU embeddings); `requirements.txt` is the compiled lock file. After changing dependencies:
 
