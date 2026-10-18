@@ -20,6 +20,8 @@
   const stopAudio = () => { if (owner) audio.pause(); settle(); };
   const play = (button, auto) => {
     stopAudio();
+    // A page nobody has clicked on cannot play sound; say so without asking Polly.
+    if (auto && navigator.userActivation && !navigator.userActivation.hasBeenActive) { controls(button).status.textContent = 'Press Listen to hear it.'; return; }
     owner = button;
     const {box, status, label} = controls(button);
     status.textContent = ''; label.textContent = 'Stop'; box.classList.add('speaking');
@@ -53,6 +55,8 @@
       let stream;
       try { stream = await navigator.mediaDevices.getUserMedia({audio: true}); }
       catch (error) { done('The microphone is not available. Type the text instead.'); return; }
+      // The page may have moved on while the browser asked.
+      if (!button.isConnected) { stream.getTracks().forEach((track) => track.stop()); return; }
       button.disabled = false;
       const context = new AudioContext();
       const source = context.createMediaStreamSource(stream);
@@ -154,6 +158,7 @@
     event.preventDefault();
     if (sending) return;
     sending = true;
+    document.body.classList.add('busy');
     stopAudio();
     if (readAloud()) unlock();
     document.querySelectorAll('#page button[type=submit]').forEach((button) => { button.disabled = true; });
@@ -164,9 +169,12 @@
     } catch (error) { next = null; }
     sending = false;
     // A page that was not redirected to, such as an error, keeps this address.
-    if (!next || !swap(next, reply.redirected && reply.ok ? reply.url : null)) form.submit();
+    if (!next || !swap(next, reply.redirected && reply.ok ? reply.url : null)) { ready(); form.submit(); }
   });
+  const ready = () => { document.querySelectorAll('#page button[type=submit]').forEach((button) => { button.disabled = false; }); };
   addEventListener('popstate', () => location.reload());
+  // A page restored by Back after leaving it has no sound playing and no form in flight.
+  addEventListener('pageshow', (event) => { if (event.persisted) { stopAudio(); ready(); } });
 
   const setup = (root) => {
     root.querySelectorAll('[data-speech]').forEach((button) => {
