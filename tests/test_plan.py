@@ -232,3 +232,52 @@ def test_first_sentence_skips_abbreviations():
     for quote, first in cases.items():
         line = _short(f"Author of a document record: ‘{quote}’")
         assert line == f"Wrote a document: ‘{first}’"
+
+
+def test_spoken_summary_names_only_the_plan_people_and_areas():
+    areas = [
+        area("Finance", "finance", person("tara", "direct_contact", "finance")),
+        area(
+            "Growth",
+            "growth",
+            person("jules", "direct_contact", "growth"),
+            person("marcus", "advisor", "growth"),
+        ),
+        area("Platform", "platform", person("owen", "direct_contact", "platform")),
+        area("Legal", "legal", status="not_found"),
+    ]
+    card = {
+        "areas": [{**a, "consultation_need": f"Need for {a['label']}?"} for a in areas],
+        "first_conversations": ["tara", "jules", "owen", "marcus"],
+    }
+    plan = build_plan(card)
+    assert plan["headline"] == "Before you start, talk to four people."
+    assert plan["lead"] == (
+        "Start with Tara in Finance. Then Jules and Marcus in Growth, and Owen in"
+        " Platform. Each card says what to find out. One area is still open."
+    )
+    assert plan["spoken"] == f"{plan['headline']} {plan['lead']}"
+    two = build_plan({**card, "first_conversations": ["tara", "owen"]})
+    assert two["lead"].startswith("Start with Tara in Finance. Then Owen in Platform.")
+    one = build_plan({**card, "first_conversations": ["jules"]})
+    assert one["headline"] == "Before you start, talk to one person."
+    assert one["lead"].startswith("Start with Jules in Growth. Each card")
+
+
+def test_spoken_summary_without_people_reports_only_the_open_areas():
+    card = {
+        "areas": [
+            area("Legal", "legal", status="not_found"),
+            area("Brand", None, status="mapping_unresolved"),
+        ]
+    }
+    plan = build_plan(card)
+    assert plan["headline"] == "I found no one to point you to from the work I can see."
+    assert plan["lead"] == "Two areas are still open."
+    assert build_plan({"areas": []})["spoken"] == plan["headline"]
+
+
+def test_spoken_summary_does_not_promise_what_to_find_out_on_older_cards():
+    # Cards stored before areas had a consultation need show no such block.
+    plan = build_plan({**CARD, "first_conversations": ["tara"]})
+    assert plan["lead"] == "Start with Tara in Finance. Two areas are still open."

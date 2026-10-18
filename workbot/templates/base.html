@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{% block title %}Workbot · simulated Alexa+ experience{% endblock %}</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23743b63'/%3E%3C/svg%3E"><style>
-:root{--bg:#f6f3f4;--surface:#fff;--fg:#28232d;--muted:#625b66;--line:#e6dfe4;--accent:#743b63;--accent-soft:#f3e8ef;--accent-ink:#5e2e50;--warn:#855014;--warn-bg:#fbf3e8;--warn-line:#e8cfa8;--field-line:#8a818d;color-scheme:light}
+:root{--bg:#f6f3f4;--surface:#fff;--fg:#28232d;--muted:#625b66;--line:#e6dfe4;--accent:#743b63;--accent-soft:#f3e8ef;--accent-ink:#5e2e50;--warn:#855014;--warn-bg:#fbf3e8;--warn-line:#e8cfa8;--field-line:#8a818d;--screen:#241d29;--screen-2:#30273a;--screen-ink:#f7f1f5;--screen-muted:#cdbfca;--glow:#d39bc1;color-scheme:light}
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
@@ -36,6 +36,18 @@ ul.plain{list-style:none;margin:0;padding:0}
 ul.recent{padding:.3rem 1.25rem}.recent li{padding:.7rem 0;border-top:1px solid var(--line)}.recent li:first-child{border-top:0}
 .warning{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:12px;padding:1rem 1.15rem}
 .warning h2,.warning strong{color:var(--warn)}
+.say-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.6rem}
+.listen{display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;padding:.3rem .85rem .3rem .65rem;border-radius:999px}
+.listen svg{width:.95rem;height:.95rem;fill:currentColor}.listen .i-stop,.speaking .listen .i-play{display:none}.speaking .listen .i-stop{display:block}
+.screen{display:grid;gap:.6rem;background:linear-gradient(160deg,var(--screen),var(--screen-2));color:var(--screen-ink);border-radius:18px;padding:1.3rem 1.4rem}
+.screen-top{display:flex;align-items:center;gap:.6rem}
+.screen-label{font-size:.75rem;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--screen-muted)}
+.orb{flex:none;width:.8rem;height:.8rem;border-radius:50%;background:var(--glow);box-shadow:0 0 0 4px rgba(211,155,193,.18)}
+.speaking .orb{animation:pulse 1.1s ease-in-out infinite}@keyframes pulse{50%{box-shadow:0 0 0 9px rgba(211,155,193,.05)}}
+.screen .listen{margin-left:auto;background:var(--screen-ink);color:var(--screen);border-color:var(--screen-ink)}
+.screen :focus-visible{outline-color:var(--glow)}
+.screen h1{font-size:1.6rem;color:var(--screen-ink)}
+.screen-sub{color:var(--screen-muted);font-size:1.02rem;max-width:58ch}.screen-sub:empty{margin-top:-.6rem}
 .cards{list-style:none;margin:0;padding:0;display:grid;gap:1rem}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .ask{display:grid;gap:.25rem;background:var(--accent-soft);padding:1rem 1.2rem}.ask .label{color:var(--accent)}
@@ -68,7 +80,7 @@ details.area>summary span{font-weight:400;font-size:.85rem;color:var(--muted)}
 @keyframes spin{to{transform:translateY(.1rem) rotate(360deg)}}
 blockquote{margin:0;border-left:3px solid var(--line);padding:.2rem 0 .2rem 1rem}
 pre{margin:0;overflow-x:auto;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:.6rem .8rem}
-@media (max-width:30rem){h1{font-size:1.35rem}.sim{margin-left:0}.ask,.p{padding-inline:1rem}}
+@media (max-width:30rem){h1,.screen h1{font-size:1.35rem}.sim{margin-left:0}.ask,.p{padding-inline:1rem}.screen{padding:1.1rem 1rem}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
 </style></head><body class="{% block body_class %}{% endblock %}">
 <header class="top"><div class="wrap"><a class="mark" href="/">Workbot<i aria-hidden="true"></i></a><span class="sim">Simulation · synthetic company data</span></div></header>

@@ -10,6 +10,7 @@ from tests.unit_seed import seed_db
 from workbot.main import DemoRateLimiter, app
 from workbot.models import AreaEvaluation, Impact, Priority
 from workbot.search import Searcher, SetupError, index_visible_records
+from workbot.speech import SpeechError
 from workbot.storage import connect
 
 
@@ -557,3 +558,87 @@ def test_setup_problem_is_shown_before_anything_is_stored_or_sent(web):
     assert db.execute("SELECT COUNT(*) FROM sessions").fetchone()[0] == 1
     db.close()
     assert model.calls == calls
+
+
+class StubSpeech:
+    """Records the text it is asked to read; `fail` makes Polly unavailable."""
+
+    def __init__(self, fail=False):
+        self.texts = []
+        self.fail = fail
+
+    def audio(self, text):
+        self.texts.append(text)
+        if self.fail:
+            raise SpeechError("Audio is not available right now.")
+        return b"ID3-synthetic-audio"
+
+
+def test_listen_reads_exactly_the_spoken_plan_on_the_page(web, monkeypatch):
+    speech = StubSpeech()
+    monkeypatch.setattr(app.state, "speech", speech, raising=False)
+    model = ScriptedModel(
+        [_person("nina", "direct_contact", ["jira:MKT-482"], "direct")]
+    )
+    client, url = _submit(web, model)
+    page = client.get(url).text
+    assert '<section class="screen"' in page
+    assert f'data-speech="{url}/speech.mp3"' in page
+    reply = client.get(url + "/speech.mp3")
+    assert reply.status_code == 200
+    assert reply.headers["content-type"] == "audio/mpeg"
+    assert reply.content == b"ID3-synthetic-audio"
+    [text] = speech.texts
+    assert text.startswith("Before you start, talk to one person. Start with Nina")
+    # Every sentence that is read aloud is also shown in the panel.
+    panel = page.split('<section class="screen"', 1)[1].split("</section>", 1)[0]
+    assert all(sentence.strip() in panel for sentence in text.split(". "))
+
+
+def test_listen_reads_the_question_and_nothing_elsewhere(web, monkeypatch):
+    speech = StubSpeech()
+    monkeypatch.setattr(app.state, "speech", speech, raising=False)
+    model = ScriptedModel(
+        [_person("nina", "direct_contact", ["jira:MKT-482"], "direct")],
+        question="Which campaigns are in scope?",
+    )
+    client, url = _submit(web, model)
+    assert client.get(url + "/speech.mp3").status_code == 200
+    assert speech.texts == [
+        "One clarification before searching. Which campaigns are in scope?"
+    ]
+    missing = client.get("/sessions/nope/speech.mp3")
+    assert missing.status_code == 404
+    assert "nothing to read aloud" in missing.text
+
+
+def test_listen_has_nothing_to_read_for_a_stale_or_refused_session(web, monkeypatch):
+    speech = StubSpeech()
+    monkeypatch.setattr(app.state, "speech", speech, raising=False)
+    model = ScriptedModel(
+        [_person("nina", "direct_contact", ["jira:MKT-482"], "direct")]
+    )
+    client, url = _submit(web, model)
+    db = connect(web.path)
+    db.execute("UPDATE people SET active=0 WHERE id='nina'")
+    db.execute(
+        """INSERT INTO sessions (id, actor, workspace, idem_key, sentence, answers_json, state)
+        VALUES ('refused', 'maya', 'demo', 'refused', 'An idea', '[]', 'refusal')"""
+    )
+    db.commit()
+    db.close()
+    assert client.get(url).status_code == 410
+    assert client.get(url + "/speech.mp3").status_code == 404
+    assert client.get("/sessions/refused/speech.mp3").status_code == 404
+    assert speech.texts == []
+
+
+def test_listen_failure_is_a_plain_message(web, monkeypatch):
+    monkeypatch.setattr(app.state, "speech", StubSpeech(fail=True), raising=False)
+    model = ScriptedModel(
+        [_person("nina", "direct_contact", ["jira:MKT-482"], "direct")]
+    )
+    client, url = _submit(web, model)
+    reply = client.get(url + "/speech.mp3")
+    assert reply.status_code == 503
+    assert "Audio is not available right now." in reply.text
