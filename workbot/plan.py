@@ -190,35 +190,47 @@ def build_plan(card: dict) -> dict:
     }
     chosen = [pid for pid in card.get("first_conversations") or [] if pid in entries]
     if not chosen:
-        # No usable model choice: the strongest person of each area, strongest first.
+        # No usable model choice: the strongest person of each area, strongest first,
+        # preferring someone whose related responsibility has not ended.
         best = []
         for index in range(len(areas)):
             here = [e for pid, e in entries.items() if home[pid] == index]
             if here:
-                best.append(min(here, key=_strength))
+                best.append(
+                    min(here, key=lambda e: (bool(e["ended_duty"]), _strength(e)))
+                )
         chosen = [e["person_id"] for e in sorted(best, key=_strength)]
     chosen = list(dict.fromkeys(chosen))[:MAX_FIRST_CONVERSATIONS]
-    first = [entries[pid] for pid in chosen]
     # One group per home area, with what to find out there. Groups follow their
-    # first chosen person, and people keep the chosen order within a group.
+    # first chosen person, and people keep the chosen order within a group, except
+    # that someone whose related responsibility has ended is not who to start
+    # with: they follow the others in their area, and an area with only such
+    # people follows the areas that have someone else.
     groups: dict[str, dict] = {}
-    for entry in first:
+    for pid in chosen:
+        entry = entries[pid]
         groups.setdefault(
             entry["area"],
             {"area": entry["area"], "need": entry["need"], "people": []},
         )["people"].append(entry)
+    ordered = sorted(
+        groups.values(), key=lambda g: all(e["ended_duty"] for e in g["people"])
+    )
+    for group in ordered:
+        group["people"].sort(key=lambda e: bool(e["ended_duty"]))
+    first = [entry for group in ordered for entry in group["people"]]
     gaps: dict[str, list[str]] = {name: [] for name in _GAPS.values()}
     for area in areas:
         if area["status"] in _GAPS:
             gaps[_GAPS[area["status"]]].append(area["label"])
-    headline, lead = _spoken(list(groups.values()), sum(map(len, gaps.values())))
+    headline, lead = _spoken(ordered, sum(map(len, gaps.values())))
     return {
         "headline": headline,
         # Said after the headline; the two are the text read aloud.
         "lead": lead,
         "spoken": f"{headline} {lead}".strip(),
         "first": first,
-        "groups": list(groups.values()),
+        "groups": ordered,
         "gaps": gaps,
         # Everyone on the card once, as shown in their home area.
         "people": entries,
