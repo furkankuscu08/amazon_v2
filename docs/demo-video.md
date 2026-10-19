@@ -33,6 +33,6 @@ The reference run had no gap, so the 1:38–1:58 row has no gap sentence. If the
 ## Before recording
 
 - Record from a fresh, separately approved live run (the hosted demo works); do not present stored OpenRouter output as Bedrock output. Fill in [DURATION] from that run.
-- Check that Omar appears as "Related work" with the note "Approver role ended on 2025-06-30.", that Tara and Jules appear as "Current responsibility", and that a clarification question is asked; rewrite 0:30–1:38 if not. Without a question, cut the 0:30–0:52 row to the first waiting page and give the time to the plan. Quote the question and the "Alexa says" text in captions exactly as the app says them.
+- Check that Omar appears as "Related work" with the note "Approver role ended on 2025-06-30.", that Tara and Jules appear as "Current responsibility", and whether a clarification question is asked; rewrite 0:30–1:38 to match the recorded run, including the number of people in the spoken plan. Without a question, cut the 0:30–0:52 row to the first waiting page and give the time to the plan. Quote the question and the "Alexa says" text in captions exactly as the app says them.
 - Show only clean Bedrock-generated ideas in the home-page list.
 - 1920×1080, browser zoom 125%; type the idea in real time; speed up only the two waiting pages and the typing of the answer.
