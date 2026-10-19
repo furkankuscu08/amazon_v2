@@ -1,5 +1,6 @@
 """Mechanical validity of the shipped synthetic company fixture."""
 
+import html
 import json
 import re
 from datetime import date
@@ -131,6 +132,18 @@ def test_expectations_refer_to_the_fixture():
             + [p for group in idea.get("must_show_any", []) for p in group]
         )
         assert named and set(named) <= set(people) - set(expected["never_show"])
+
+
+def test_every_home_page_example_has_an_answer_key():
+    home = (Path(__file__).parent.parent / "workbot/templates/home.html").read_text(
+        "utf-8"
+    )
+    examples = [html.unescape(i) for i in re.findall(r'data-idea="([^"]+)"', home)]
+    expected = json.loads(
+        (Path(__file__).parent / "expectations.json").read_text("utf-8")
+    )
+    assert len(examples) == 3
+    assert set(examples) <= {idea["idea"] for idea in expected["ideas"]}
 
 
 def test_candidate_cap_follows_retrieval_rank_not_recency(tmp_path):
