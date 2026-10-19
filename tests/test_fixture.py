@@ -133,6 +133,18 @@ def test_expectations_refer_to_the_fixture():
         assert named and set(named) <= set(people) - set(expected["never_show"])
 
 
+def test_every_home_page_example_has_an_answer_key():
+    home = (Path(__file__).parent.parent / "workbot/templates/home.html").read_text(
+        "utf-8"
+    )
+    examples = re.findall(r'data-idea="([^"]+)"', home)
+    expected = json.loads(
+        (Path(__file__).parent / "expectations.json").read_text("utf-8")
+    )
+    assert len(examples) == 3
+    assert set(examples) <= {idea["idea"] for idea in expected["ideas"]}
+
+
 def test_candidate_cap_follows_retrieval_rank_not_recency(tmp_path):
     db = connect(str(tmp_path / "rank.sqlite3"))
     seed_db(db)
