@@ -45,6 +45,13 @@
       "must_show": ["tara"],
       "must_not_be_direct": ["ben"],
       "why": "Tara currently reviews marketing spend requests above the threshold. Omar's approval duty expired in 2025, so only his 2024 policy document can support him. Ben has moved to Payments and his old work was invoice matching."
+    },
+    {
+      "id": "spend-policy",
+      "idea": "Raise the approval threshold in the spending approval policy so small marketing spend changes need no review.",
+      "must_show": ["tara", "anders"],
+      "must_not_be_direct": ["ben"],
+      "why": "The idea changes a policy. Tara reviews marketing spend requests above the threshold, and Anders currently reviews changes to internal approval and spending policies for compliance."
     }
   ]
 }

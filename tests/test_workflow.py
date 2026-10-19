@@ -678,6 +678,30 @@ def test_idempotency_question_skip_and_priority_fallback(db):
     assert [call["remaining_questions"] for call in impact_calls] == [2, 0]
 
 
+def test_clarification_answers_reach_the_priority_model(db):
+    question = Impact.model_validate(
+        {"question": "Which campaigns would this cover?", "areas": []}
+    )
+    model = StubModel(
+        [question, impact(AREA)], [evaluation()], [priority("campaign_review")]
+    )
+    sid, _ = card_for(db, model)
+    answer_question(db, sid, "Only retail email campaigns.", model, StubSearcher())
+    assert valid_card(db, load_session(db, sid)) is not None
+    task, payload = model.calls[-1]
+    assert task == "priority"
+    assert payload["answers"] == [
+        {
+            "question": "Which campaigns would this cover?",
+            "answer": "Only retail email campaigns.",
+        }
+    ]
+    # Without a clarification the priority call gets an empty list.
+    model = StubModel([impact(AREA)], [evaluation()], [priority("campaign_review")])
+    card_for(db, model, key="key-2")
+    assert model.calls[-1][1]["answers"] == []
+
+
 def test_question_after_a_skipped_clarification_is_refused(db):
     first = Impact.model_validate(
         {"question": "What sort of campaigns do you mean?", "areas": []}

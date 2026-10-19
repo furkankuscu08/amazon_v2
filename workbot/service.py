@@ -177,7 +177,7 @@ def run(db, sid: str, model, searcher) -> None:
     card = {"areas": [], "shared_question": None, "first_conversations": []}
     _review_areas(db, sid, session, answers, impact, card, model, searcher)
     _report(sid, "priority")
-    _apply_priority(db, session, card, model)
+    _apply_priority(db, session, answers, card, model)
     try:
         store_card(db, sid, card)
     except ValueError:
@@ -312,12 +312,16 @@ def _review_areas(
                 _report(sid, done=item["id"])
 
 
-def _apply_priority(db, session: dict, card: dict, model) -> None:
+def _apply_priority(db, session: dict, answers: list, card: dict, model) -> None:
     """Third model task. Any failure leaves the card in its original order."""
     try:
         priority = model.complete(
             "priority",
-            {"idea": session["sentence"], "areas": _priority_areas(card["areas"])},
+            {
+                "idea": session["sentence"],
+                "answers": answers,
+                "areas": _priority_areas(card["areas"]),
+            },
         )
         if (
             isinstance(priority, Priority)
