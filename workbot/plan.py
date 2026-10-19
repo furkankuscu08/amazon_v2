@@ -265,6 +265,19 @@ def build_plan(card: dict) -> dict:
     for group in ordered:
         group["people"].sort(key=lambda e: bool(e["ended_duty"]))
     first = [entry for group in ordered for entry in group["people"]]
+    # The full list names first the people it shows in full in an area, then those
+    # it refers elsewhere; the plan's people lead each part, in the plan's order.
+    rank = {entry["person_id"]: index for index, entry in enumerate(first)}
+    order = [
+        sorted(
+            area["people"],
+            key=lambda p: (
+                home[p["person_id"]] != index,
+                rank.get(p["person_id"], len(rank)),
+            ),
+        )
+        for index, area in enumerate(areas)
+    ]
     # Areas with people where nobody chosen has their home and somebody was left
     # out, named with those people under the cards so the plan does not seem to
     # have lost them.
@@ -272,9 +285,8 @@ def build_plan(card: dict) -> dict:
     more = [
         {
             "area": area["label"],
-            "names": [
-                p["name"] for p in area["people"] if p["person_id"] not in chosen
-            ],
+            # In the full list's order, so the two name them alike.
+            "names": [p["name"] for p in order[index] if p["person_id"] not in chosen],
         }
         for index, area in enumerate(areas)
         if area["status"] == "people"
@@ -297,6 +309,8 @@ def build_plan(card: dict) -> dict:
         "gaps": gaps,
         # Everyone on the card once, as shown in their home area.
         "people": entries,
+        # Per area: its people in the order the full list shows them.
+        "order": order,
         # Per area: where each listed person is shown in full (None = here).
         "elsewhere": [
             {

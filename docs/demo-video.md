@@ -8,7 +8,7 @@
 - Under three minutes (target 2:50) with about 300 narrated words, leaving time for the app's own voice (Listen) and silent screen actions.
 - The story is the contrast between who handles the decision today (Tara) and who used to (Omar); Jules gets one sentence.
 - Ideas whose stored cards showed a wrong direct contact (pickup lockers, campaign AI) stay out of the video.
-- Claims stay within what the code does: code checks record visibility and the person's link to it, not whether a record answers the area's question; only person summaries are labelled unverified.
+- Claims stay within what the code does: code checks record visibility and the person's link to it, not whether a record answers the area's question; the card shows no model-written summary of a person.
 
 ## Timeline
 
@@ -20,7 +20,7 @@
 | 0:52–0:58 | Second waiting page, sped up; caption "Sped up · recorded run: [DURATION] after the answer" | "Each team the idea touches is reviewed in parallel, over records Maya may see." |
 | 0:58–1:16 | Plan appears and Alexa reads the "Alexa says" panel aloud; then highlight the two area cards | (the app's voice: "Before you start, talk to three people. Start with Tara Reed and Omar Haddad in Finance. Omar Haddad's approver role ended in June 2025. Then Jules Carter in Growth Marketing. Each card says what to find out. One more area is in the full list.") "Tara Reed currently reviews marketing spend requests above the threshold. Jules Carter reviews campaign launch approvals." |
 | 1:16–1:38 | Omar's line → click "source" → 2024 policy record → back → highlight the directory note | "Omar Haddad wrote the 2024 policy that set today's thresholds, so he can explain why they are where they are. A directory note says his approver role ended in June 2025. So Maya knows Tara approves requests today, and Omar only used to." |
-| 1:38–1:58 | Open the full list; show "Model summary (unverified)" and source links; 4-second cut to a "No contact found" line on another card, only if a recorded card has one | "The full list shows each person's evidence, with links to the records. Person summaries written by the model are labelled unverified. Restricted records never reach search, the model, or the screen." |
+| 1:38–1:58 | Open the full list; show the evidence lines and source links; 4-second cut to a "No contact found" line on another card, only if a recorded card has one | "The full list shows each person's evidence, with links to the records. Restricted records never reach search, the model, or the screen." |
 | 1:58–2:04 | Home page, earlier ideas | "Earlier ideas stay on the home page, ready to reopen." |
 | 2:04–2:26 | Architecture diagram (below) | "Under the hood, Amazon Nova 2 Lite on Bedrock maps the areas, reviews each in parallel, and chooses who to talk to first. Between stages, code checks that each cited record is visible and linked to the person. Relevance stays the model's judgment. Nova 2 Sonic turns speech into text; Polly reads the summary aloud." |
 | 2:26–2:46 | Plan again | "Why Alexa+? A short request becomes a short spoken plan, with evidence cards for detail. Next, the same checks could run over real tickets, documents, and a company directory, with their permissions. WorkBot sends no messages and makes no decisions. It shows who to talk to first, and why." |

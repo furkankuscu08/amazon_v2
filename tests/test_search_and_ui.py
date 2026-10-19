@@ -222,8 +222,9 @@ def test_web_card_reload_and_source_visibility(web):
     assert "Related work" in card.text
     assert "Assigned to a Jira issue: ‘" in card.text
     assert "Full list: 1 consultation area and each person's evidence" in card.text
-    assert "Model summary (unverified):" in card.text
-    assert "Checklist work can clarify pre-launch campaign review scope." in card.text
+    # The model's own summary is never shown.
+    assert "Model summary" not in card.text
+    assert "pre-launch campaign review scope" not in card.text
     assert 'http-equiv="refresh"' not in card.text
     assert client.get(url).text == card.text
     assert client.get(url + "/sources/slack:restricted-plan").status_code == 404
@@ -237,6 +238,8 @@ def test_web_card_reload_and_source_visibility(web):
     saved = db.execute("SELECT card_json FROM sessions WHERE id=?", (sid,)).fetchone()
     old_card = json.loads(saved["card_json"])
     del old_card["areas"][0]["people"][0]["primary_evidence_id"]
+    # A card stored before summaries were dropped still holds one; it stays hidden.
+    old_card["areas"][0]["people"][0]["contribution"] = "OLDER_MODEL_SUMMARY."
     db.execute(
         "UPDATE sessions SET card_json=? WHERE id=?",
         (json.dumps(old_card), sid),
@@ -248,6 +251,7 @@ def test_web_card_reload_and_source_visibility(web):
     # An older card without a primary source lists its evidence without links.
     assert "Assignee of jira record" in previous.text
     assert "/sources/" not in previous.text
+    assert "OLDER_MODEL_SUMMARY" not in previous.text
     db = connect(web.path)
     db.execute(
         """INSERT INTO sessions
@@ -447,6 +451,8 @@ def test_routing_line_and_directory_source_page(web):
     assert "jira:MKT-482" in model.area_inputs[0]
     assert "No one was identified from the visible work on this." in card
     assert "was found" not in card
+    # The routing line is built from both records, so the plan links neither.
+    assert "/sources/" not in card.split('<details class="all">')[0]
     remit = client.get(url + "/sources/directory:growth-remit")
     assert remit.status_code == 200
     assert "<h1>Directory record</h1>" in remit.text
@@ -459,6 +465,17 @@ def test_routing_line_and_directory_source_page(web):
     assert "manages" in manager and "Since 2025-01-01." in manager
     assert client.get(url + "/sources/directory:secret-duty").status_code == 404
     assert "Eve Restricted" not in card + remit.text + manager
+
+
+def test_current_responsibility_in_the_plan_links_its_directory_source(web):
+    model = ScriptedModel(
+        [_person("jules", "direct_contact", ["directory:jules-approval"], "direct")]
+    )
+    client, url = _submit(web, model)
+    plan = client.get(url).text.split('<details class="all">')[0]
+    assert "Current responsibility" in plan
+    assert f'href="{url}/sources/directory%3Ajules-approval"' in plan
+    assert "directory:jules" not in plan
 
 
 def test_routing_line_in_the_plan_is_not_linked_to_a_work_record(web):
