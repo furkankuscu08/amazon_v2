@@ -59,9 +59,10 @@ class PersonProposal(StrictModel):
     # enforced in the deterministic audit, not this schema, so an inconsistent
     # role/link does not void a whole area review.
     primary_evidence_id: str
-    # Unverified source-to-need summary, not an independent semantic audit. The
-    # schema cap is well above the prompt's requested length so a provider that
-    # enforces it does not cut a sentence short.
+    # Unverified source-to-need summary, not an independent semantic audit; it is
+    # asked for before the role and never stored on the card. The schema cap is
+    # well above the prompt's requested length so a provider that enforces it does
+    # not cut a sentence short.
     contribution: str = Field(min_length=5, max_length=600)
     role: Literal["direct_contact", "advisor", "routing_contact"]
     relevance: Literal["direct", "adjacent", "weak"]
