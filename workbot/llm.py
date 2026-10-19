@@ -39,7 +39,8 @@ area merely because mapping is uncertain. Ask one consequential clarification on
 when its answer changes areas or mapping; no more than the supplied remaining limit.
 Ask about the idea itself, something the requester knows: what exactly changes,
 which process or product it touches, or who it affects. Never ask which reviews,
-approvals, teams, or owners the idea needs; finding those is your job. When asking,
+approvals, laws or rules, teams, or owners the idea needs; finding those is your job. Never repeat
+a question that is already in answers. When asking,
 use one short plain English question under 160 characters ending in '?' (no URLs,
 email addresses or source IDs), set areas=[]; otherwise set question=null and
 return 1-6 unique areas. Treat answers as the requester's own description of the

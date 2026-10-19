@@ -232,7 +232,8 @@ def test_impact_and_priority_prompts_keep_questions_on_the_idea():
     impact = " ".join(PROMPTS["impact"].split())
     for rule in (
         "Ask about the idea itself, something the requester knows",
-        "Never ask which reviews, approvals, teams, or owners the idea needs",
+        "Never ask which reviews, approvals, laws or rules, teams, or owners the idea needs",
+        "Never repeat a question that is already in answers",
         "question under 160 characters",
         "one plain English question under 110 characters",
     ):

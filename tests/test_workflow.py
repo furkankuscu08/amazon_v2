@@ -1216,6 +1216,9 @@ def test_ended_duty_on_an_unrelated_topic_is_not_noted(db):
         **AREA,
         "label": "Scheduler integration",
         "consultation_need": "Which scheduler interfaces would change.",
+        "search_intents": [
+            {"keyword": "scheduler interface", "semantic": "Scheduler API changes"}
+        ],
     }
     _, card = card_for(
         db,
@@ -1226,6 +1229,29 @@ def test_ended_duty_on_an_unrelated_topic_is_not_noted(db):
         ),
     )
     assert card["areas"][0]["people"][0]["ended_duty"] is None
+
+
+def test_ended_duty_matches_the_area_keyword_intents_too(db):
+    # A short need can lose the duty's words; the area's keyword search still has them.
+    area = {
+        **AREA,
+        "label": "Growth",
+        "consultation_need": "Which steps would AI handle?",
+        "search_intents": [
+            {"keyword": "campaign launch approval", "semantic": "Who reviews steps"}
+        ],
+    }
+    _, card = card_for(
+        db,
+        StubModel(
+            [impact(area)],
+            [evaluation(proposal("elena", "advisor", ["jira:MKT-482"]))],
+            [priority("campaign_review")],
+        ),
+    )
+    assert card["areas"][0]["people"][0]["ended_duty"].startswith(
+        "An earlier responsibility ended on 2025-01-01"
+    )
 
 
 def test_ended_duty_is_not_noted_beside_a_current_duty_on_the_topic(db):
