@@ -177,7 +177,7 @@ def run(db, sid: str, model, searcher) -> None:
     card = {"areas": [], "shared_question": None, "first_conversations": []}
     _review_areas(db, sid, session, answers, impact, card, model, searcher)
     _report(sid, "priority")
-    _apply_priority(db, session, card, model)
+    _apply_priority(db, session, answers, card, model)
     try:
         store_card(db, sid, card)
     except ValueError:
@@ -239,7 +239,7 @@ def _review_areas(
     searcher,
 ) -> None:
     """Second model task, once per mapped area and all at once; each area fails alone."""
-    pending: dict[Future, tuple[dict, dict]] = {}
+    pending: dict[Future, tuple[dict, dict, list[str]]] = {}
     _report(
         sid,
         "areas",
@@ -287,7 +287,11 @@ def _review_areas(
                 if len(json.dumps(prompt)) > 18000:
                     item["status"] = "review_incomplete"
                     continue
-                pending[executor.submit(model.complete, "area", prompt)] = (item, pool)
+                pending[executor.submit(model.complete, "area", prompt)] = (
+                    item,
+                    pool,
+                    [intent.keyword for intent in area.search_intents],
+                )
                 submitted = True
             except Exception as exc:  # noqa: BLE001 — search/preparation must fail closed.
                 log.warning("area_review_incomplete type=%s", type(exc).__name__)
@@ -298,12 +302,12 @@ def _review_areas(
                     _report(sid, done=area.id)
         # Audits run here, on the workflow thread, as each model reply arrives.
         for future in as_completed(pending):
-            item, pool = pending[future]
+            item, pool, intent_keywords = pending[future]
             try:
                 evaluation = future.result()
                 if not isinstance(evaluation, AreaEvaluation):
                     raise ModelError("Invalid area contract")
-                audit_area(db, item, pool, evaluation)
+                audit_area(db, item, pool, evaluation, intent_keywords)
             except Exception as exc:  # noqa: BLE001 — each area must fail closed independently.
                 log.warning("area_review_incomplete type=%s", type(exc).__name__)
                 item["status"] = "review_incomplete"
@@ -312,12 +316,16 @@ def _review_areas(
                 _report(sid, done=item["id"])
 
 
-def _apply_priority(db, session: dict, card: dict, model) -> None:
+def _apply_priority(db, session: dict, answers: list, card: dict, model) -> None:
     """Third model task. Any failure leaves the card in its original order."""
     try:
         priority = model.complete(
             "priority",
-            {"idea": session["sentence"], "areas": _priority_areas(card["areas"])},
+            {
+                "idea": session["sentence"],
+                "answers": answers,
+                "areas": _priority_areas(card["areas"]),
+            },
         )
         if (
             isinstance(priority, Priority)
@@ -478,9 +486,18 @@ def _ended_duty(db, person_id: str, topic: set[str]) -> dict | None:
     return None
 
 
-def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
+def audit_area(
+    db,
+    item: dict,
+    pool: dict,
+    evaluation: AreaEvaluation,
+    intent_keywords: list[str] | None = None,
+) -> None:
     candidates = {p["person_id"]: p for p in pool["people"]}
+    # The area's words for the ended-duty note: its label and need, plus its keyword
+    # search intents, since a short need alone can miss the duty's words.
     topic = set(keywords(f"{item['label']} {item['consultation_need']}"))
+    topic.update(term for text in intent_keywords or [] for term in keywords(text))
     teams = {row["id"]: row["name"] for row in db.execute("SELECT * FROM org_units")}
     accepted = []
     # A direct proposal that names a person or source outside the pool, a person

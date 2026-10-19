@@ -678,6 +678,30 @@ def test_idempotency_question_skip_and_priority_fallback(db):
     assert [call["remaining_questions"] for call in impact_calls] == [2, 0]
 
 
+def test_clarification_answers_reach_the_priority_model(db):
+    question = Impact.model_validate(
+        {"question": "Which campaigns would this cover?", "areas": []}
+    )
+    model = StubModel(
+        [question, impact(AREA)], [evaluation()], [priority("campaign_review")]
+    )
+    sid, _ = card_for(db, model)
+    answer_question(db, sid, "Only retail email campaigns.", model, StubSearcher())
+    assert valid_card(db, load_session(db, sid)) is not None
+    task, payload = model.calls[-1]
+    assert task == "priority"
+    assert payload["answers"] == [
+        {
+            "question": "Which campaigns would this cover?",
+            "answer": "Only retail email campaigns.",
+        }
+    ]
+    # Without a clarification the priority call gets an empty list.
+    model = StubModel([impact(AREA)], [evaluation()], [priority("campaign_review")])
+    card_for(db, model, key="key-2")
+    assert model.calls[-1][1]["answers"] == []
+
+
 def test_question_after_a_skipped_clarification_is_refused(db):
     first = Impact.model_validate(
         {"question": "What sort of campaigns do you mean?", "areas": []}
@@ -1192,6 +1216,9 @@ def test_ended_duty_on_an_unrelated_topic_is_not_noted(db):
         **AREA,
         "label": "Scheduler integration",
         "consultation_need": "Which scheduler interfaces would change.",
+        "search_intents": [
+            {"keyword": "scheduler interface", "semantic": "Scheduler API changes"}
+        ],
     }
     _, card = card_for(
         db,
@@ -1202,6 +1229,29 @@ def test_ended_duty_on_an_unrelated_topic_is_not_noted(db):
         ),
     )
     assert card["areas"][0]["people"][0]["ended_duty"] is None
+
+
+def test_ended_duty_matches_the_area_keyword_intents_too(db):
+    # A short need can lose the duty's words; the area's keyword search still has them.
+    area = {
+        **AREA,
+        "label": "Growth",
+        "consultation_need": "Which steps would AI handle?",
+        "search_intents": [
+            {"keyword": "campaign launch approval", "semantic": "Who reviews steps"}
+        ],
+    }
+    _, card = card_for(
+        db,
+        StubModel(
+            [impact(area)],
+            [evaluation(proposal("elena", "advisor", ["jira:MKT-482"]))],
+            [priority("campaign_review")],
+        ),
+    )
+    assert card["areas"][0]["people"][0]["ended_duty"].startswith(
+        "An earlier responsibility ended on 2025-01-01"
+    )
 
 
 def test_ended_duty_is_not_noted_beside_a_current_duty_on_the_topic(db):

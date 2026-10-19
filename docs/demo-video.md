@@ -1,6 +1,6 @@
 # Demo video script (draft)
 
-**Status: working draft, not final.** Written on 14 October 2026; the user will revisit it. Any line, timing, or decision below may change. On 18 October 2026 the facts about the demo card were rechecked against a run on the hosted demo with Amazon Nova 2 Lite: a clarification question, then three people (Omar Haddad and Tara Reed in Finance, Jules Carter in Growth Marketing; the plan now names Tara before Omar because his approver role has ended), about 30 seconds after the answer. People, questions, and wording vary from run to run, so recheck them against the run that is recorded.
+**Status: working draft, not final.** Written on 14 October 2026; the user will revisit it. Any line, timing, or decision below may change. On 18 October 2026 the facts about the demo card were rechecked against a run on the hosted demo with Amazon Nova 2 Lite: a clarification question, then three people (Omar Haddad and Tara Reed in Finance, Jules Carter in Growth Marketing; the plan now names Tara before Omar because his approver role has ended), about 30 seconds after the answer. People, questions, and wording vary from run to run, so recheck them against the run that is recorded. On 19 October 2026 the impact prompt stopped asking which reviews or approvals an idea needs; in five live runs of this idea afterwards no clarification was asked, and Legal and Compliance (Anders Holm, who reviews changes to the spending approval policy) appeared in three. The question in the 0:30–0:52 row comes from the old prompt: unless the recorded run asks one, follow the no-question instruction under "Before recording".
 
 ## Decisions so far
 
@@ -33,6 +33,6 @@ The reference run had no gap, so the 1:38–1:58 row has no gap sentence. If the
 ## Before recording
 
 - Record from a fresh, separately approved live run (the hosted demo works); do not present stored OpenRouter output as Bedrock output. Fill in [DURATION] from that run.
-- Check that Omar appears as "Related work" with the note "Approver role ended on 2025-06-30.", that Tara and Jules appear as "Current responsibility", and that a clarification question is asked; rewrite 0:30–1:38 if not. Without a question, cut the 0:30–0:52 row to the first waiting page and give the time to the plan. Quote the question and the "Alexa says" text in captions exactly as the app says them.
+- Check that Omar appears as "Related work" with the note "Approver role ended on 2025-06-30.", that Tara and Jules appear as "Current responsibility", and whether a clarification question is asked; rewrite 0:30–1:38 to match the recorded run, including the number of people in the spoken plan. Without a question, cut the 0:30–0:52 row to the first waiting page and give the time to the plan. Quote the question and the "Alexa says" text in captions exactly as the app says them.
 - Show only clean Bedrock-generated ideas in the home-page list.
 - 1920×1080, browser zoom 125%; type the idea in real time; speed up only the two waiting pages and the typing of the answer.
