@@ -12,16 +12,21 @@ from __future__ import annotations
 
 import re
 from difflib import SequenceMatcher
+from urllib.parse import urlencode
 
 from workbot.plan import ended_spoken, join_and
 
 # Questions shown in one conversation, the newest included; older ones drop off.
 MAX_TURNS = 6
 MAX_QUESTION = 200
-# A name heard slightly wrong, such as "Tarah", still finds Tara; shorter words
-# must match exactly.
+# A capitalized name heard slightly wrong, such as "Tarah", still finds Tara:
+# same first letter, at most one letter longer or shorter, and close enough.
+# Shorter or lowercase words must match exactly.
 _FUZZY_RATIO = 0.8
 _FUZZY_LENGTH = 4
+# The earlier questions a follow-up form carries, as at most this many bytes once
+# encoded, so the form stays under the 4096-byte limit with a long new question.
+_PRIOR_BYTES = 1500
 # Common words of fuzzy length that must never be read as a misheard name.
 _NOT_NAMES = {
     "about", "anyone", "before", "does", "else", "first", "from", "have", "know",
@@ -55,20 +60,41 @@ def _close(word: str, name: str) -> bool:
     return (
         len(word) >= _FUZZY_LENGTH
         and len(name) >= _FUZZY_LENGTH
-        and word not in _NOT_NAMES
+        and word[0] == name[0]
+        and abs(len(word) - len(name)) <= 1
         and SequenceMatcher(None, word, name).ratio() >= _FUZZY_RATIO
     )
 
 
-def _named(words: list[str], people: dict[str, dict]) -> list[str]:
+def _places(plan: dict) -> set[str]:
+    """Words of the area and team names on the page, which are never names."""
+    labels = {e["area"] for e in plan["people"].values()}
+    labels.update(e.get("team") or "" for e in plan["people"].values())
+    labels.update(label for labels in plan["gaps"].values() for label in labels)
+    return {word for label in labels for word in _words(label)}
+
+
+def _named(question: str, plan: dict) -> list[str]:
     """The card people a question names, best match first: exact name words beat
-    near ones, and more matching words (a full name) beat fewer."""
+    near ones, and more matching words (a full name) beat fewer. Only a
+    capitalized word, never an area or team word or a common one, may be a near
+    match, so "rules" is not taken for Jules."""
+    skip = _places(plan)
+    words = [w for w in _words(question) if w not in skip]
+    capitalized = [
+        w.lower()
+        for w in re.findall(r"[A-Za-z]+", question)
+        if w[0].isupper() and w.lower() not in skip | _NOT_NAMES
+    ]
     scores = {}
     for exact in (True, False):
-        for pid, entry in people.items():
+        for pid, entry in plan["people"].items():
             names = [w for w in _words(entry["name"]) if len(w) > 1]
             hits = sum(
-                any(w == n if exact else _close(w, n) for w in words) for n in names
+                any(w == n for w in words)
+                if exact
+                else any(_close(w, n) for w in capitalized)
+                for n in names
             )
             if hits:
                 scores[pid] = hits
@@ -84,9 +110,8 @@ def resolve(question: str, plan: dict) -> tuple[str, list[str]]:
     Kinds: why, prep, others, open, ambiguous (more than one person fits),
     unlisted (a name that is not on the card), and help.
     """
-    words = _words(question)
-    said = set(words)
-    named = _named(words, plan["people"])
+    said = set(_words(question))
+    named = _named(question, plan)
     if len(named) > 1:
         return "ambiguous", named
     if named:
@@ -108,15 +133,17 @@ def resolve(question: str, plan: dict) -> tuple[str, list[str]]:
 
 def _unlisted(question: str, plan: dict) -> bool:
     """Whether the question seems to name someone who is not on the card: a
-    capitalized word after the first that is no area name or common word. Who
-    that might be is never checked, so a restricted person is answered exactly
-    like someone who does not exist."""
-    areas = {e["area"] for e in plan["people"].values()}
-    areas.update(label for labels in plan["gaps"].values() for label in labels)
-    known = {w for label in areas for w in _words(label)} | _NOT_NAMES
-    known |= _WHY | _PREP | _OTHERS | _OPEN | {"alexa", "maya"}
-    words = re.findall(r"[A-Za-z]+", question)[1:]
-    return any(len(w) > 1 and w[0].isupper() and w.lower() not in known for w in words)
+    capitalized word, not starting a sentence and not an acronym, that is no area
+    or team name or common word. Who that might be is never checked, so a
+    restricted person is answered exactly like someone who does not exist."""
+    known = _places(plan) | _NOT_NAMES | _WHY | _PREP | _OTHERS | _OPEN
+    known |= {"alexa", "maya"}
+    for sentence in re.split(r"[.!?]+", question):
+        for word in re.findall(r"[A-Za-z]+", sentence)[1:]:
+            title = len(word) > 1 and word[0].isupper() and word[1:].islower()
+            if title and word.lower() not in known:
+                return True
+    return False
 
 
 def _areas_of(pid: str, card: dict) -> list[dict]:
@@ -276,5 +303,16 @@ def chips(plan: dict, asked: list[str]) -> list[str]:
         options.append("Who else?")
     if any(plan["gaps"].values()):
         options.append("What's still open?")
-    seen = {question.strip().lower() for question in asked}
-    return [option for option in options if option.lower() not in seen][:4]
+    seen = {tuple(_words(question)) for question in asked}
+    return [option for option in options if tuple(_words(option)) not in seen][:4]
+
+
+def carried(questions: list[str]) -> list[str]:
+    """The newest earlier questions the next follow-up form carries: at most
+    MAX_TURNS - 1, and fewer when long ones would make the form too large."""
+    kept = list(questions)[-(MAX_TURNS - 1) :]
+    while (
+        kept and len(urlencode({str(i): q for i, q in enumerate(kept)})) > _PRIOR_BYTES
+    ):
+        kept.pop(0)
+    return kept

@@ -2,7 +2,7 @@
 
 import pytest
 
-from workbot.followup import chips, reply, resolve
+from workbot.followup import carried, chips, reply, resolve
 from workbot.plan import build_plan
 
 NOTE = "An earlier responsibility ended on 2025-06-30: approver."
@@ -231,3 +231,50 @@ def test_chips_use_a_full_name_when_a_first_name_is_shared():
     plan = build_plan(card)
     assert chips(plan, [])[:2] == ["Why Tara Reed?", "Prep me for Tara Reed"]
     assert resolve("Why Tara Reed?", plan) == ("why", ["tara"])
+
+
+def test_ordinary_words_and_place_names_are_not_taken_for_names():
+    jules = person("jules", "Jules Carter", "direct_contact", "growth")
+    chloe = {
+        **person("chloe", "Chloe Martin", "advisor", "platform"),
+        "team": "Campaign Platform",
+    }
+    card = {
+        "areas": [
+            {
+                "label": "Growth Marketing",
+                "org_unit_id": "growth",
+                "status": "people",
+                "consultation_need": "Launch?",
+                "people": [jules, chloe],
+            }
+        ]
+    }
+    plan = build_plan(card)
+    for question in (
+        "What rules apply?",
+        "What about Growth Marketing?",
+        "What should I ask Marketing?",
+        "Why is Campaign Platform involved?",
+        # Speak starts every sentence with a capital; acronyms are no names.
+        "Okay. Who should I start with?",
+        "Is VP approval needed? Thanks.",
+    ):
+        assert resolve(question, plan) == ("help", []), question
+    # A lowercase near miss is not guessed; a capitalized one is.
+    assert resolve("why jule?", plan) == ("help", [])
+    assert resolve("Why Jule?", plan) == ("why", ["jules"])
+    assert resolve("why chloe martin", plan) == ("why", ["chloe"])
+    assert resolve("Okay. Why Paul?", plan) == ("unlisted", [])
+
+
+def test_a_chip_asked_in_other_words_is_not_offered_again():
+    assert "Why Omar?" not in chips(PLAN, ["why omar"])
+
+
+def test_long_earlier_questions_are_dropped_before_the_form_gets_too_large():
+    short = [f"Question {n}?" for n in range(7)]
+    assert carried(short) == short[-5:]
+    wide = ["“Why” ” ’ " * 20] * 5
+    kept = carried([*wide, "Why Omar?"])
+    assert kept[-1] == "Why Omar?" and len(kept) < 5

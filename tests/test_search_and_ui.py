@@ -180,6 +180,7 @@ def web(tmp_path, monkeypatch):
     monkeypatch.setattr(app.state, "searcher", WebSearch(), raising=False)
     # Every test client shares one address, so each test gets its own request limit.
     monkeypatch.setattr(main_module, "demo_limiter", DemoRateLimiter())
+    monkeypatch.setattr(main_module, "reply_limiter", DemoRateLimiter(limit=60))
 
     def use(model):
         monkeypatch.setattr(app.state, "model", model, raising=False)
@@ -1066,7 +1067,15 @@ def test_follow_ups_refuse_bad_stale_or_foreign_requests(web):
     db.close()
     waiting = _ask(client, "/sessions/asking", "Why Nina?")
     assert waiting.status_code == 409
-    assert "There is no plan to ask about yet." in waiting.text
+    assert "There is no plan to ask about." in waiting.text
+    db = connect(web.path)
+    db.execute(
+        """INSERT INTO sessions (id, actor, workspace, idem_key, sentence, answers_json, state)
+        VALUES ('refused', 'maya', 'demo', 'refused', 'An idea', '[]', 'refusal')"""
+    )
+    db.commit()
+    db.close()
+    assert _ask(client, "/sessions/refused", "Why Nina?").status_code == 409
     stale = _ask(client, url, "Why Nina?")
     assert stale.status_code == 410
     assert "This plan is out of date" in stale.text
@@ -1098,3 +1107,13 @@ def test_follow_up_speech_reads_only_the_answer_built_from_the_plan(web, monkeyp
     assert client.get(url + "/reply.mp3?q=" + "x" * 201).status_code == 404
     assert client.get("/sessions/nope/reply.mp3?q=Why").status_code == 404
     assert len(speech.texts) == 3
+    # Reading answers aloud is limited per address, like Speak.
+    monkeypatch.setattr(main_module, "reply_limiter", DemoRateLimiter(limit=0))
+    limited = client.get(url + "/reply.mp3?q=Why%20Nina%3F")
+    assert limited.status_code == 429 and len(speech.texts) == 3
+    # A stale plan has nothing to read.
+    db = connect(web.path)
+    db.execute("UPDATE people SET active=0 WHERE id='nina'")
+    db.commit()
+    db.close()
+    assert client.get(url + "/reply.mp3?q=Why%20Nina%3F").status_code == 404

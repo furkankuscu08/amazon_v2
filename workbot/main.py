@@ -22,7 +22,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from workbot.followup import MAX_QUESTION, MAX_TURNS, chips, reply
+from workbot.followup import MAX_QUESTION, MAX_TURNS, carried, chips, reply
 from workbot.llm import default_model
 from workbot.plan import build_plan
 from workbot.search import Searcher, SetupError
@@ -120,6 +120,8 @@ class DemoRateLimiter:
 demo_limiter = DemoRateLimiter()
 # Voice inputs per client: each one is a paid Nova 2 Sonic request.
 transcribe_limiter = DemoRateLimiter(limit=20, window_seconds=600)
+# Follow-up answers read aloud per client: each new text is a Polly request.
+reply_limiter = DemoRateLimiter(limit=60, window_seconds=600)
 # Wrong access codes per client: enough for typos, too few to guess a code.
 access_limiter = DemoRateLimiter(limit=10, window_seconds=600)
 ACCESS_COOKIE = "workbot_access"
@@ -423,7 +425,7 @@ def _session_page(request: Request, session: dict, card, questions=()):
             "turns": [{"question": q, **reply(q, plan, card)} for q in questions],
             # Carried by the next follow-up's form, so the conversation is kept
             # in the page and never stored.
-            "prior": list(questions)[-(MAX_TURNS - 1) :],
+            "prior": carried(list(questions)),
             "chips": chips(plan, list(questions)) if plan else [],
             "progress": progress(session["id"])
             if session["state"] == "processing"
@@ -500,7 +502,7 @@ async def ask(request: Request, sid: str):
     if not session:
         raise HTTPException(404, "There is no idea at this address.")
     if session["state"] != "card":
-        raise HTTPException(409, "There is no plan to ask about yet.")
+        raise HTTPException(409, "There is no plan to ask about.")
     if card is None:
         raise HTTPException(
             410,
@@ -512,7 +514,7 @@ async def ask(request: Request, sid: str):
 
 @app.post("/transcribe")
 async def transcribe(request: Request):
-    """Speech for the idea or answer box: 16 kHz 16-bit mono PCM in, JSON text out.
+    """Speech for the idea, answer, or follow-up box: 16 kHz 16-bit mono PCM in, JSON text out.
 
     The text only fills the box; the person still reads it and sends the form.
     """
@@ -554,13 +556,17 @@ def speech(sid: str):
 
 
 @app.get("/sessions/{sid}/reply.mp3")
-def reply_speech(sid: str, q: str = ""):
+def reply_speech(request: Request, sid: str, q: str = ""):
     """A follow-up answer, read by Polly. Only the answer built from the plan is
     sent; the question is used to choose it and is never read itself."""
     session, card = _get_session(sid)
     question = q.strip()
     if not (session and card) or not 0 < len(question) <= MAX_QUESTION:
         raise HTTPException(404, "There is nothing to read aloud at this address.")
+    if not reply_limiter.allow(request.client.host if request.client else "unknown"):
+        raise HTTPException(
+            429, "Answers were read aloud often. Wait a few minutes, then try again."
+        )
     return _audio(reply(question, build_plan(card), card)["text"])
 
 
