@@ -22,6 +22,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from workbot.followup import MAX_QUESTION, MAX_TURNS, chips, reply
 from workbot.llm import default_model
 from workbot.plan import build_plan
 from workbot.search import Searcher, SetupError
@@ -395,11 +396,8 @@ def _answers(session: dict) -> list[dict]:
         return []
 
 
-@app.get("/sessions/{sid}", response_class=HTMLResponse)
-def show_session(request: Request, sid: str):
-    session, card = _get_session(sid)
-    if not session:
-        raise HTTPException(404, "There is no idea at this address.")
+def _session_page(request: Request, session: dict, card, questions=()):
+    """The session page; `questions` are the follow-ups asked about its plan."""
     if session["state"] == "card" and card is None:
         return templates.TemplateResponse(
             request,
@@ -412,6 +410,7 @@ def show_session(request: Request, sid: str):
             },
             status_code=410,
         )
+    plan = build_plan(card) if card else None
     return templates.TemplateResponse(
         request,
         "session.html",
@@ -420,10 +419,25 @@ def show_session(request: Request, sid: str):
             "card": card,
             "stale": False,
             "answers": _answers(session),
-            "plan": build_plan(card) if card else None,
-            "progress": progress(sid) if session["state"] == "processing" else None,
+            "plan": plan,
+            "turns": [{"question": q, **reply(q, plan, card)} for q in questions],
+            # Carried by the next follow-up's form, so the conversation is kept
+            # in the page and never stored.
+            "prior": list(questions)[-(MAX_TURNS - 1) :],
+            "chips": chips(plan, list(questions)) if plan else [],
+            "progress": progress(session["id"])
+            if session["state"] == "processing"
+            else None,
         },
     )
+
+
+@app.get("/sessions/{sid}", response_class=HTMLResponse)
+def show_session(request: Request, sid: str):
+    session, card = _get_session(sid)
+    if not session:
+        raise HTTPException(404, "There is no idea at this address.")
+    return _session_page(request, session, card)
 
 
 def _answer(sid: str, answer: str | None):
@@ -459,6 +473,41 @@ async def answer(request: Request, sid: str):
     except SetupError as exc:
         return _setup_page(request, exc)
     return RedirectResponse(f"/sessions/{sid}", status_code=303)
+
+
+def _question(text: str) -> str:
+    text = text.strip()
+    if not text:
+        raise HTTPException(400, "Type or say a question about the plan first.")
+    if len(text) > MAX_QUESTION:
+        raise HTTPException(400, "Keep the question under 200 characters.")
+    return text
+
+
+@app.post("/sessions/{sid}/ask", response_class=HTMLResponse)
+async def ask(request: Request, sid: str):
+    """A follow-up question about the plan, answered from the plan with no model.
+
+    The earlier questions come back with the form, so nothing is stored and one
+    visitor's questions never appear for another.
+    """
+    form = await _form(request)
+    _same_origin(request)
+    prior = [form.get(f"prior-{index}", "") for index in range(MAX_TURNS - 1)]
+    questions = [_question(q) for q in prior if q.strip()]
+    questions.append(_question(form.get("q", "")))
+    session, card = await run_in_threadpool(_get_session, sid)
+    if not session:
+        raise HTTPException(404, "There is no idea at this address.")
+    if session["state"] != "card":
+        raise HTTPException(409, "There is no plan to ask about yet.")
+    if card is None:
+        raise HTTPException(
+            410,
+            "This plan is out of date, so Alexa cannot answer questions about it."
+            " Ask about the idea again to get a current plan.",
+        )
+    return _session_page(request, session, card, questions[-MAX_TURNS:])
 
 
 @app.post("/transcribe")
@@ -501,6 +550,21 @@ def speech(sid: str):
         text = f"One clarification before searching. {session['question']}"
     else:
         raise HTTPException(404, "There is nothing to read aloud at this address.")
+    return _audio(text)
+
+
+@app.get("/sessions/{sid}/reply.mp3")
+def reply_speech(sid: str, q: str = ""):
+    """A follow-up answer, read by Polly. Only the answer built from the plan is
+    sent; the question is used to choose it and is never read itself."""
+    session, card = _get_session(sid)
+    question = q.strip()
+    if not (session and card) or not 0 < len(question) <= MAX_QUESTION:
+        raise HTTPException(404, "There is nothing to read aloud at this address.")
+    return _audio(reply(question, build_plan(card), card)["text"])
+
+
+def _audio(text: str) -> Response:
     try:
         audio = _speech().audio(text)
     except SpeechError as exc:

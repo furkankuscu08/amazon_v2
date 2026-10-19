@@ -303,7 +303,9 @@ def test_spoken_summary_names_only_the_plan_people_and_areas():
         "Start with Tara in Finance. Then Jules and Marcus in Growth, and Owen in"
         " Platform. Each card says what to find out. One area is still open."
     )
-    assert plan["spoken"] == f"{plan['headline']} {plan['lead']}"
+    # A plan that names someone ends by inviting follow-up questions.
+    assert plan["invite"] == "Ask me why anyone is listed, or what to ask them."
+    assert plan["spoken"] == f"{plan['headline']} {plan['lead']} {plan['invite']}"
     two = build_plan({**card, "first_conversations": ["tara", "owen"]})
     assert two["lead"].startswith("Start with Tara in Finance. Then Owen in Platform.")
     one = build_plan({**card, "first_conversations": ["jules"]})
@@ -321,6 +323,7 @@ def test_spoken_summary_without_people_reports_only_the_open_areas():
     plan = build_plan(card)
     assert plan["headline"] == "I found no one to point you to from the work I can see."
     assert plan["lead"] == "Two areas are still open."
+    assert plan["invite"] is None
     assert build_plan({"areas": []})["spoken"] == plan["headline"]
 
 

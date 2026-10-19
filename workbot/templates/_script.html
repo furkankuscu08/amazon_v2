@@ -128,10 +128,13 @@
     document.title = next.title;
     if (url && url !== location.href) history.pushState(null, '', url);
     setup(page);
-    const heading = page.querySelector('h1');
+    // A follow-up answer is the newest thing on the page: show and read it, not
+    // the plan above it.
+    const answer = page.querySelector('[data-speech-auto]');
+    const heading = answer ? answer.closest('.screen').querySelector('p') : page.querySelector('h1');
     if (heading) { heading.tabIndex = -1; heading.focus({preventScroll: true}); }
-    scrollTo(0, 0);
-    const listen = page.querySelector('[data-speech]');
+    if (answer) answer.closest('.screen').scrollIntoView({block: 'center'}); else scrollTo(0, 0);
+    const listen = answer || page.querySelector('[data-speech]');
     if (listen && readAloud()) play(listen, true);
     return true;
   };

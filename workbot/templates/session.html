@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}WorkBot · who to talk to first{% endblock %}
 {% block body_class %}{{ 'busy' if session.state == 'processing' else '' }}{% endblock %}
+{% macro carry(questions) %}{% for q in questions %}<input type="hidden" name="prior-{{ loop.index0 }}" value="{{ q }}">{% endfor %}{% endmacro %}
 {% block body %}<div class="stack">
 <div class="idea"><span class="label">Maya's idea</span><q>{{ session.sentence }}</q></div>
 {% for turn in answers %}<div class="idea"><span class="label">Alexa asked</span><p>{{ turn.question }}</p><span class="label">Maya answered</span><p>{% if turn.answer %}{{ turn.answer }}{% else %}<span class="muted">Continued without answering</span>{% endif %}</p></div>
@@ -25,7 +26,14 @@
 {% elif card %}
 {% set count = plan.first | length %}
 <section class="screen" aria-labelledby="spoken"><div class="screen-top"><span class="orb" aria-hidden="true"></span><span class="screen-label">Alexa says</span><button class="listen" type="button" data-speech="/sessions/{{ session.id }}/speech.mp3" hidden><svg class="i-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6L12.6 8z"/></svg><svg class="i-stop" viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.2"/></svg><span>Listen</span></button></div>
-<h1 id="spoken">{{ plan.headline }}</h1>{% if plan.lead %}<p class="screen-sub">{{ plan.lead }}</p>{% endif %}<span class="screen-sub" data-speech-status role="status"></span></section>
+<h1 id="spoken">{{ plan.headline }}</h1>{% if plan.lead %}<p class="screen-sub">{{ plan.lead }}</p>{% endif %}{% if plan.invite %}<p class="screen-sub">{{ plan.invite }}</p>{% endif %}<span class="screen-sub" data-speech-status role="status"></span></section>
+<section class="stack tight" aria-label="Follow-up questions">
+{% for turn in turns %}<div class="idea"><span class="label">Maya asked</span><p>{{ turn.question }}</p></div>
+<section class="screen"><div class="screen-top"><span class="orb" aria-hidden="true"></span><span class="screen-label">Alexa says</span><button class="listen" type="button" data-speech="/sessions/{{ session.id }}/reply.mp3?q={{ turn.question | urlencode }}"{% if loop.last %} data-speech-auto{% endif %} hidden><svg class="i-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6L12.6 8z"/></svg><svg class="i-stop" viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.2"/></svg><span>Listen</span></button></div>
+<p class="answer">{{ turn.text }}{% if turn.source_id %} <a href="/sessions/{{ session.id }}/sources/{{ turn.source_id | urlencode }}">Source</a>{% endif %}</p><span class="screen-sub" data-speech-status role="status"></span></section>
+{% endfor %}<div class="panel stack tight talk"><label class="label" for="q">Ask Alexa about this plan</label>
+{% if chips %}<div class="chips">{% for chip in chips %}<form method="post" action="/sessions/{{ session.id }}/ask" data-swap>{{ carry(prior) }}<input type="hidden" name="q" value="{{ chip }}"><button type="submit">{{ chip }}</button></form>{% endfor %}</div>
+{% endif %}<form class="row" method="post" action="/sessions/{{ session.id }}/ask" data-swap>{{ carry(prior) }}<input type="text" name="q" id="q" maxlength="200" required autocomplete="off" placeholder="For example: {{ chips[0] if chips else 'Who else?' }}"><button type="button" class="quiet speak" data-voice-for="q" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5"/><path d="M3.5 7.5a4.5 4.5 0 0 0 9 0" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 12v2.5" stroke="currentColor" stroke-width="1.4"/></svg><span>Speak</span></button><button type="submit">Ask</button><span class="small muted" data-voice-status role="status"></span></form></div></section>
 {% if count %}<ol class="cards">{% for group in plan.groups %}<li class="card"><div class="ask"><h2>{{ group.area }}</h2>{% if group.need %}<span class="label">What to find out</span><p>{{ group.need }}</p>{% endif %}</div>
 <ul class="ppl">{% for person in group.people %}<li class="p"><span class="av" aria-hidden="true">{{ person.initials }}</span><div class="head"><h3>{{ person.name }}{% if person.team and person.team != group.area %}<span class="team">{{ person.team }}</span>{% endif %}</h3><span class="badge {{ person.role }}">{{ person.label }}</span></div>
 <p class="ev">{{ person.short or person.evidence[0].text }}{% if person.role != 'routing_contact' and person.primary_evidence_id %} <a href="/sessions/{{ session.id }}/sources/{{ person.primary_evidence_id | urlencode }}" aria-label="Source for {{ person.name }}">Source</a>{% endif %}</p>
