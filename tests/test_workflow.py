@@ -312,59 +312,24 @@ def test_indirect_relevance_keeps_a_useful_contact_as_advisor(db):
     ]
 
 
-def test_contribution_reaches_the_card_but_not_the_priority_model(db):
+def test_contribution_reaches_neither_the_card_nor_the_priority_model(db):
     proposed = proposal("nina", "advisor", ["jira:MKT-482"])
-    marker = "The checklist work covers launch review steps.   It is not ownership."
+    marker = "The checklist work covers launch review steps. It is not ownership."
     proposed["contribution"] = marker
     model = StubModel(
         [impact(AREA)], [evaluation(proposed)], [priority("campaign_review")]
     )
     _, card = card_for(db, model)
-    assert card["areas"][0]["people"][0]["contribution"] == (
-        "The checklist work covers launch review steps. It is not ownership."
-    )
+    assert card["areas"][0]["people"][0]["person_id"] == "nina"
+    assert "contribution" not in card["areas"][0]["people"][0]
+    assert "launch review steps" not in json.dumps(card)
     priority_input = json.dumps(model.calls[-1][1])
     assert model.calls[-1][0] == "priority"
-    assert "contribution" not in priority_input
     assert "launch review steps" not in priority_input
     # Rejection flags stay on the card, out of the priority call.
     assert "direct_review_incomplete" in card["areas"][0]
     for diagnostic in ("direct_review_incomplete", "no_visible_work"):
         assert diagnostic not in priority_input
-
-
-@pytest.mark.parametrize(
-    ("text", "shown"),
-    [
-        ("Wrote the launch checklist and could clarify how review steps are", None),
-        # A complete first sentence is not shown on its own: there is no trimming.
-        ("Wrote the launch checklist. It could clarify review steps but not own", None),
-        # A closing bracket without a full stop does not end a sentence.
-        ("Authored the settlement runbook (covers refunds, e.g. chargebacks)", None),
-        (
-            "Wrote the runbook, e.g. for refunds. It covers chargebacks (in part).",
-            "Wrote the runbook, e.g. for refunds. It covers chargebacks (in part).",
-        ),
-        (
-            "Wrote what the team calls the ‘launch checklist.’",
-            "Wrote what the team calls the ‘launch checklist.’",
-        ),
-        ("See https://example.test for the checklist that was written.", None),
-        ("The record jira:MKT-482 shows checklist work on launches.", None),
-    ],
-)
-def test_cut_off_or_unsafe_contribution_is_hidden(db, text, shown):
-    proposed = proposal("nina", "advisor", ["jira:MKT-482"])
-    proposed["contribution"] = text
-    _, card = card_for(
-        db,
-        StubModel(
-            [impact(AREA)], [evaluation(proposed)], [priority("campaign_review")]
-        ),
-    )
-    person = card["areas"][0]["people"][0]
-    assert person["person_id"] == "nina"
-    assert person["contribution"] == shown
 
 
 def test_empty_model_response_is_still_not_found(db):
@@ -447,12 +412,11 @@ def test_overclaimed_direct_restores_only_a_held_back_manager(db):
 
     # A manager line cannot prove direct work. The model, told to propose a manager
     # only without a direct contact, held him back; the audit adds him from the
-    # directory, with no model summary.
+    # directory.
     area = card(proposal("marcus", "direct_contact", refs), key="manager-as-direct")
     assert area["status"] == "people"
     [person] = area["people"]
     assert (person["person_id"], person["role"]) == ("marcus", "routing_contact")
-    assert person["contribution"] is None
     assert person["evidence_ids"] == refs
     assert person["headline"].startswith(
         "No one was identified from the visible work on this. Manages the team."
@@ -880,7 +844,7 @@ def test_real_model_client_diagnostics_preserve_workflow_without_card_metadata(
             "model_call_summary",
         ):
             assert f'"{field}"' not in serialized
-        # An incomplete summary is hidden; none is ever passed to priority.
+        # The model's summary is never stored, nor passed to priority.
         assert "SYNTHETIC_PRIVATE_CONTRIBUTION" not in serialized
     assert '"contribution"' not in json.dumps(priority_payloads)
 

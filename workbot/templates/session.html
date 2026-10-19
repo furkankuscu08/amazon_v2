@@ -28,7 +28,7 @@
 <h1 id="spoken">{{ plan.headline }}</h1>{% if plan.lead %}<p class="screen-sub">{{ plan.lead }}</p>{% endif %}<span class="screen-sub" data-speech-status role="status"></span></section>
 {% if count %}<ol class="cards">{% for group in plan.groups %}<li class="card"><div class="ask"><h2>{{ group.area }}</h2>{% if group.need %}<span class="label">What to find out</span><p>{{ group.need }}</p>{% endif %}</div>
 <ul class="ppl">{% for person in group.people %}<li class="p"><span class="av" aria-hidden="true">{{ person.initials }}</span><div class="head"><h3>{{ person.name }}{% if person.team and person.team != group.area %}<span class="team">{{ person.team }}</span>{% endif %}</h3><span class="badge {{ person.role }}">{{ person.label }}</span></div>
-<p class="ev">{{ person.short or person.evidence[0].text }}{% if person.role != 'routing_contact' and person.primary_evidence_id and not person.primary_evidence_id.startswith('directory:') %} <a href="/sessions/{{ session.id }}/sources/{{ person.primary_evidence_id | urlencode }}" aria-label="Source for {{ person.name }}">Source</a>{% endif %}</p>
+<p class="ev">{{ person.short or person.evidence[0].text }}{% if person.role != 'routing_contact' and person.primary_evidence_id %} <a href="/sessions/{{ session.id }}/sources/{{ person.primary_evidence_id | urlencode }}" aria-label="Source for {{ person.name }}">Source</a>{% endif %}</p>
 {% if person.ended_short %}<p class="ended">{{ person.ended_short }}</p>{% endif %}</li>{% endfor %}</ul></li>{% endfor %}</ol>{% endif %}
 {% if plan.more %}<p class="small muted">Also in the full list: {% for item in plan.more %}{{ item.area }}{% if item.names %} ({{ item.names | join(', ') }}){% endif %}{{ '; ' if not loop.last }}{% endfor %}.</p>{% endif %}
 {% if card.shared_question %}<section class="shared"><h2 class="label">Across all areas</h2><p>{{ card.shared_question }}</p></section>{% endif %}
@@ -38,7 +38,7 @@
 {% if plan.gaps.review_incomplete %}<li><strong>Review incomplete for:</strong> {{ plan.gaps.review_incomplete | join('; ') }}.</li>{% endif %}</ul></section>{% endif %}
 <p class="caution">These are proposals from the work records and directory you can see, not verified ownership. Alexa sends no messages or invitations.</p>
 <details class="all"><summary><h2>Full list: {{ card.areas | length }} consultation area{{ '' if card.areas | length == 1 else 's' }} and each person's evidence</h2></summary><div class="areas">
-{% for area in card.areas %}{% set elsewhere = plan.elsewhere[loop.index0] %}<details class="area"><summary><h3>{{ area.label }}</h3> <span>{% if area.people %}{{ area.people | map(attribute='name') | join(', ') }}{% else %}{{ {'mapping_unresolved': 'Team not identified', 'review_incomplete': 'Review incomplete', 'not_found': 'No contact found'}.get(area.status, '') }}{% endif %}</span></summary><div class="areabody">
+{% for area in card.areas %}{% set elsewhere = plan.elsewhere[loop.index0] %}{% set listed = plan.order[loop.index0] %}<details class="area"><summary><h3>{{ area.label }}</h3> <span>{% if listed %}{{ listed | map(attribute='name') | join(', ') }}{% else %}{{ {'mapping_unresolved': 'Team not identified', 'review_incomplete': 'Review incomplete', 'not_found': 'No contact found'}.get(area.status, '') }}{% endif %}</span></summary><div class="areabody">
 <p>{{ area.rationale }}</p>{% if area.consultation_need %}<p><strong>What to find out:</strong> {{ area.consultation_need }}</p>{% endif %}
 {% if area.status == 'mapping_unresolved' %}<p class="warning"><strong>Team not identified.</strong> {{ area.mapping_reason }} No one was reviewed for this area.</p>
 {% elif area.status == 'review_incomplete' %}<p class="warning"><strong>Review incomplete.</strong> The review of this area did not finish, so no one is shown for it.</p>
@@ -46,13 +46,12 @@
 {% endif %}
 {% if area.direct_review_incomplete and area.status == 'people' %}<p class="warning">The direct-contact review could not be completed; the people below are the remaining verified ones.</p>{% endif %}
 {% if area.no_visible_work_trace and area.mapping == 'mapped' %}<p class="small muted">No relevant accessible work record was found in this search; other evidence may still exist.</p>{% endif %}
-{% for person in area.people %}{% if elsewhere[person.person_id] %}<p class="small muted">Also relevant: {{ person.name }} — see {{ elsewhere[person.person_id] }}.</p>
+{% for person in listed %}{% if elsewhere[person.person_id] %}<p class="small muted">Also relevant: {{ person.name }} — see {{ elsewhere[person.person_id] }}.</p>
 {% else %}{% set entry = plan.people[person.person_id] %}<section class="who"><div class="head"><h4>{{ person.name }}</h4><span class="badge {{ person.role }}">{{ entry.label }}</span></div>
-{% if person.contribution %}<p class="small muted"><strong>Model summary (unverified):</strong> {{ person.contribution }}</p>{% endif %}
 <ul>{% for line in entry.evidence %}<li>{{ line.text }}{% if line.source_id %} <a href="/sessions/{{ session.id }}/sources/{{ line.source_id | urlencode }}">Source</a>{% endif %}</li>{% endfor %}</ul>
 {% if entry.ended_duty %}<p class="ended"><strong>Directory note:</strong> {{ entry.ended_duty }}</p>{% endif %}</section>{% endif %}{% endfor %}
 </div></details>{% endfor %}
-<p class="caution">The people shown were proposed by the model, and their cited links were checked against this synthetic directory. Whether the cited work answers an area's question, and who owns the new idea, has not been established. Model summaries are the model's own reading of a source and were not checked against it.</p></div></details>
+<p class="caution">The people shown were proposed by the model, and their cited links were checked against this synthetic directory. Whether the cited work answers an area's question, and who owns the new idea, has not been established.</p></div></details>
 {% endif %}
 {% if session.state in ('card', 'refusal') or stale %}<p><a class="btn quiet" href="/">Ask about another idea</a></p>{% endif %}
 </div>{% endblock %}

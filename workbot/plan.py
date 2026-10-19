@@ -286,6 +286,9 @@ def build_plan(card: dict) -> dict:
         if area["status"] in _GAPS:
             gaps[_GAPS[area["status"]]].append(area["label"])
     headline, lead = _spoken(ordered, len(more), sum(map(len, gaps.values())))
+    # The full list names first the people it shows in full in an area, then those
+    # it refers elsewhere; the plan's people lead each part, in the plan's order.
+    rank = {entry["person_id"]: index for index, entry in enumerate(first)}
     return {
         "headline": headline,
         # Said after the headline; the two are the text read aloud.
@@ -297,6 +300,17 @@ def build_plan(card: dict) -> dict:
         "gaps": gaps,
         # Everyone on the card once, as shown in their home area.
         "people": entries,
+        # Per area: its people in the order the full list shows them.
+        "order": [
+            sorted(
+                area["people"],
+                key=lambda p: (
+                    home[p["person_id"]] != index,
+                    rank.get(p["person_id"], len(rank)),
+                ),
+            )
+            for index, area in enumerate(areas)
+        ],
         # Per area: where each listed person is shown in full (None = here).
         "elsewhere": [
             {

@@ -386,6 +386,34 @@ def test_areas_left_out_of_the_plan_are_named_below_it():
     assert all(m["area"] not in ("Legal", "Brand") for m in plan["more"])
 
 
+def test_full_list_names_each_area_in_the_plan_order():
+    def ids(plan):
+        return [[p["person_id"] for p in people] for people in plan["order"]]
+
+    note = "An earlier responsibility ended on 2025-06-30: approver."
+    omar = {**person("omar", "direct_contact", "finance"), "ended_duty": note}
+    tara = person("tara", "direct_contact", "finance", kind="responsibility")
+    ben = person("ben", "advisor", "finance")
+    jules = person("jules", "direct_contact", "growth", kind="responsibility")
+    card = {
+        "areas": [
+            area("Finance", "finance", omar, ben, tara),
+            area("Growth", "growth", jules, tara),
+            area("Legal", "legal", status="not_found"),
+        ],
+        "first_conversations": ["omar", "tara", "jules"],
+    }
+    plan = build_plan(card)
+    # The plan puts Tara before Omar; the list follows it, then the others in
+    # card order, and a person shown in full elsewhere comes last. It only reorders.
+    assert ids(plan) == [["tara", "omar", "ben"], ["jules", "tara"], []]
+    assert [e["person_id"] for e in plan["first"]] == ["tara", "omar", "jules"]
+    # Without a model choice the fallback plan sets the order the same way.
+    fallback = build_plan({**card, "first_conversations": None})
+    assert [e["person_id"] for e in fallback["first"]] == ["tara", "jules"]
+    assert ids(fallback) == [["tara", "omar", "ben"], ["jules", "tara"], []]
+
+
 def test_spoken_summary_stays_short_with_four_people_and_every_note():
     note = "An earlier responsibility ended on 2025-06-30: approver."
     people = [

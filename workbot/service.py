@@ -343,10 +343,9 @@ def _apply_priority(db, session: dict, card: dict, model) -> None:
 
 
 def _priority_areas(areas: list[dict]) -> list[dict]:
-    """Keep out of the priority call what no model has audited or may see (the
-    unverified model summary, the expired-duty note with its source) and the
-    area's rejection flags."""
-    hidden = {"contribution", "ended_duty", "context_ids"}
+    """Keep out of the priority call what the model may not see (the expired-duty
+    note with its source) and the area's rejection flags."""
+    hidden = {"ended_duty", "context_ids"}
     diagnostics = {"direct_review_incomplete", "no_visible_work_trace"}
     return [
         {
@@ -368,19 +367,6 @@ _UNSAFE_TEXT = re.compile(
 
 def _safe_question(text: str) -> bool:
     return 0 < len(text) <= 300 and text.endswith("?") and not _UNSAFE_TEXT.search(text)
-
-
-# A finished statement: closing punctuation, optionally inside a quote or bracket.
-_COMPLETE = re.compile(r"[.!][)\]'\"’”]*$")
-
-
-def _shown_contribution(text: str) -> str | None:
-    """Show the model's summary only when it ends as a complete sentence; a
-    cut-off one is hidden rather than repaired, and it is never verified."""
-    text = " ".join(text.split())
-    if _UNSAFE_TEXT.search(text):
-        return None
-    return text if _COMPLETE.search(text) and len(text) >= 20 else None
 
 
 def _lower_first(text: str) -> str:
@@ -506,7 +492,7 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
     # the manager it held back may be added from the directory below.
     overclaimed = False
 
-    def accept(candidate, role, primary, evidence_ids, facts, confidence, summary):
+    def accept(candidate, role, primary, evidence_ids, facts, confidence):
         headline = facts[primary][2]
         if role == "routing_contact":
             # The reason for routing is added below, once the area's people are known.
@@ -533,8 +519,6 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
                 "evidence_ids": evidence_ids,
                 "why": [facts[primary][1]]
                 + [fact[1] for sid, fact in facts.items() if sid != primary],
-                # Unverified model text, shown labelled as such; None hides the line.
-                "contribution": summary,
             }
         )
 
@@ -590,7 +574,6 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
             proposal.evidence_ids,
             facts,
             proposal.confidence,
-            _shown_contribution(proposal.contribution),
         )
     shown = {p["person_id"] for p in accepted}
     if (
@@ -615,7 +598,7 @@ def audit_area(db, item: dict, pool: dict, evaluation: AreaEvaluation) -> None:
             refs += [e["id"] for e in manager["evidence"] if e["kind"] == "remit"]
             facts = {sid: _evidence(db, manager, sid) for sid in refs}
             if all(facts.values()) and active_in_team(manager["person_id"], manager):
-                accept(manager, "routing_contact", refs[0], refs, facts, "low", None)
+                accept(manager, "routing_contact", refs[0], refs, facts, "low")
     has_direct = any(p["role"] == "direct_contact" for p in accepted)
     accepted = [
         p
