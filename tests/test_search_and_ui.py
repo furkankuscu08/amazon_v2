@@ -451,6 +451,8 @@ def test_routing_line_and_directory_source_page(web):
     assert "jira:MKT-482" in model.area_inputs[0]
     assert "No one was identified from the visible work on this." in card
     assert "was found" not in card
+    # The routing line is built from both records, so the plan links neither.
+    assert "/sources/" not in card.split('<details class="all">')[0]
     remit = client.get(url + "/sources/directory:growth-remit")
     assert remit.status_code == 200
     assert "<h1>Directory record</h1>" in remit.text

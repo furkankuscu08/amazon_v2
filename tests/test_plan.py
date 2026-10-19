@@ -412,6 +412,23 @@ def test_full_list_names_each_area_in_the_plan_order():
     fallback = build_plan({**card, "first_conversations": None})
     assert [e["person_id"] for e in fallback["first"]] == ["tara", "jules"]
     assert ids(fallback) == [["tara", "omar", "ben"], ["jules", "tara"], []]
+    # The line under the cards names left-out people in that same order.
+    ivan = person("ivan", "direct_contact", "legal")
+    other = build_plan(
+        {
+            "areas": [
+                area("Finance", "finance", tara),
+                area("Growth", "growth", tara, jules),
+                area("Legal", "legal", ivan),
+            ],
+            "first_conversations": ["ivan"],
+        }
+    )
+    assert ids(other)[1] == ["jules", "tara"]
+    assert other["more"] == [
+        {"area": "Finance", "names": ["Tara"]},
+        {"area": "Growth", "names": ["Jules", "Tara"]},
+    ]
 
 
 def test_spoken_summary_stays_short_with_four_people_and_every_note():
