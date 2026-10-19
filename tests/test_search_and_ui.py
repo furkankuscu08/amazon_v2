@@ -180,6 +180,7 @@ def web(tmp_path, monkeypatch):
     monkeypatch.setattr(app.state, "searcher", WebSearch(), raising=False)
     # Every test client shares one address, so each test gets its own request limit.
     monkeypatch.setattr(main_module, "demo_limiter", DemoRateLimiter())
+    monkeypatch.setattr(main_module, "reply_limiter", DemoRateLimiter(limit=60))
 
     def use(model):
         monkeypatch.setattr(app.state, "model", model, raising=False)
@@ -986,3 +987,133 @@ def test_plan_names_the_areas_it_leaves_to_the_full_list(web, monkeypatch):
         "Also in the full list: Legal and Compliance (Anders Holm, Zoe Park); Data."
         in plan
     )
+
+
+def _ask(client, url, question, *prior, origin="http://testserver"):
+    data = {f"prior-{index}": q for index, q in enumerate(prior)}
+    return client.post(
+        url + "/ask",
+        data={**data, "q": question},
+        headers={"Origin": origin},
+        follow_redirects=False,
+    )
+
+
+def test_follow_ups_are_answered_in_the_page_without_a_model(web):
+    model = ScriptedModel(
+        [_person("nina", "direct_contact", ["jira:MKT-482"], "direct")]
+    )
+    client, url = _submit(web, model)
+    calls = model.calls
+    page = client.get(url).text.split("<script")[0]
+    panel = page.split('<section class="screen"', 1)[1].split("</section>", 1)[0]
+    assert "Ask me why anyone is listed, or what to ask them." in panel
+    assert f'action="{url}/ask" data-swap' in page
+    assert '<input type="hidden" name="q" value="Why Nina?">' in page
+    assert 'data-voice-for="q"' in page and "data-speech-auto" not in page
+    first = _ask(client, url, "Why Nina?")
+    # The answer is the page itself, at the same address, not a redirect.
+    assert first.status_code == 200
+    _swappable(first.text)
+    plan, _ = first.text.split('<details class="all">')
+    assert "Maya asked</span><p>Why Nina?</p>" in plan
+    assert "Nina Ellis is listed under Growth Marketing for related work." in plan
+    assert f'href="{url}/sources/jira%3AMKT-482">Source</a></p>' in plan
+    assert plan.count("data-speech-auto") == 1
+    # The next question carries this one, and its chip is gone.
+    assert '<input type="hidden" name="prior-0" value="Why Nina?">' in plan
+    assert '<input type="hidden" name="q" value="Why Nina?">' not in plan
+    second = _ask(client, url, "Prep me for Nina", "Why Nina?").text.split("<script")[0]
+    assert second.count("Maya asked") == 2
+    assert second.index("Why Nina?</p>") < second.index("Prep me for Nina</p>")
+    # Only the newest answer is read aloud on its own.
+    assert second.count("data-speech-auto") == 1
+    assert second.index("Prep me for Nina</p>") < second.index("data-speech-auto")
+    assert "With Nina Ellis, find out: Who reviews retail campaign launches" in second
+    assert model.calls == calls
+
+
+def test_a_follow_up_conversation_keeps_only_the_newest_questions(web):
+    client, url = _submit(
+        web,
+        ScriptedModel([_person("nina", "direct_contact", ["jira:MKT-482"], "direct")]),
+    )
+    prior = [f"Question {n}?" for n in range(6)]
+    page = _ask(client, url, "Who else?", *prior).text
+    # prior-5 is not read: five earlier questions and the new one are shown.
+    assert page.count("Maya asked") == 6
+    assert "Question 5?" not in page and "Question 0?" in page
+    assert 'name="prior-4" value="Who else?"' in page
+    assert 'name="prior-5"' not in page and 'Question 0?">' not in page
+
+
+def test_follow_ups_refuse_bad_stale_or_foreign_requests(web):
+    model = ScriptedModel(
+        [_person("nina", "direct_contact", ["jira:MKT-482"], "direct")]
+    )
+    client, url = _submit(web, model)
+    assert _ask(client, url, "  ").status_code == 400
+    assert _ask(client, url, "x" * 201).status_code == 400
+    assert _ask(client, url, "Why Nina?", "y" * 201).status_code == 400
+    assert _ask(client, url, "Why Nina?", origin="https://elsewhere").status_code == 403
+    assert _ask(client, "/sessions/nope", "Why Nina?").status_code == 404
+    db = connect(web.path)
+    db.execute(
+        """INSERT INTO sessions (id, actor, workspace, idem_key, sentence, answers_json, state, question)
+        VALUES ('asking', 'maya', 'demo', 'asking', 'An idea', '[]', 'question', 'Which?')"""
+    )
+    db.execute("UPDATE people SET active=0 WHERE id='nina'")
+    db.commit()
+    db.close()
+    waiting = _ask(client, "/sessions/asking", "Why Nina?")
+    assert waiting.status_code == 409
+    assert "There is no plan to ask about." in waiting.text
+    db = connect(web.path)
+    db.execute(
+        """INSERT INTO sessions (id, actor, workspace, idem_key, sentence, answers_json, state)
+        VALUES ('refused', 'maya', 'demo', 'refused', 'An idea', '[]', 'refusal')"""
+    )
+    db.commit()
+    db.close()
+    assert _ask(client, "/sessions/refused", "Why Nina?").status_code == 409
+    stale = _ask(client, url, "Why Nina?")
+    assert stale.status_code == 410
+    assert "This plan is out of date" in stale.text
+    assert "Nina" not in stale.text
+
+
+def test_follow_up_speech_reads_only_the_answer_built_from_the_plan(web, monkeypatch):
+    speech = StubSpeech()
+    monkeypatch.setattr(app.state, "speech", speech, raising=False)
+    model = ScriptedModel(
+        [_person("nina", "direct_contact", ["jira:MKT-482"], "direct")]
+    )
+    client, url = _submit(web, model)
+    page = _ask(client, url, "Why Nina?").text
+    assert f'data-speech="{url}/reply.mp3?q=Why%20Nina%3F" data-speech-auto' in page
+    reply = client.get(url + "/reply.mp3?q=Why%20Nina%3F")
+    assert reply.status_code == 200 and reply.content == b"ID3-synthetic-audio"
+    [text] = speech.texts
+    assert text.startswith("Nina Ellis is listed under Growth Marketing")
+    answer = page.split("data-speech-auto", 1)[1].split('<p class="answer">', 1)[1]
+    assert answer.startswith(text)
+    # A question naming someone known only through restricted sources gets the
+    # same answer as one naming nobody, and the question itself is never read.
+    client.get(url + "/reply.mp3?q=Why%20Eve%20Restricted%3F")
+    client.get(url + "/reply.mp3?q=Why%20Zed%20Nobody%3F")
+    assert speech.texts[1] == speech.texts[2]
+    assert "Eve" not in speech.texts[1] and "Zed" not in speech.texts[1]
+    assert client.get(url + "/reply.mp3").status_code == 404
+    assert client.get(url + "/reply.mp3?q=" + "x" * 201).status_code == 404
+    assert client.get("/sessions/nope/reply.mp3?q=Why").status_code == 404
+    assert len(speech.texts) == 3
+    # Reading answers aloud is limited per address, like Speak.
+    monkeypatch.setattr(main_module, "reply_limiter", DemoRateLimiter(limit=0))
+    limited = client.get(url + "/reply.mp3?q=Why%20Nina%3F")
+    assert limited.status_code == 429 and len(speech.texts) == 3
+    # A stale plan has nothing to read.
+    db = connect(web.path)
+    db.execute("UPDATE people SET active=0 WHERE id='nina'")
+    db.commit()
+    db.close()
+    assert client.get(url + "/reply.mp3?q=Why%20Nina%3F").status_code == 404

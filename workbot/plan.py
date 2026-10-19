@@ -80,7 +80,7 @@ def _ended_short(note: str | None) -> str | None:
     return f"{match[2].capitalize()} role ended on {match[1]}." if match else note
 
 
-def _ended_spoken(name: str, note: str | None) -> str | None:
+def ended_spoken(name: str, note: str | None) -> str | None:
     """The ended-duty note as a sentence to hear: role and month, not an ISO date."""
     match = _ENDED.match(note or "")
     try:
@@ -152,11 +152,13 @@ def placements(areas: list[dict]) -> dict[str, int]:
     return {person_id: key[-1] for person_id, key in best.items()}
 
 
+# Said after the summary when the plan names someone: the page takes follow-ups.
+INVITE = "Ask me why anyone is listed, or what to ask them."
 _COUNTS = ["one person", "two people", "three people", "four people"]
 _NUMBERS = {2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six"}
 
 
-def _and(items: list[str]) -> str:
+def join_and(items: list[str]) -> str:
     return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
 
 
@@ -164,10 +166,10 @@ def _notes(groups: list[dict]) -> list[str]:
     """What the plan shows about these groups' people beyond their names, said
     after the sentence that names them: ended duties, then who can route you."""
     people = [person for group in groups for person in group["people"]]
-    notes = [_ended_spoken(p["name"], p["ended_duty"]) for p in people]
+    notes = [ended_spoken(p["name"], p["ended_duty"]) for p in people]
     routing = [p["name"] for p in people if p["role"] == "routing_contact"]
     if routing:
-        notes.append(f"{_and(routing)} can point you to the right person.")
+        notes.append(f"{join_and(routing)} can point you to the right person.")
     return [note for note in notes if note]
 
 
@@ -183,7 +185,7 @@ def _spoken(groups: list[dict], more: int, open_areas: int) -> tuple[str, str]:
     else:
         headline = f"Before you start, talk to {_COUNTS[count - 1]}."
         places = [
-            f"{_and([p['name'] for p in group['people']])} in {group['area']}"
+            f"{join_and([p['name'] for p in group['people']])} in {group['area']}"
             for group in groups
         ]
         lead = [f"Start with {places[0]}.", *_notes(groups[:1])]
@@ -298,11 +300,13 @@ def build_plan(card: dict) -> dict:
         if area["status"] in _GAPS:
             gaps[_GAPS[area["status"]]].append(area["label"])
     headline, lead = _spoken(ordered, len(more), sum(map(len, gaps.values())))
+    invite = INVITE if first else None
     return {
         "headline": headline,
-        # Said after the headline; the two are the text read aloud.
+        # Said after the headline, then the invite; the three are the text read aloud.
         "lead": lead,
-        "spoken": f"{headline} {lead}".strip(),
+        "invite": invite,
+        "spoken": " ".join(part for part in (headline, lead, invite) if part),
         "first": first,
         "groups": ordered,
         "more": more,
