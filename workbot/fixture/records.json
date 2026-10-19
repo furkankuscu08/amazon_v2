@@ -430,19 +430,6 @@
   ]
  },
  {
-  "id": "docs:policy-change-review",
-  "kind": "document",
-  "occurred_at": "2026-03-04",
-  "text": "How a change to the spending approval policy is reviewed. Finance drafts the new thresholds, and Anders checks the wording for compliance before the new version is published. The approval levels in force stay as they are until then, and the old version is archived, not deleted.",
-  "visibility": "maya",
-  "links": [
-   [
-    "anders",
-    "author"
-   ]
-  ]
- },
- {
   "id": "jira:SEC-58",
   "kind": "jira",
   "occurred_at": "2026-08-14",
