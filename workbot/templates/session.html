@@ -9,11 +9,10 @@
 {% elif session.state == 'question' %}
 <section class="screen" aria-labelledby="asked"><div class="screen-top"><span class="orb" aria-hidden="true"></span><span class="screen-label">Alexa asks</span><button class="listen" type="button" data-speech="/sessions/{{ session.id }}/speech.mp3" hidden><svg class="i-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6L12.6 8z"/></svg><svg class="i-stop" viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.2"/></svg><span>Listen</span></button></div>
 <p class="screen-sub">One clarification before searching.</p><h1 id="asked" class="question">{{ session.question }}</h1><span class="screen-sub" data-speech-status role="status"></span></section>
-<form class="panel stack tight" method="post" action="/sessions/{{ session.id }}/answer"><label for="answer">Your answer<textarea name="answer" id="answer" maxlength="500" required></textarea></label>
+<form class="panel stack tight" method="post" action="/sessions/{{ session.id }}/answer" data-swap><label for="answer">Your answer<textarea name="answer" id="answer" maxlength="500" required></textarea></label>
 <div class="row"><button type="button" class="quiet speak" data-voice-for="answer" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5"/><path d="M3.5 7.5a4.5 4.5 0 0 0 9 0" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 12v2.5" stroke="currentColor" stroke-width="1.4"/></svg><span>Speak</span></button><span class="small muted" data-voice-status role="status"></span></div>
 <div class="row"><button type="submit">Continue</button><button type="submit" form="skip" class="quiet">Continue without answering</button></div></form>
-<form id="skip" method="post" action="/sessions/{{ session.id }}/answer" hidden><input type="hidden" name="skip" value="1"></form>
-{% include "_voice.html" %}
+<form id="skip" method="post" action="/sessions/{{ session.id }}/answer" data-swap hidden><input type="hidden" name="skip" value="1"></form>
 {% elif session.state == 'refusal' %}<div class="warning stack tight"><h1>Alexa could not evaluate this idea</h1><p>No plan was produced. Try a new idea; if this keeps happening, check the model setup.</p></div>
 {% elif session.state == 'processing' %}<div class="panel stack tight" id="progress">
 <h1>Working on it…</h1>{% if progress %}<ul class="steps">
@@ -22,7 +21,6 @@
 {% if progress.stage == 'priority' %}<li class="now">Choosing who to talk to first</li>{% endif %}</ul>{% endif %}
 <p class="small muted">People are shown only once every area has been checked.</p>
 <p class="warning small" id="lost" role="status" hidden><strong>Connection lost.</strong> This page keeps trying; reload it if nothing changes.</p></div>
-<script>(function poll() { setTimeout(async () => { try { const page = await fetch(location.href, {cache: 'no-store'}); if (page.status >= 500) { throw new Error(); } const next = new DOMParser().parseFromString(await page.text(), 'text/html'); const now = next.getElementById('progress'); if (!now) { location.reload(); return; } document.getElementById('progress').replaceWith(now); } catch (error) { document.getElementById('lost').hidden = false; } poll(); }, 2000); })();</script>
 <noscript><meta http-equiv="refresh" content="5"></noscript>
 {% elif card %}
 {% set count = plan.first | length %}
@@ -57,25 +55,4 @@
 <p class="caution">The people shown were proposed by the model, and their cited links were checked against this synthetic directory. Whether the cited work answers an area's question, and who owns the new idea, has not been established. Model summaries are the model's own reading of a source and were not checked against it.</p></div></details>
 {% endif %}
 {% if session.state in ('card', 'refusal') or stale %}<p><a class="btn quiet" href="/">Ask about another idea</a></p>{% endif %}
-<script>document.querySelectorAll('[data-speech]').forEach((button) => {
-  // Shown only with script; the audio is fetched when Listen is pressed.
-  const box = button.closest('.screen, .panel');
-  const status = box.querySelector('[data-speech-status]');
-  const label = button.querySelector('span');
-  let audio = null;
-  const idle = () => { audio = null; label.textContent = 'Listen'; box.classList.remove('speaking'); };
-  const failed = () => { idle(); status.textContent = 'Audio is not available right now.'; };
-  button.hidden = false;
-  button.addEventListener('click', () => {
-    if (audio) { audio.pause(); idle(); return; }
-    status.textContent = '';
-    const mine = audio = new Audio(button.dataset.speech);
-    // A clip that was stopped must not reset a newer one.
-    mine.addEventListener('ended', () => { if (audio === mine) idle(); });
-    mine.addEventListener('error', () => { if (audio === mine) failed(); });
-    label.textContent = 'Stop';
-    box.classList.add('speaking');
-    mine.play().catch((error) => { if (audio === mine && error.name !== 'AbortError') failed(); });
-  });
-});</script>
 </div>{% endblock %}

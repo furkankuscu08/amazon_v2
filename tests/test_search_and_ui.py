@@ -178,6 +178,8 @@ def web(tmp_path, monkeypatch):
     db.close()
     monkeypatch.setenv("WORKBOT_DB_PATH", path)
     monkeypatch.setattr(app.state, "searcher", WebSearch(), raising=False)
+    # Every test client shares one address, so each test gets its own request limit.
+    monkeypatch.setattr(main_module, "demo_limiter", DemoRateLimiter())
 
     def use(model):
         monkeypatch.setattr(app.state, "model", model, raising=False)
@@ -900,6 +902,50 @@ def test_question_form_offers_speak_for_the_answer(web):
     client.post(url + "/answer", data={"answer": "Retail"}, follow_redirects=False)
     app.state.last_run.join(10)
     assert "Alexa asked</span><p>Which campaigns are in scope?" in client.get(url).text
+
+
+def _swappable(page):
+    # The script swaps #page in place, so it must sit outside it, once, after it.
+    assert page.count('id="page"') == 1 and page.count("<script") == 1
+    assert page.index("</main>") < page.index("<script")
+
+
+def test_pages_are_swapped_in_place_by_the_one_script(web):
+    model = ScriptedModel(
+        [_person("nina", "direct_contact", ["jira:MKT-482"], "direct")],
+        question="Which campaigns are in scope?",
+    )
+    client = web.use(model)
+    home = client.get("/").text
+    _swappable(home)
+    assert (
+        '<form class="panel stack tight" action="/sessions" method="post" data-swap>'
+        in home
+    )
+    # Read aloud is the visitor's own choice, shown by script and never sent.
+    toggle = home.split('<label class="toggle"', 1)[1].split("</label>", 1)[0]
+    assert toggle.startswith(" hidden>") and 'id="read-aloud" checked' in toggle
+    assert "name=" not in toggle
+    # The script sends forms as a browser would, with a charset in the type.
+    reply = client.post(
+        "/sessions",
+        content="idea=Help+plan+marketing+campaigns&idempotency_key=swap",
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+            "Origin": "http://testserver",
+        },
+        follow_redirects=False,
+    )
+    assert reply.status_code == 303
+    url = reply.headers["location"]
+    app.state.last_run.join(10)
+    question = client.get(url).text
+    _swappable(question)
+    # Continue, and Continue without answering.
+    assert question.split("<script")[0].count("data-swap") == 2
+    client.post(url + "/answer", data={"answer": "Retail"}, follow_redirects=False)
+    app.state.last_run.join(10)
+    _swappable(client.get(url).text)
 
 
 def test_plan_names_the_areas_it_leaves_to_the_full_list(web, monkeypatch):
