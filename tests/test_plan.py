@@ -1,6 +1,6 @@
 """The first-conversations plan is a pure regrouping of an audited card."""
 
-from workbot.plan import _short, build_plan, placements
+from workbot.plan import _line, _short, build_plan, placements
 
 
 def person(pid, role, org, confidence="medium", kind="assignee"):
@@ -195,9 +195,12 @@ def test_plan_lines_are_shortened_and_people_grouped_by_area():
         "Reported a Jira issue: ‘Prepare the reforecast with spend per …’"
     )
     assert short["tara"] == "Current reviewer — reviewing spend requests."
-    assert plan["people"]["omar"]["ended_short"] == "Approver role ended on 2025-06-30."
-    # The full note stays for the full list.
+    assert plan["people"]["omar"]["ended_short"] == "Approver role ended in June 2025."
+    # The full note stays for the full list, with its date written out.
     assert plan["people"]["omar"]["ended_duty"] == note
+    assert plan["people"]["omar"]["ended_full"] == note.replace(
+        "2025-06-30", "30 June 2025"
+    )
     assert plan["people"]["tara"]["ended_short"] is None
     # Areas follow their first chosen person; people keep the chosen order, except
     # that Omar, whose approver role has ended, follows Tara.
@@ -357,8 +360,8 @@ def test_spoken_notes_name_ended_duties_and_routing_contacts():
         " 2025. Then Anders in Legal and Compliance, and Dan in Commerce. Anders and"
         " Dan can point you to the right person."
     )
-    # The plan line keeps the date as written; only the voice says the month.
-    assert plan["first"][1]["ended_short"] == "Operator role ended on 2025-01-01."
+    # The plan line says the month, as the voice does.
+    assert plan["first"][1]["ended_short"] == "Operator role ended in January 2025."
     # A note the plan cannot read adds nothing to the voice; the screen shows it.
     for odd in ("An earlier responsibility ended on soon: operator.", "Moved teams."):
         oddly = {**elena, "ended_duty": odd}
@@ -456,3 +459,27 @@ def test_spoken_summary_stays_short_with_four_people_and_every_note():
     plan = build_plan({"areas": areas, "first_conversations": ["aa", "bb", "cc", "dd"]})
     # Every note at once is unlikely; even then the voice stays under a minute.
     assert len(plan["spoken"].split()) <= 120
+
+
+def test_full_list_lines_are_written_in_plain_words_with_dates_written_out():
+    lines = {
+        "Assignee of jira record on 2026-03-02: ‘Fix it.’": "Assigned to a Jira issue"
+        " on 2 March 2026: ‘Fix it.’",
+        "Author of document record on 2024-11-30: ‘Policy.’": "Wrote a document on"
+        " 30 November 2024: ‘Policy.’",
+        "Contributor of github record on 2026-01-05: ‘PR.’": "Contributed to a GitHub"
+        " pull request on 5 January 2026: ‘PR.’",
+        "Reporter of jira record on 2025-07-01: ‘Bug.’": "Reported a Jira issue on"
+        " 1 July 2025: ‘Bug.’",
+        "Mention of slack record on 2026-08-10: ‘Hi.’": "Mentioned in a Slack message"
+        " on 10 August 2026: ‘Hi.’",
+        # Older cards ended the line with the source ID; it is dropped first.
+        "Mention of slack record on 2026-08-10: ‘Hi.’ [slack:x].": "Mentioned in a"
+        " Slack message on 10 August 2026: ‘Hi.’",
+        # Anything else, such as a directory line or an unknown kind, is left alone.
+        "Current reviewer: spend.": "Current reviewer: spend.",
+        "Author of wiki record on 2026-08-10: ‘Hi.’": "Author of wiki record on"
+        " 2026-08-10: ‘Hi.’",
+    }
+    for stored, shown in lines.items():
+        assert _line(stored) == shown

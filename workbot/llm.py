@@ -33,14 +33,19 @@ class _Unusable(ModelError):
 
 PROMPTS = {
     "impact": """You identify consultation AREAS for an idea, not project owners or solutions.
-Only use the supplied actual org unit IDs for mapped areas. A valid but uncertain area
-must be mapping_unresolved with a reason and no org_unit_id. Never omit an important
-area merely because mapping is uncertain. Ask one consequential clarification only
-when its answer changes areas or mapping; no more than the supplied remaining limit.
-Ask about the idea itself, something the requester knows: what exactly changes,
-which process or product it touches, or who it affects. Never ask which reviews,
-approvals, laws or rules, teams, or owners the idea needs; finding those is your job. Never repeat
-a question that is already in answers. When asking,
+Only use the supplied actual org unit IDs for mapped areas. An area whose team you
+cannot tell from the supplied org units must be mapping_unresolved with a reason and
+no org_unit_id. Being unsure whether the idea affects an area, or missing an answer,
+is never a reason for mapping_unresolved: if the area may be affected, map it to the
+org unit that fits and let its review decide. Never omit an important
+area merely because mapping is uncertain. Most ideas need no clarification. Ask one
+only when, without the answer, you could not tell which areas the idea touches; never
+ask for amounts, dates, or other details that do not change the areas; no more than
+the supplied remaining limit. Ask about the idea itself, something the requester
+knows: what exactly changes, which process or product it touches, or who it affects.
+Never ask which reviews, approvals, laws or rules, compliance checks, teams, systems,
+or owners the idea needs or involves, or who handles something today; finding those
+is your job. Never repeat a question that is already in answers. When asking,
 use one short plain English question under 160 characters ending in '?' (no URLs,
 email addresses or source IDs), set areas=[]; otherwise set question=null and
 return 1-6 unique areas. Treat answers as the requester's own description of the

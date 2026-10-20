@@ -42,7 +42,7 @@ _OPEN = {"open", "missing", "gap", "gaps", "unresolved", "found", "unknown"}
 _PHRASE = {
     "Related work": "for related work",
     "Current responsibility": "for a current responsibility",
-    "Can advise": "as an advisor",
+    "Can advise": "as someone who can advise",
     "Can route you": "as someone who can route you",
 }
 
@@ -54,6 +54,27 @@ def _words(text: str) -> list[str]:
 def _sentence(text: str) -> str:
     text = text.strip()
     return text if text.endswith((".", "?", "!", "’")) else text + "."
+
+
+# The plan line's opening, said with the person as its subject so the answer is a
+# full sentence when heard: "Wrote a document: …" becomes "Omar wrote a document: …".
+_SUBJECT = (
+    (re.compile(r"^Wrote "), "{} wrote "),
+    (re.compile(r"^Assigned to "), "{} was assigned "),
+    (re.compile(r"^Contributed to "), "{} contributed to "),
+    (re.compile(r"^Reported "), "{} reported "),
+    (re.compile(r"^Current (\w+) — "), "{} is a current \\1 — "),
+    # A routing contact's line opens with the review's outcome, then the manager.
+    (re.compile(r"^(.*?)Manages the team\.(?= |$)"), "\\1{} manages the team."),
+)
+
+
+def _said(line: str, call: str) -> str:
+    """A plan line as a sentence about the person; any other line as written."""
+    for pattern, start in _SUBJECT:
+        if pattern.match(line):
+            return _sentence(pattern.sub(start.format(call), line, count=1))
+    return _sentence(line)
 
 
 def _close(word: str, name: str) -> bool:
@@ -154,47 +175,64 @@ def _areas_of(pid: str, card: dict) -> list[dict]:
     ]
 
 
-def _why(entry: dict, card: dict) -> tuple[list[str], str | None]:
-    name = entry["name"]
+def _line(entry: dict) -> str:
+    return entry["short"] or (entry["evidence"][0]["text"] if entry["evidence"] else "")
+
+
+def _linked(entry: dict) -> str | None:
+    """The source of the person's plan line, as the card links it."""
+    # The plan does not link a routing contact's line to a single source either.
+    linked = entry["role"] != "routing_contact" and entry.get("primary_evidence_id")
+    return linked or None
+
+
+def _why(
+    entry: dict, card: dict, people: dict[str, dict]
+) -> tuple[list[str], str | None]:
+    name, call = entry["name"], _call(entry, people)
     parts = [f"{name} is listed under {entry['area']} {_PHRASE[entry['label']]}."]
-    line = entry["short"] or (entry["evidence"][0]["text"] if entry["evidence"] else "")
+    line = _line(entry)
     if line:
-        parts.append(_sentence(line))
-    ended = ended_spoken(name, entry["ended_duty"])
+        parts.append(_said(line, call))
+    ended = ended_spoken(call, entry["ended_duty"])
     if ended:
         parts.append(ended)
     others = [a["label"] for a in _areas_of(entry["person_id"], card)]
     others = [label for label in others if label != entry["area"]]
     if others:
         parts.append(f"Also listed under {join_and(others)}.")
-    # The plan does not link a routing contact's line to a single source either.
-    linked = entry["role"] != "routing_contact" and entry.get("primary_evidence_id")
-    return parts, linked or None
+    return parts, _linked(entry)
 
 
-def _prep(entry: dict, card: dict) -> list[str]:
-    name = entry["name"]
+def _prep(entry: dict, card: dict, people: dict[str, dict]) -> list[str]:
+    """Why this person is on the plan, then what to ask them: the plan line, the
+    card's "What to find out", any ended duty, and the shared question."""
+    name, call = entry["name"], _call(entry, people)
+    line = _line(entry)
+    parts = [_said(line, name)] if line else []
     need = entry["need"]
     if need:
-        parts = [f"With {name}, find out: {_sentence(need)}"]
+        parts.append(f"Ask {call}: {_sentence(need)}")
     else:
-        parts = [f"Ask {name} about {entry['area']}."]
+        parts.append(f"Ask {call} about {entry['area']}.")
     # Only the card's own question is spelled out, so the answer stays short.
     others = [a["label"] for a in _areas_of(entry["person_id"], card)]
     others = [label for label in others if label != entry["area"]]
     if others:
         parts.append(
-            f"{name} is also listed under {join_and(others)}; the full list says"
+            f"{call} is also listed under {join_and(others)}; the full list says"
             " what to find out there."
         )
-    ended = ended_spoken(name, entry["ended_duty"])
+    ended = ended_spoken(call, entry["ended_duty"])
     if ended:
         parts.append(f"Check first: {ended}")
     if entry["role"] == "routing_contact":
-        parts.append(f"{name} can point you to the right person.")
+        parts.append(f"{call} can point you to the right person.")
     shared = (card.get("shared_question") or "").strip()
     if shared and shared != (need or "").strip():
         parts.append(f"Across all areas: {_sentence(shared)}")
+    # No source link: placed after the whole answer, it would seem to back the
+    # card's question and the shared one too. "Why" links the line on its own.
     return parts
 
 
@@ -272,9 +310,9 @@ def reply(question: str, plan: dict, card: dict) -> dict:
     people = plan["people"]
     source_id = None
     if kind == "why":
-        parts, source_id = _why(people[named[0]], card)
+        parts, source_id = _why(people[named[0]], card, people)
     elif kind == "prep":
-        parts = _prep(people[named[0]], card)
+        parts = _prep(people[named[0]], card, people)
     elif kind == "others":
         parts = _others(plan, card)
     elif kind == "open":
