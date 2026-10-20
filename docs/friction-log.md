@@ -1,8 +1,40 @@
 # Friction log: AWS and Amazon Bedrock
 
-Friction met while moving WorkBot's model calls to Amazon Bedrock during the hackathon, recorded as it happened. Each entry gives the task, the steps, what was expected and what happened, a severity, the workaround, and a suggestion. Severity: **High** blocks the task until worked around; **Medium** costs real time or risks a wrong setup; **Low** is a papercut. Error texts are quoted as shown; account IDs are left out.
+Friction met while building WorkBot on Amazon Bedrock (Amazon Nova 2 Lite and Nova 2 Sonic), Amazon Polly, and the AWS account, console, CLI, and SDKs during the hackathon, recorded as it happened. Each entry gives the task, the steps, what was expected and what happened, a severity, the workaround, and a suggestion. Severity: **High** blocks the task until worked around; **Medium** costs real time or risks a wrong setup; **Low** is a papercut. Error texts are quoted as shown; account IDs are left out.
 
 Setup at the time: a new account created through AWS Settings (projects owned by an AWS Builder ID, signed in with Google), AWS Free plan, project Region `eu-north-1` (Stockholm), AWS CLI 2.38.1, boto3/botocore 1.43.114, model Amazon Nova 2 Lite. Entries 1–19 are from 18 October 2026, entry 20 from 20 October 2026.
+
+## Summary
+
+Status: **Worked around** means WorkBot runs despite it; **Open** means no workaround was found; **Not pursued** means we stopped before it mattered; **Watched** means it has not blocked anything so far.
+
+| # | Service | Issue | Severity | Status |
+|---|---|---|---|---|
+| 1 | Console search, Bedrock | [The console search for Bedrock leads to a retired product](#1-the-console-search-for-bedrock-leads-to-a-retired-product) | Low | Worked around |
+| 2 | Bedrock, account plan | [Every third-party model is denied on the Free plan, with no reason given](#2-every-third-party-model-is-denied-on-the-free-plan-with-no-reason-given) | High | Worked around |
+| 3 | Bedrock console | [Anthropic's use-case form assumes a company](#3-anthropics-use-case-form-assumes-a-company) | Low | Worked around |
+| 4 | Console search, IAM | [Searching for "credentials" opens the Builder ID profile](#4-searching-for-credentials-opens-the-builder-id-profile) | Low | Worked around |
+| 5 | AWS CLI | [`aws configure` asks to install agent tooling](#5-aws-configure-asks-to-install-agent-tooling) | Low | Worked around |
+| 6 | Bedrock, Nova 2 Lite | [The catalog's model ID cannot be invoked in this Region](#6-the-catalogs-model-id-cannot-be-invoked-in-this-region) | Medium | Worked around |
+| 7 | Account (AWS Settings projects), Polly | [The project's Region is locked, and nothing in the console says so](#7-the-projects-region-is-locked-and-nothing-in-the-console-says-so) | Medium | Worked around |
+| 8 | Account (AWS Settings projects) | [A new project cannot choose its Region](#8-a-new-project-cannot-choose-its-region) | Medium | Open |
+| 9 | Account (AWS Settings projects) | [Advanced-feature activation sends a code to an address it then refuses](#9-advanced-feature-activation-sends-a-code-to-an-address-it-then-refuses) | Low | Not pursued |
+| 10 | Account, billing | [The spend limit's consequence is not shown where it is set](#10-the-spend-limits-consequence-is-not-shown-where-it-is-set) | Medium | Worked around |
+| 11 | Bedrock, Nova 2 Lite | [Nova 2 Lite supports neither structured-output mechanism in the guide](#11-nova-2-lite-supports-neither-structured-output-mechanism-in-the-guide) | Medium | Worked around |
+| 12 | Nova 2 Lite | [Medium reasoning effort fills the output cap](#12-medium-reasoning-effort-fills-the-output-cap) | Medium | Worked around |
+| 13 | botocore | [An empty bearer-token variable still sends the request](#13-an-empty-bearer-token-variable-still-sends-the-request) | Medium | Worked around |
+| 14 | boto3 | [boto3 ignores `AWS_REGION`](#14-boto3-ignores-aws_region) | Low | Worked around |
+| 15 | Nova 2 Lite | [Without strict schemas, an occasional reply breaks a rule](#15-without-strict-schemas-an-occasional-reply-breaks-a-rule) | Medium | Worked around |
+| 16 | Account, billing | [The account's plan and the Upgrade button cannot be found](#16-the-accounts-plan-and-the-upgrade-button-cannot-be-found) | Medium | Open |
+| 17 | Billing | [A short test burst is forecast as nearly hitting the spend limit](#17-a-short-test-burst-is-forecast-as-nearly-hitting-the-spend-limit) | Low | Watched |
+| 18 | Amazon Transcribe, account plan | [Transcribe streaming says the account is not authorized, without saying why](#18-transcribe-streaming-says-the-account-is-not-authorized-without-saying-why) | High | Worked around |
+| 19 | Nova 2 Sonic, aws-sdk-bedrock-runtime, IAM console | [Nova 2 Sonic from Python takes three fixes the samples do not mention](#19-nova-2-sonic-from-python-takes-three-fixes-the-samples-do-not-mention) | Medium | Worked around |
+| 20 | Nova 2 Lite | [Nova 2 Lite copies context text into its own fields, even when told not to](#20-nova-2-lite-copies-context-text-into-its-own-fields-even-when-told-not-to) | Medium | Open |
+
+The three that cost us most:
+- **Nova 2 Lite enforces no output schema** ([11](#11-nova-2-lite-supports-neither-structured-output-mechanism-in-the-guide), [15](#15-without-strict-schemas-an-occasional-reply-breaks-a-rule), [20](#20-nova-2-lite-copies-context-text-into-its-own-fields-even-when-told-not-to)): every reply has to be checked and sometimes requested again, and instructions about a field's content are not reliably followed.
+- **Access errors do not name the account plan** ([2](#2-every-third-party-model-is-denied-on-the-free-plan-with-no-reason-given), [16](#16-the-accounts-plan-and-the-upgrade-button-cannot-be-found), [18](#18-transcribe-streaming-says-the-account-is-not-authorized-without-saying-why)): a service the plan excludes fails like a missing permission, and the plan cannot be found or changed in the console.
+- **Nova 2 Sonic from Python** ([19](#19-nova-2-sonic-from-python-takes-three-fixes-the-samples-do-not-mention)): bidirectional streaming needs a separate SDK and three fixes the samples do not show.
 
 ## 1. The console search for Bedrock leads to a retired product
 
@@ -151,7 +183,7 @@ Setup at the time: a new account created through AWS Settings (projects owned by
 - **Expected:** replies that follow the tool's JSON schema, including its documented cross-field rules.
 - **Actual:** across two runs, 1 of 83 calls returned a reply that broke a cross-field rule of the impact schema (Pydantic `value_error`), so that idea was refused; the other replies validated. Roles also varied between runs for the same idea, for example a person shown as a direct contact in one run and not proposed in the next.
 - **Severity:** Medium (a refused idea is visible to the user).
-- **Workaround:** a reply that fails the schema is requested once more with the same input; a second failure still produces no card.
+- **Workaround:** a reply that fails the schema is requested once more with the same input; a second failure still produces no card. In the two later 42-run measurements, 1 of 287 calls and then none of 251 needed that repeat.
 - **Suggestion:** support `strict` tools or `outputConfig` for Nova 2 Lite, as for the models the structured-output guide covers.
 
 ## 16. The account's plan and the Upgrade button cannot be found
