@@ -46,7 +46,9 @@ _KIND = {
 # A sentence ends at . ! or ? before a capital letter or the end of the excerpt,
 # unless the word before it is an abbreviation such as "e.g.", "Dr." or "U.S.".
 _SENTENCE_END = re.compile(r"[.!?](?=\s+[A-Z‘“]|$)")
-_ABBREVIATION = re.compile(r"(?:\b(?:[A-Za-z]\.){2,}|\b(?:etc|vs|Dr|Mr|Mrs|Ms)\.)$")
+_ABBREVIATION = re.compile(
+    r"(?:\b(?:[A-Za-z]\.){2,}|\b[A-Z]\.|\b(?:etc|vs|Dr|Mr|Mrs|Ms|No|Inc|approx)\.)$"
+)
 _ENDED = re.compile(r"^An earlier responsibility ended on (\S+): (.+?)(?: — .*)?\.$")
 # Spelled out here, not by the locale, so the spoken date never depends on the server.
 _MONTHS = (
@@ -79,6 +81,19 @@ def _first_sentence(quote: str) -> str:
         if not _ABBREVIATION.search(quote[: end.end()]):
             return quote[: end.end()]
     return quote
+
+
+def _whole(quote: str) -> str:
+    """A cut excerpt up to its last whole sentence, still marked as cut; without
+    one it stays as stored."""
+    if not quote.endswith(" …"):
+        return quote
+    ends = [
+        end.end()
+        for end in _SENTENCE_END.finditer(quote[:-2])
+        if not _ABBREVIATION.search(quote[: end.end()])
+    ]
+    return f"{quote[: ends[-1]]} …" if ends else quote
 
 
 def _date(text: str) -> date | None:
@@ -142,7 +157,9 @@ def _line(text: str) -> str:
     match = _RECORD_LINE.match(cut)
     if match and match[2] in _KIND:
         relation, kind, when, quote = match.groups()
-        return f"{_DID[relation]} {_KIND[kind]} on {_long_date(when)}: ‘{quote}’"
+        return (
+            f"{_DID[relation]} {_KIND[kind]} on {_long_date(when)}: ‘{_whole(quote)}’"
+        )
     # A quoted record needs no full stop of its own after the closing quote.
     return cut if cut == text or cut.endswith("’") else cut + "."
 
@@ -248,18 +265,24 @@ def _spoken(groups: list[dict], more: int, open_areas: int) -> tuple[str, str]:
 def build_plan(card: dict) -> dict:
     areas = card["areas"]
     home = placements(areas)
-    # An ended-duty note is found per area; keep it wherever the person is shown.
+    # An ended-duty note is found per area; keep it wherever the person is shown,
+    # with the directory source it came from (older cards did not store one).
     notes: dict[str, str] = {}
+    note_sources: dict[str, str | None] = {}
     for area in areas:
         for person in area["people"]:
-            if person.get("ended_duty"):
-                notes.setdefault(person["person_id"], person["ended_duty"])
+            if person.get("ended_duty") and person["person_id"] not in notes:
+                notes[person["person_id"]] = person["ended_duty"]
+                note_sources[person["person_id"]] = next(
+                    iter(person.get("context_ids") or []), None
+                )
     entries = {
         person["person_id"]: {
             **person,
             "ended_duty": notes.get(person["person_id"]),
             "ended_short": _ended_short(notes.get(person["person_id"])),
             "ended_full": _ended_full(notes.get(person["person_id"])),
+            "ended_source": note_sources.get(person["person_id"]),
             "short": _short(person.get("headline")),
             "initials": _initials(person["name"]),
             "label": _label(person),

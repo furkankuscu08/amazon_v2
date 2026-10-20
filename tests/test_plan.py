@@ -127,6 +127,8 @@ def test_ended_duty_note_follows_the_person_to_their_home_area():
     assert plan["first"][0]["area"] == "Data"
     assert plan["first"][0]["ended_duty"] == note
     assert plan["people"]["omar"]["ended_duty"] == note
+    # A card stored before notes kept their source links nothing.
+    assert plan["people"]["omar"]["ended_source"] is None
 
 
 def test_everyone_gets_the_plan_label_and_evidence_linked_to_its_source():
@@ -176,6 +178,7 @@ def test_plan_lines_are_shortened_and_people_grouped_by_area():
         **person("omar", "advisor", "finance"),
         "headline": long_record,
         "ended_duty": note,
+        "context_ids": ["directory:omar-old"],
     }
     marcus = {**person("marcus", "advisor", "growth"), "headline": cut_record}
     card = {
@@ -202,6 +205,9 @@ def test_plan_lines_are_shortened_and_people_grouped_by_area():
         "2025-06-30", "30 June 2025"
     )
     assert plan["people"]["tara"]["ended_short"] is None
+    # The note links the directory source it came from.
+    assert plan["people"]["omar"]["ended_source"] == "directory:omar-old"
+    assert plan["people"]["tara"]["ended_source"] is None
     # Areas follow their first chosen person; people keep the chosen order, except
     # that Omar, whose approver role has ended, follows Tara.
     groups = [
@@ -480,6 +486,19 @@ def test_full_list_lines_are_written_in_plain_words_with_dates_written_out():
         "Current reviewer: spend.": "Current reviewer: spend.",
         "Author of wiki record on 2026-08-10: ‘Hi.’": "Author of wiki record on"
         " 2026-08-10: ‘Hi.’",
+        # A cut excerpt ends at its last whole sentence, not mid-sentence.
+        "Author of document record on 2024-11-30: ‘Policy. Readers should treat it"
+        " as a …’": "Wrote a document on 30 November 2024: ‘Policy. …’",
+        "Author of document record on 2024-11-30: ‘Policy. …’": "Wrote a document"
+        " on 30 November 2024: ‘Policy. …’",
+        # A period after an abbreviation or an initial does not end a sentence.
+        "Author of document record on 2024-11-30: ‘Spoke to Dr. Lee. Then a …’": "Wrote a document on 30 November 2024: ‘Spoke to Dr. Lee. …’",
+        "Author of document record on 2024-11-30: ‘Done. Ask J. Smith about …’": "Wrote a document on 30 November 2024: ‘Done. …’",
+        # Without a whole sentence, or an abbreviation alone, it stays as stored.
+        "Author of document record on 2024-11-30: ‘Spend per …’": "Wrote a document"
+        " on 30 November 2024: ‘Spend per …’",
+        "Author of document record on 2024-11-30: ‘Ask Dr. Lee about …’": "Wrote a"
+        " document on 30 November 2024: ‘Ask Dr. Lee about …’",
     }
     for stored, shown in lines.items():
         assert _line(stored) == shown

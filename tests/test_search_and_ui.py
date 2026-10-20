@@ -512,6 +512,30 @@ def test_current_responsibility_in_the_plan_links_its_directory_source(web):
     assert "directory:jules" not in plan
 
 
+def test_ended_duty_note_links_its_directory_source(web):
+    model = ScriptedModel([_person("elena", "advisor", ["jira:MKT-482"], "adjacent")])
+    client, url = _submit(web, model)
+    plan, full_list = client.get(url).text.split('<details class="all">')
+    link = f'href="{url}/sources/directory%3Aelena-old"'
+    assert "Operator role ended in January 2025." in plan and link in plan
+    assert "Directory note:" in full_list and link in full_list
+    # The note's source opens though no evidence line cites it.
+    page = client.get(url + "/sources/directory:elena-old")
+    assert page.status_code == 200
+    assert "Elena Park — operator in" in page.text
+    assert "to 2025-01-01." in page.text
+    assert "directory:elena-old" not in plan + full_list + page.text
+    # Once the note's source is no longer visible, the plan and its sources go.
+    db = connect(web.path)
+    db.execute(
+        "UPDATE directory_sources SET visibility='restricted'"
+        " WHERE id='directory:elena-old'"
+    )
+    db.commit()
+    db.close()
+    assert client.get(url + "/sources/directory:elena-old").status_code == 410
+
+
 def test_routing_line_in_the_plan_is_not_linked_to_a_work_record(web):
     # The routing line is built from the manager and remit records, so it must not
     # link to a work record the model happened to choose as the primary source.
