@@ -180,7 +180,7 @@ On 20 October 2026 the seven ideas in `tests/expectations.json` (the answer key:
 | Spending policy change | 10 | 10 | 10 | The answer key requires the current reviewer and the policy reviewer in Legal and Compliance; both were in every plan (1 of 3 before hints). |
 | Customer scoring | 5 | 5 | 5 | |
 | Stablecoin payments | 5 | 5 | 5 | Legal and Compliance was open (no contact found) in 1. |
-| Campaign AI, refund assistant, pickup lockers | 4 each | 12 | 9 | The refund queue owner was missing once. Twice the pickup lockers idea, which has no relevant record by design, made the store operations lead a direct contact instead of leaving the team manager as the routing contact. |
+| Campaign AI, refund assistant, pickup lockers | 4 each | 12 | 9 | The refund queue owner was missing once. Twice the pickup lockers idea, which has no relevant record by design, made a fulfilment planner a direct contact instead of leaving the team manager as the routing contact. |
 
 In all 42 runs no plan was refused, no area the model named was left without a team, and no question was asked. A run took 14 to 44 seconds and 4 to 8 model calls; none of 251 calls had to be repeated. Areas that are only loosely affected still get reviewed, and the answer key checks only obvious outcomes, so a pass does not mean every person shown is relevant.
 
