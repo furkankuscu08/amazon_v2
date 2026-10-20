@@ -134,12 +134,17 @@ def stems(texts: list[str]) -> list[set[str]]:
         mem.executemany(
             "INSERT INTO t(rowid, text) VALUES (?, ?)", enumerate(texts, start=1)
         )
-        stems = [set() for _ in texts]
+        found = [set() for _ in texts]
         for term, doc in mem.execute("SELECT term, doc FROM v"):
-            stems[doc - 1].add(term)
-        return stems
+            found[doc - 1].add(term)
+        return found
     finally:
         mem.close()
+
+
+def ignored_stems() -> set[str]:
+    """Stems of the stop and generic process words, which say nothing about an area."""
+    return stems([" ".join(_stop | _generic)])[0]
 
 
 def directory_hints(db, text: str, limit: int = 3) -> list[dict]:
@@ -158,10 +163,8 @@ def directory_hints(db, text: str, limit: int = 3) -> list[dict]:
     ]
     if not rows:
         return []
-    ignored, idea, *duties = stems(
-        [" ".join(_stop | _generic), text, *(row["scope"] for row in rows)]
-    )
-    idea = {stem for stem in idea if len(stem) >= 3} - ignored
+    idea, *duties = stems([text, *(row["scope"] for row in rows)])
+    idea = {stem for stem in idea if len(stem) >= 3} - ignored_stems()
     best: dict[str, tuple[int, str]] = {}
     for row, duty in zip(rows, duties):
         shared = len(idea & duty)

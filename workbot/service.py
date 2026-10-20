@@ -14,7 +14,13 @@ from threading import Lock
 from workbot.llm import ModelError
 from workbot.models import AreaEvaluation, Impact, Priority
 from workbot.plan import ROLE_ORDER
-from workbot.search import candidate_pool, directory_hints, keywords, stems
+from workbot.search import (
+    candidate_pool,
+    directory_hints,
+    ignored_stems,
+    keywords,
+    stems,
+)
 from workbot.storage import (
     current,
     current_and_visible,
@@ -522,7 +528,7 @@ def audit_area(
     # search intents, since a short need alone can miss the duty's words.
     words = keywords(f"{item['label']} {item['consultation_need']}")
     words += [term for text in intent_keywords or [] for term in keywords(text)]
-    topic = stems([" ".join(words)])[0]
+    topic = stems([" ".join(words)])[0] - ignored_stems()
     teams = {row["id"]: row["name"] for row in db.execute("SELECT * FROM org_units")}
     accepted = []
     # A direct proposal that names a person or source outside the pool, a person
