@@ -502,3 +502,22 @@ def test_full_list_lines_are_written_in_plain_words_with_dates_written_out():
     }
     for stored, shown in lines.items():
         assert _line(stored) == shown
+
+
+def test_the_voice_puts_people_in_an_area_only_when_it_is_their_team():
+    spoken = build_plan(CARD)["spoken"]
+    assert "Start with Omar for Data." in spoken  # Omar is in Finance
+    assert "Nina in Growth" in spoken and "Tara in Finance" in spoken
+    # Older cards without org_id keep the earlier wording.
+    old = {
+        "areas": [
+            {
+                **a,
+                "people": [
+                    {k: v for k, v in p.items() if k != "org_id"} for p in a["people"]
+                ],
+            }
+            for a in CARD["areas"]
+        ]
+    }
+    assert "Start with Omar in Data." in build_plan(old)["spoken"]

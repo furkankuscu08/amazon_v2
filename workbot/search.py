@@ -123,7 +123,7 @@ def keywords(text: str) -> list[str]:
     )[:12]
 
 
-def _stems(texts: list[str]) -> list[set[str]]:
+def stems(texts: list[str]) -> list[set[str]]:
     """Porter stems of each text, tokenized as the visible_fts index tokenizes."""
     mem = sqlite3.connect(":memory:")
     try:
@@ -158,13 +158,13 @@ def directory_hints(db, text: str, limit: int = 3) -> list[dict]:
     ]
     if not rows:
         return []
-    ignored, idea, *duties = _stems(
+    ignored, idea, *duties = stems(
         [" ".join(_stop | _generic), text, *(row["scope"] for row in rows)]
     )
     idea = {stem for stem in idea if len(stem) >= 3} - ignored
     best: dict[str, tuple[int, str]] = {}
-    for row, stems in zip(rows, duties):
-        shared = len(idea & stems)
+    for row, duty in zip(rows, duties):
+        shared = len(idea & duty)
         if shared >= HINT_MIN_SHARED and shared > best.get(row["org_id"], (0, ""))[0]:
             best[row["org_id"]] = (shared, row["scope"])
     ranked = sorted(best.items(), key=lambda item: (-item[1][0], item[0]))[:limit]

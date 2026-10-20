@@ -1375,3 +1375,50 @@ def test_impact_call_gets_directory_hints_from_the_idea_and_answers(db):
         {"org_unit_id": "growth", "current_duty": "Reviewing campaign launch approvals"}
     ]
     assert valid_card(db, load_session(db, sid)) is not None
+
+
+def test_shared_question_that_repeats_a_cards_need_is_dropped(db):
+    def shared(text):
+        return Priority.model_validate(
+            {
+                "order": ["campaign_review"],
+                "shared_question": text,
+                "first_conversations": [],
+            }
+        )
+
+    # AREA's need, recased and without its full stop, then a different question.
+    repeat = "what campaign launch approvals are needed before retail launch?"
+    for key, text, kept in [
+        ("key-1", repeat, None),
+        ("key-2", "Who decides the launch date?", "Who decides the launch date?"),
+    ]:
+        model = StubModel(
+            [impact(AREA)],
+            [evaluation(proposal("nina", "direct_contact", ["jira:MKT-482"]))],
+            [shared(text)],
+        )
+        _, card = card_for(db, model, key=key)
+        assert card["shared_question"] == kept
+
+
+def test_ended_duty_matches_by_stem(db):
+    # "launches" and "approving" share only stems with "Managing campaign launch
+    # approvals"; the words themselves differ.
+    area = {
+        **AREA,
+        "label": "Growth",
+        "consultation_need": "Which steps would AI handle?",
+        "search_intents": [{"keyword": "launches approving", "semantic": "Steps"}],
+    }
+    _, card = card_for(
+        db,
+        StubModel(
+            [impact(area)],
+            [evaluation(proposal("elena", "advisor", ["jira:MKT-482"]))],
+            [priority("campaign_review")],
+        ),
+    )
+    assert card["areas"][0]["people"][0]["ended_duty"].startswith(
+        "An earlier responsibility ended on 2025-01-01"
+    )

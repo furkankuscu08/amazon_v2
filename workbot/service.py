@@ -8,12 +8,13 @@ import re
 import sqlite3
 import uuid
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
+from difflib import SequenceMatcher
 from threading import Lock
 
 from workbot.llm import ModelError
 from workbot.models import AreaEvaluation, Impact, Priority
 from workbot.plan import ROLE_ORDER
-from workbot.search import candidate_pool, directory_hints, keywords
+from workbot.search import candidate_pool, directory_hints, keywords, stems
 from workbot.storage import (
     current,
     current_and_visible,
@@ -398,6 +399,18 @@ def _safe_shared_question(db, text: str, card: dict) -> bool:
         return False
     shown = {person["person_id"] for area in card["areas"] for person in area["people"]}
     lowered = text.casefold()
+    # A shared question that repeats a card's "What to find out" adds nothing.
+    plain = " ".join(re.findall(r"\w+", lowered))
+    if any(
+        SequenceMatcher(
+            None,
+            plain,
+            " ".join(re.findall(r"\w+", area["consultation_need"].casefold())),
+        ).ratio()
+        >= 0.9
+        for area in card["areas"]
+    ):
+        return False
     return not any(
         row["name"].casefold() in lowered and row["id"] not in shown
         for row in db.execute("SELECT id, name FROM people")
@@ -477,8 +490,13 @@ def _ended_duty(db, person_id: str, topic: set[str]) -> dict | None:
             ORDER BY valid_to DESC, id""",
             (person_id,),
         )
-        if topic & set(keywords(row["scope"]))
-        and visible_directory_source(db, row["source_id"])
+        if visible_directory_source(db, row["source_id"])
+    ]
+    # Compared by stem, so "approval" meets "approving" and "change" meets "changes".
+    rows = [
+        row
+        for row, duty in zip(rows, stems([row["scope"] for row in rows]))
+        if topic & duty
     ]
     if any(current(row) for row in rows):
         return None
@@ -502,8 +520,9 @@ def audit_area(
     candidates = {p["person_id"]: p for p in pool["people"]}
     # The area's words for the ended-duty note: its label and need, plus its keyword
     # search intents, since a short need alone can miss the duty's words.
-    topic = set(keywords(f"{item['label']} {item['consultation_need']}"))
-    topic.update(term for text in intent_keywords or [] for term in keywords(text))
+    words = keywords(f"{item['label']} {item['consultation_need']}")
+    words += [term for text in intent_keywords or [] for term in keywords(text)]
+    topic = stems([" ".join(words)])[0]
     teams = {row["id"]: row["name"] for row in db.execute("SELECT * FROM org_units")}
     accepted = []
     # A direct proposal that names a person or source outside the pool, a person

@@ -247,6 +247,8 @@ def test_impact_and_priority_prompts_keep_questions_on_the_idea():
         "a shared word does not make a duty relevant",
         "ignore a hint that does not fit the idea",
         "A hint is never a reason to ask a question.",
+        "Use a hint only to decide which areas to include",
+        "not from a hint's wording",
     ):
         assert rule in impact
     priority = " ".join(PROMPTS["priority"].split())
