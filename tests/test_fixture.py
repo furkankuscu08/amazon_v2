@@ -255,11 +255,21 @@ def test_directory_hints_skip_ended_restricted_and_inactive_duties(tmp_path):
     assert {"org_unit_id": "finance", "current_duty": SPEND_DUTY} in (
         directory_hints(db, SPEND_DUTY)
     )
-    db.execute("UPDATE people SET active=0 WHERE id='tara'")
+    # A duty counts only for an active person still in that org unit.
+    db.execute("UPDATE people SET org_id='growth' WHERE id='tara'")
     assert "finance" not in {h["org_unit_id"] for h in directory_hints(db, SPEND_DUTY)}
-    # A hint names no person and no source.
-    names = {row["name"] for row in db.execute("SELECT name FROM people")}
-    text = json.dumps(directory_hints(db, POLICY_DUTY + " " + SPEND_DUTY))
-    assert "directory:" not in text
-    assert not any(name in text for name in names)
+    db.execute("UPDATE people SET org_id='finance', active=0 WHERE id='tara'")
+    assert "finance" not in {h["org_unit_id"] for h in directory_hints(db, SPEND_DUTY)}
+    assert "directory:" not in json.dumps(directory_hints(db, POLICY_DUTY))
     db.close()
+
+
+def test_directory_duties_name_no_person():
+    # Duty texts reach the impact call as hints with no person attached.
+    directory, _ = load_fixture()
+    for claim in directory["responsibilities"] + directory["team_remits"]:
+        for person in directory["people"]:
+            assert not re.search(rf"\b{_first_name(person)}\b", claim["scope"]), (
+                claim["id"],
+                person["id"],
+            )

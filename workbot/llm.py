@@ -38,9 +38,9 @@ cannot tell from the supplied org units must be mapping_unresolved with a reason
 no org_unit_id. Being unsure whether the idea affects an area, or missing an answer,
 is never a reason for mapping_unresolved: if the area may be affected, map it to the
 org unit that fits and let its review decide. Never omit an important
-area merely because mapping is uncertain. directory_hints lists current duties
-recorded in the company directory that share words with the idea; a shared word
-does not make a duty relevant. If a listed duty concerns something the idea would
+area merely because mapping is uncertain. The directory_hints field lists current duties
+recorded in the company directory that share words with the idea; a shared
+word does not make a duty relevant. If a listed duty concerns something the idea would
 change, include that org unit as an area; ignore a hint that does not fit the idea.
 A hint is never a reason to ask a question. Most ideas need no clarification. Ask one
 only when, without the answer, you could not tell which areas the idea touches; never
