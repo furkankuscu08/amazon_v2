@@ -223,9 +223,11 @@ def test_web_card_reload_and_source_visibility(web):
     assert "Related work" in card.text
     assert "Assigned to a Jira issue: ‘" in card.text
     assert "Full list: 1 consultation area and each person's evidence" in card.text
-    # The model's own summary is never shown.
+    # The model's own summary is never shown, nor its description of the area.
     assert "Model summary" not in card.text
     assert "pre-launch campaign review scope" not in card.text
+    assert "Campaign approval should be reviewed before launch." not in card.text
+    assert "Who reviews retail campaign launches before go-live." in card.text
     assert 'http-equiv="refresh"' not in card.text
     assert client.get(url).text == card.text
     assert client.get(url + "/sources/slack:restricted-plan").status_code == 404
@@ -241,6 +243,20 @@ def test_web_card_reload_and_source_visibility(web):
     del old_card["areas"][0]["people"][0]["primary_evidence_id"]
     # A card stored before summaries were dropped still holds one; it stays hidden.
     old_card["areas"][0]["people"][0]["contribution"] = "OLDER_MODEL_SUMMARY."
+    # The model's reason for leaving an area without a team is not shown either.
+    old_card["areas"].append(
+        {
+            "id": "legal",
+            "label": "Legal and Compliance",
+            "rationale": "UNRESOLVED_RATIONALE.",
+            "consultation_need": "Does the change need a policy update?",
+            "mapping": "mapping_unresolved",
+            "org_unit_id": None,
+            "mapping_reason": "UNRESOLVED_REASON.",
+            "status": "mapping_unresolved",
+            "people": [],
+        }
+    )
     db.execute(
         "UPDATE sessions SET card_json=? WHERE id=?",
         (json.dumps(old_card), sid),
@@ -250,9 +266,16 @@ def test_web_card_reload_and_source_visibility(web):
     previous = client.get(url)
     assert previous.status_code == 200
     # An older card without a primary source lists its evidence without links.
-    assert "Assignee of jira record" in previous.text
+    assert "Assigned to a Jira issue on " in previous.text
+    assert "Assignee of jira record" not in previous.text
     assert "/sources/" not in previous.text
     assert "OLDER_MODEL_SUMMARY" not in previous.text
+    assert "UNRESOLVED_" not in previous.text
+    assert (
+        "<strong>Team not identified.</strong> No one was reviewed for this area."
+        in previous.text
+    )
+    assert "Team not identified for:</strong> Legal and Compliance." in previous.text
     db = connect(web.path)
     db.execute(
         """INSERT INTO sessions
@@ -1029,7 +1052,7 @@ def test_follow_ups_are_answered_in_the_page_without_a_model(web):
     # Only the newest answer is read aloud on its own.
     assert second.count("data-speech-auto") == 1
     assert second.index("Prep me for Nina</p>") < second.index("data-speech-auto")
-    assert "With Nina Ellis, find out: Who reviews retail campaign launches" in second
+    assert "Ask Nina: Who reviews retail campaign launches" in second
     assert model.calls == calls
 
 

@@ -25,11 +25,17 @@ _OLD_SOURCE_ID = re.compile(r" \[[a-z]+:[^\]\s]+\]\.$")
 _RECORD_HEADLINE = re.compile(
     r"^(Author|Assignee|Contributor|Reporter) of an? (\w+) record: ‘(.+)’$"
 )
+# The audit's full-list line for a work record, rewritten the same way at render
+# time so stored cards read the same; a line that does not match is left alone.
+_RECORD_LINE = re.compile(
+    r"^(Author|Assignee|Contributor|Reporter|Mention) of (\w+) record on (\S+): ‘(.+)’$"
+)
 _DID = {
     "Author": "Wrote",
     "Assignee": "Assigned to",
     "Contributor": "Contributed to",
     "Reporter": "Reported",
+    "Mention": "Mentioned in",
 }
 _KIND = {
     "jira": "a Jira issue",
@@ -75,21 +81,45 @@ def _first_sentence(quote: str) -> str:
     return quote
 
 
+def _date(text: str) -> date | None:
+    try:
+        return date.fromisoformat(text)
+    except ValueError:
+        return None
+
+
+def _month(day: date) -> str:
+    return f"{_MONTHS[day.month - 1]} {day.year}"
+
+
+def _long_date(text: str) -> str:
+    """An ISO date as people write it, such as "30 June 2025"; anything else as is."""
+    day = _date(text)
+    return f"{day.day} {_month(day)}" if day else text
+
+
 def _ended_short(note: str | None) -> str | None:
+    """The plan's ended-duty line: role and month, as Alexa says it."""
     match = _ENDED.match(note or "")
-    return f"{match[2].capitalize()} role ended on {match[1]}." if match else note
+    ended = _date(match[1]) if match else None
+    if not ended:
+        return note
+    return f"{match[2].capitalize()} role ended in {_month(ended)}."
+
+
+def _ended_full(note: str | None) -> str | None:
+    """The full list's directory note, with its date written out."""
+    match = re.match(r"^(An earlier responsibility ended on )(\S+)(: .+)$", note or "")
+    return f"{match[1]}{_long_date(match[2])}{match[3]}" if match else note
 
 
 def ended_spoken(name: str, note: str | None) -> str | None:
     """The ended-duty note as a sentence to hear: role and month, not an ISO date."""
     match = _ENDED.match(note or "")
-    try:
-        ended = date.fromisoformat(match[1]) if match else None
-    except ValueError:
-        ended = None
+    ended = _date(match[1]) if match else None
     if not ended:
         return None
-    return f"{name}'s {match[2]} role ended in {_MONTHS[ended.month - 1]} {ended.year}."
+    return f"{name}'s {match[2]} role ended in {_month(ended)}."
 
 
 def _initials(name: str) -> str:
@@ -109,6 +139,10 @@ def _label(person: dict) -> str:
 
 def _line(text: str) -> str:
     cut = _OLD_SOURCE_ID.sub("", text)
+    match = _RECORD_LINE.match(cut)
+    if match and match[2] in _KIND:
+        relation, kind, when, quote = match.groups()
+        return f"{_DID[relation]} {_KIND[kind]} on {_long_date(when)}: ‘{quote}’"
     # A quoted record needs no full stop of its own after the closing quote.
     return cut if cut == text or cut.endswith("’") else cut + "."
 
@@ -225,6 +259,7 @@ def build_plan(card: dict) -> dict:
             **person,
             "ended_duty": notes.get(person["person_id"]),
             "ended_short": _ended_short(notes.get(person["person_id"])),
+            "ended_full": _ended_full(notes.get(person["person_id"])),
             "short": _short(person.get("headline")),
             "initials": _initials(person["name"]),
             "label": _label(person),

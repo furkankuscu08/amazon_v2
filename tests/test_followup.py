@@ -2,7 +2,7 @@
 
 import pytest
 
-from workbot.followup import carried, chips, reply, resolve
+from workbot.followup import _said, carried, chips, reply, resolve
 from workbot.plan import build_plan
 
 NOTE = "An earlier responsibility ended on 2025-06-30: approver."
@@ -101,24 +101,26 @@ def test_questions_are_matched_by_rules_to_a_kind_and_card_people(
 def test_why_names_the_role_evidence_ended_duty_and_other_areas():
     answer = reply("Why Omar?", PLAN, CARD)
     assert answer["text"] == (
-        "Omar Haddad is listed under Finance for related work. Wrote a document:"
-        " ‘Omar Haddad wrote this.’ Omar Haddad's approver role ended in June 2025."
+        "Omar Haddad is listed under Finance for related work. Omar wrote a"
+        " document: ‘Omar Haddad wrote this.’ Omar's approver role ended in June"
+        " 2025."
     )
     assert answer["source_id"] == "docs:omar"
     tara = reply("Why Tara?", PLAN, CARD)["text"]
     assert tara.endswith("Also listed under Growth Marketing.")
 
 
-def test_prep_says_what_to_find_out_in_every_area_and_the_shared_question():
+def test_prep_says_why_then_what_to_find_out_in_every_area_and_the_shared_question():
     answer = reply("Prep me for Tara", PLAN, CARD)
     assert answer["text"] == (
-        "With Tara Reed, find out: Which spend limits need a reviewer. Tara Reed is"
-        " also listed under Growth Marketing; the full list says what to find out"
-        " there. Across all areas: Who signs off on the new threshold?"
+        "Tara Reed wrote a document: ‘Tara Reed wrote this.’ Ask Tara: Which spend"
+        " limits need a reviewer. Tara is also listed under Growth Marketing; the"
+        " full list says what to find out there. Across all areas: Who signs off on"
+        " the new threshold?"
     )
-    assert answer["source_id"] is None
+    assert answer["source_id"] == "docs:tara"
     omar = reply("What should I ask Omar?", PLAN, CARD)["text"]
-    assert "Check first: Omar Haddad's approver role ended in June 2025." in omar
+    assert "Check first: Omar's approver role ended in June 2025." in omar
     # A shared question that repeats the card's own is not said twice.
     same = {**CARD, "shared_question": "Which spend limits need a reviewer"}
     text = reply("Prep me for Omar", build_plan(same), same)["text"]
@@ -161,10 +163,12 @@ def test_a_routing_contact_is_answered_without_a_single_source_link():
         "Helen Brooks is listed under Finance as someone who can route you."
     )
     assert answer["source_id"] is None
-    assert reply("Prep me for Helen", plan, card)["text"] == (
-        "With Helen Brooks, find out: Limits? Helen Brooks can point you to the"
-        " right person."
+    prep = reply("Prep me for Helen", plan, card)
+    assert prep["text"] == (
+        "No one was identified from the visible work. Helen Brooks manages Finance."
+        " Ask Helen: Limits? Helen can point you to the right person."
     )
+    assert prep["source_id"] is None
 
 
 def test_a_name_not_on_the_card_is_answered_alike_for_everyone():
@@ -278,3 +282,24 @@ def test_long_earlier_questions_are_dropped_before_the_form_gets_too_large():
     wide = ["“Why” ” ’ " * 20] * 5
     kept = carried([*wide, "Why Omar?"])
     assert kept[-1] == "Why Omar?" and len(kept) < 5
+
+
+@pytest.mark.parametrize(
+    ("line", "said"),
+    [
+        ("Wrote a document: ‘A.’", "Omar wrote a document: ‘A.’"),
+        ("Assigned to a Jira issue: ‘A.’", "Omar was assigned a Jira issue: ‘A.’"),
+        (
+            "Contributed to a GitHub pull request: ‘A.’",
+            "Omar contributed to a GitHub pull request: ‘A.’",
+        ),
+        ("Reported a Jira issue: ‘A.’", "Omar reported a Jira issue: ‘A.’"),
+        (
+            "Current reviewer — reviewing marketing spend requests.",
+            "Omar is the current reviewer — reviewing marketing spend requests.",
+        ),
+        ("Team remit: budgets", "Team remit: budgets."),
+    ],
+)
+def test_a_plan_line_is_said_with_the_person_as_its_subject(line, said):
+    assert _said(line, "Omar") == said

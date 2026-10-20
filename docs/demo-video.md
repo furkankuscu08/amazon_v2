@@ -9,7 +9,7 @@ Facts of the saved plan, as the hosted page shows them on 19 October 2026:
 - Idea: "Raise the approval threshold for marketing spend requests so small changes need no review." Alexa asked "Does raising the approval threshold involve any compliance or regulatory changes?" and Maya continued without answering.
 - "Alexa says": "Before you start, talk to two people. Start with Tara Reed and Omar Haddad in Finance. Omar Haddad's approver role ended in June 2025. Each card says what to find out. One area is still open. Ask me why anyone is listed, or what to ask them."
 - Finance card: Tara Reed, "Current responsibility", "Current reviewer — reviewing marketing spend requests above the approval threshold."; Omar Haddad, "Can advise", "Wrote a document: ‘This budget approval policy was written in 2024 and describes the spend thresholds in force at that time.’" with "Approver role ended on 2025-06-30."
-- "Still open": "Team not identified for: Legal and Compliance." This is a mapping gap, not a search that found no one: the impact model left the area without a team because Maya skipped its compliance question (its reason, shown in the full list: "Answer about compliance/regulatory changes is pending but questions exhausted"). The fixture's Legal and Compliance team exists, and other runs of this idea named someone there.
+- "Still open": "Team not identified for: Legal and Compliance." This is a mapping gap, not a search that found no one: the impact model left the area without a team because Maya skipped its compliance question (its reason, kept on the card but no longer shown: "Answer about compliance/regulatory changes is pending but questions exhausted"). The fixture's Legal and Compliance team exists, and other runs of this idea named someone there.
 - Suggestions: "Why Omar?", "Prep me for Tara", "What's still open?". "Why Omar?" answers: "Omar Haddad is listed under Finance as an advisor. Wrote a document: ‘This budget approval policy was written in 2024 and describes the spend thresholds in force at that time.’ Omar Haddad's approver role ended in June 2025." "What's still open?" answers: "The team was not identified for Legal and Compliance."
 
 ## Decisions so far
@@ -19,7 +19,7 @@ Facts of the saved plan, as the hosted page shows them on 19 October 2026:
 - The story is the contrast between who handles the decision today (Tara) and who used to (Omar), told on the saved plan; a caption marks it as a plan saved from an earlier run.
 - The live segment uses another example idea, so the home page does not show the same idea twice; stablecoin payments is the default.
 - Ideas whose stored cards showed a wrong direct contact (pickup lockers, campaign AI) stay out of the video.
-- Claims stay within what the code does: code checks record visibility and the person's link to it, not whether a record answers the area's question; the card shows no model-written summary of a person, and code assembles every sentence Alexa says in the plan summary and follow-up answers; the only model-written parts are area names, what to find out, and the shared question, all shown on the page.
+- Claims stay within what the code does: code checks record visibility and the person's link to it, not whether a record answers the area's question; the card shows no model-written summary of a person, and code assembles every sentence Alexa says in the plan summary and follow-up answers; the only model-written text on the page is the area names, what to find out, the shared question, and a clarification question.
 
 ## Timeline
 
@@ -40,7 +40,7 @@ Facts of the saved plan, as the hosted page shows them on 19 October 2026:
 
 ## Before recording
 
-- Open the saved plan on the hosted demo and check it still says what "Facts of the saved plan" lists, and that its full list still gives the reason quoted there for Legal and Compliance (if it reads worse, drop the 1:08–1:18 row); a plan stops being shown if its evidence changes, so if it is gone or different, rewrite 0:10–1:16 and the Devpost text together.
+- Open the saved plan on the hosted demo and check it still says what "Facts of the saved plan" lists, and that its full list still shows Legal and Compliance as "Team not identified" (if not, drop the 1:08–1:18 row); a plan stops being shown if its evidence changes, so if it is gone or different, rewrite 0:10–1:16 and the Devpost text together.
 - The live segment needs a separately approved live run (and budget) on the hosted demo; record it uncut, speed up only the waiting page, and fill in [DURATION] from that run. It adds an idea to the shared home page: ask the user whether to keep it afterwards.
 - Quote every question and "Alexa says" text in captions exactly as the app says them.
 - 1920×1080, browser zoom 125%.
