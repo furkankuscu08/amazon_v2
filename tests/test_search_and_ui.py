@@ -1181,7 +1181,8 @@ def test_follow_up_speech_reads_only_the_answer_built_from_the_plan(web, monkeyp
 def test_dark_theme_redefines_every_color_token():
     # The dark palette follows the device setting; a color written outside the
     # two token blocks, or a token left out of one, would show in one theme only.
-    css = Path("workbot/templates/base.html").read_text().split("<style>")[1]
+    base = Path(__file__).parent.parent / "workbot/templates/base.html"
+    css = base.read_text("utf-8").split("<style>")[1]
     light = re.match(r"\s*:root\{(.*?)\}\n", css)
     dark = re.search(r"@media \(prefers-color-scheme:dark\)\{:root\{(.*?)\}\}", css)
     assert light and dark
@@ -1192,4 +1193,5 @@ def test_dark_theme_redefines_every_color_token():
 
     assert tokens(light.group(1)) == tokens(dark.group(1))
     rest = css.replace(light.group(0), "").replace(dark.group(0), "")
-    assert not re.search(r"#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(", rest)
+    literal = r"#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(|(?<![\w-])(?:white|black)(?![\w-])"
+    assert not re.search(literal, rest)
