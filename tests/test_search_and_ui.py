@@ -243,6 +243,9 @@ def test_web_card_reload_and_source_visibility(web):
     del old_card["areas"][0]["people"][0]["primary_evidence_id"]
     # A card stored before summaries were dropped still holds one; it stays hidden.
     old_card["areas"][0]["people"][0]["contribution"] = "OLDER_MODEL_SUMMARY."
+    old_card["areas"][0]["people"][0]["ended_duty"] = (
+        "An earlier responsibility ended on 2025-06-30: approver — approving spend."
+    )
     # The model's reason for leaving an area without a team is not shown either.
     old_card["areas"].append(
         {
@@ -271,6 +274,13 @@ def test_web_card_reload_and_source_visibility(web):
     assert "/sources/" not in previous.text
     assert "OLDER_MODEL_SUMMARY" not in previous.text
     assert "UNRESOLVED_" not in previous.text
+    # The plan says the month, as Alexa does; the full list writes the date out.
+    assert '<p class="ended">Approver role ended in June 2025.</p>' in previous.text
+    assert (
+        "<strong>Directory note:</strong> An earlier responsibility ended on"
+        " 30 June 2025: approver — approving spend.</p>" in previous.text
+    )
+    assert "2025-06-30" not in previous.text
     assert (
         "<strong>Team not identified.</strong> No one was reviewed for this area."
         in previous.text

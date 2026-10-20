@@ -63,7 +63,9 @@ _SUBJECT = (
     (re.compile(r"^Assigned to "), "{} was assigned "),
     (re.compile(r"^Contributed to "), "{} contributed to "),
     (re.compile(r"^Reported "), "{} reported "),
-    (re.compile(r"^Current (\w+) — "), "{} is the current \\1 — "),
+    (re.compile(r"^Current (\w+) — "), "{} is a current \\1 — "),
+    # A routing contact's line opens with the review's outcome, then the manager.
+    (re.compile(r"^(.*?)Manages the team\.(?= |$)"), "\\1{} manages the team."),
 )
 
 
@@ -202,9 +204,7 @@ def _why(
     return parts, _linked(entry)
 
 
-def _prep(
-    entry: dict, card: dict, people: dict[str, dict]
-) -> tuple[list[str], str | None]:
+def _prep(entry: dict, card: dict, people: dict[str, dict]) -> list[str]:
     """Why this person is on the plan, then what to ask them: the plan line, the
     card's "What to find out", any ended duty, and the shared question."""
     name, call = entry["name"], _call(entry, people)
@@ -231,7 +231,9 @@ def _prep(
     shared = (card.get("shared_question") or "").strip()
     if shared and shared != (need or "").strip():
         parts.append(f"Across all areas: {_sentence(shared)}")
-    return parts, _linked(entry)
+    # No source link: placed after the whole answer, it would seem to back the
+    # card's question and the shared one too. "Why" links the line on its own.
+    return parts
 
 
 def _others(plan: dict, card: dict) -> list[str]:
@@ -310,7 +312,7 @@ def reply(question: str, plan: dict, card: dict) -> dict:
     if kind == "why":
         parts, source_id = _why(people[named[0]], card, people)
     elif kind == "prep":
-        parts, source_id = _prep(people[named[0]], card, people)
+        parts = _prep(people[named[0]], card, people)
     elif kind == "others":
         parts = _others(plan, card)
     elif kind == "open":

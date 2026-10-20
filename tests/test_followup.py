@@ -35,8 +35,10 @@ HELEN = person(
     primary_kind="manager",
     evidence_ids=["directory:finance-manager", "directory:finance-remit"],
     primary_evidence_id="directory:finance-manager",
-    headline=None,
-    why=["No one was identified from the visible work. Helen Brooks manages Finance."],
+    # As the audit writes it: the review's outcome, the manager, then the remit.
+    headline="No one was identified from the visible work on this. Manages the team."
+    " Team remit: Budget planning.",
+    why=["Currently manages the team.", "Team remit: Budget planning."],
 )
 CARD = {
     "areas": [
@@ -118,7 +120,8 @@ def test_prep_says_why_then_what_to_find_out_in_every_area_and_the_shared_questi
         " full list says what to find out there. Across all areas: Who signs off on"
         " the new threshold?"
     )
-    assert answer["source_id"] == "docs:tara"
+    # Linked after the whole answer, a source would seem to back the questions.
+    assert answer["source_id"] is None
     omar = reply("What should I ask Omar?", PLAN, CARD)["text"]
     assert "Check first: Omar's approver role ended in June 2025." in omar
     # A shared question that repeats the card's own is not said twice.
@@ -165,8 +168,9 @@ def test_a_routing_contact_is_answered_without_a_single_source_link():
     assert answer["source_id"] is None
     prep = reply("Prep me for Helen", plan, card)
     assert prep["text"] == (
-        "No one was identified from the visible work. Helen Brooks manages Finance."
-        " Ask Helen: Limits? Helen can point you to the right person."
+        "No one was identified from the visible work on this. Helen Brooks manages"
+        " the team. Team remit: Budget planning. Ask Helen: Limits? Helen can point"
+        " you to the right person."
     )
     assert prep["source_id"] is None
 
@@ -296,7 +300,11 @@ def test_long_earlier_questions_are_dropped_before_the_form_gets_too_large():
         ("Reported a Jira issue: ‘A.’", "Omar reported a Jira issue: ‘A.’"),
         (
             "Current reviewer — reviewing marketing spend requests.",
-            "Omar is the current reviewer — reviewing marketing spend requests.",
+            "Omar is a current reviewer — reviewing marketing spend requests.",
+        ),
+        (
+            "No one was identified from the visible work on this. Manages the team.",
+            "No one was identified from the visible work on this. Omar manages the team.",
         ),
         ("Team remit: budgets", "Team remit: budgets."),
     ],
