@@ -1,6 +1,6 @@
 # Demo video script (draft)
 
-**Status: working draft, not final.** Written on 14 October 2026, restructured on 19 October 2026, and rewritten on 20 October 2026 for the new saved plan, two rounds of the judges' reviews, and an opening on three problems at company scale; the user will revisit it. Any line, timing, or decision below may change. Claude will produce the video; recording and editing come after this script is agreed.
+**Status: working draft, not final.** Written on 14 October 2026, restructured on 19 October 2026, and rewritten on 20 October 2026 for the new saved plan, two rounds of the judges' reviews, and an opening on three problems at company scale; the user will revisit it. Any line, timing, or decision below may change. Recording and editing come after this script is agreed.
 
 The story is told on the **saved marketing-spend plan** on the hosted demo's home page (session `6f661e79…`, made with Amazon Nova 2 Lite on 20 October 2026, the first attempt after the impact-prompt change; it was kept because it passed the answer key, asked no question, and showed Omar with the ended-role note, which 7 of 10 measured runs did), so the video says word for word what the Devpost text quotes and what a judge sees on opening that plan. A **separate live run** of another idea then shows the app working end to end. People, questions, and wording vary from run to run, so the live segment is written after it is recorded, and nothing from it is presented as the saved plan or the other way round.
 
