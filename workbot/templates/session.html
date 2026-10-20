@@ -37,7 +37,7 @@
 {% if count %}<ol class="cards">{% for group in plan.groups %}<li class="card"><div class="ask"><h2>{{ group.area }}</h2>{% if group.need %}<span class="label">What to find out</span><p>{{ group.need }}</p>{% endif %}</div>
 <ul class="ppl">{% for person in group.people %}<li class="p"><span class="av" aria-hidden="true">{{ person.initials }}</span><div class="head"><h3>{{ person.name }}{% if person.team and person.team != group.area %}<span class="team">{{ person.team }}</span>{% endif %}</h3><span class="badge {{ person.role }}">{{ person.label }}</span></div>
 <p class="ev">{{ person.short or person.evidence[0].text }}{% if person.role != 'routing_contact' and person.primary_evidence_id %} <a href="/sessions/{{ session.id }}/sources/{{ person.primary_evidence_id | urlencode }}" aria-label="Source for {{ person.name }}">Source</a>{% endif %}</p>
-{% if person.ended_short %}<p class="ended">{{ person.ended_short }}</p>{% endif %}</li>{% endfor %}</ul></li>{% endfor %}</ol>{% endif %}
+{% if person.ended_short %}<p class="ended">{{ person.ended_short }}{% if person.ended_source %} <a href="/sessions/{{ session.id }}/sources/{{ person.ended_source | urlencode }}" aria-label="Source for {{ person.name }}'s ended role">Source</a>{% endif %}</p>{% endif %}</li>{% endfor %}</ul></li>{% endfor %}</ol>{% endif %}
 {% if plan.more %}<p class="small muted">Also in the full list: {% for item in plan.more %}{{ item.area }}{% if item.names %} ({{ item.names | join(', ') }}){% endif %}{{ '; ' if not loop.last }}{% endfor %}.</p>{% endif %}
 {% if card.shared_question %}<section class="shared"><h2 class="label">Across all areas</h2><p>{{ card.shared_question }}</p></section>{% endif %}
 {% if plan.gaps.no_contact or plan.gaps.team_unresolved or plan.gaps.review_incomplete %}<section class="warning stack tight"><h2>Still open</h2><ul class="plain stack tight">
@@ -57,7 +57,7 @@
 {% for person in listed %}{% if elsewhere[person.person_id] %}<p class="small muted">Also relevant: {{ person.name }} — see {{ elsewhere[person.person_id] }}.</p>
 {% else %}{% set entry = plan.people[person.person_id] %}<section class="who"><div class="head"><h4>{{ person.name }}</h4><span class="badge {{ person.role }}">{{ entry.label }}</span></div>
 <ul>{% for line in entry.evidence %}<li>{{ line.text }}{% if line.source_id %} <a href="/sessions/{{ session.id }}/sources/{{ line.source_id | urlencode }}">Source</a>{% endif %}</li>{% endfor %}</ul>
-{% if entry.ended_duty %}<p class="ended"><strong>Directory note:</strong> {{ entry.ended_full }}</p>{% endif %}</section>{% endif %}{% endfor %}
+{% if entry.ended_duty %}<p class="ended"><strong>Directory note:</strong> {{ entry.ended_full }}{% if entry.ended_source %} <a href="/sessions/{{ session.id }}/sources/{{ entry.ended_source | urlencode }}">Source</a>{% endif %}</p>{% endif %}</section>{% endif %}{% endfor %}
 </div></details>{% endfor %}
 <p class="caution">The people shown were proposed by the model, and their cited links were checked against this synthetic directory. Whether the cited work answers an area's question, and who owns the new idea, has not been established.</p></div></details>
 {% endif %}

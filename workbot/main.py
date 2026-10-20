@@ -592,11 +592,12 @@ def show_source(request: Request, sid: str, source_id: str):
             raise HTTPException(
                 410, "This plan is out of date, so its sources are no longer shown."
             )
+        # A person's cited sources, and the directory source of an ended-duty note.
         cited = {
             source_id
             for area in card["areas"]
             for person in area["people"]
-            for source_id in person["evidence_ids"]
+            for source_id in [*person["evidence_ids"], *person.get("context_ids", [])]
         }
         if source_id not in cited:
             raise HTTPException(404, "This source is not available.")
