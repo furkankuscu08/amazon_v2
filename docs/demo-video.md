@@ -53,6 +53,6 @@ Facts of the two other saved plans used, as the hosted page shows them on 20 Oct
 - Film each suggestion before pressing it, so the chips on screen are the ones the plan offers.
 - The live segment needs a separately approved live run (and budget) on the hosted demo; record it uncut, speed up only the waiting page, never the app's voice, and fill in [DURATION] from that run. It adds an idea to the shared home page: ask the user whether to keep it afterwards.
 - Quote every question and "Alexa says" text in captions exactly as the app says them.
-- 1920×1080, browser zoom 125%.
+- 1920×1080, browser zoom 125%, light mode (the app follows the device setting, and the gallery images are light).
 - No music unless it is licensed for this use, and no Alexa, Amazon, or other logos: the Rules forbid third-party trademarks and copyrighted material without permission, and the organizers cannot grant use of the Alexa+ logo ([#45450](https://amazonappdev2026.devpost.com/forum_topics/45450-change-of-type-of-project-and-logo-permission)).
 - Upload to YouTube as public at least a day before the deadline, since the organizers warn that uploads can take much longer than expected; check that it plays when signed out and runs under three minutes. After the deadline the video stays unchanged until the winners are announced.

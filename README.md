@@ -24,7 +24,7 @@ For example, Maya asks: *"Raise the approval threshold for marketing spend reque
 
 | Layer | Choice |
 | --- | --- |
-| Web | FastAPI + Jinja2 templating, served by **uvicorn** (`workbot.main:app`) |
+| Web | FastAPI + Jinja2 templating, served by **uvicorn** (`workbot.main:app`); one inline stylesheet whose light and dark mode follow the device setting |
 | LLM | Amazon Bedrock — Amazon Nova 2 Lite through the `global.amazon.nova-2-lite-v1:0` cross-Region inference profile, Converse API with extended thinking at low effort for all three tasks. Fallback: OpenRouter — `z-ai/glm-5.3-flash` (area low; impact/priority high) on the tested `open-inference/fp4` endpoint |
 | Vectors | Local Qdrant (Docker, REST 6333, bound to localhost) |
 | Speech | Amazon Polly — the plan summary, the clarification question, and follow-up answers read aloud as they arrive or on **Listen**, standard voice `Joanna` in the profile's Region |
