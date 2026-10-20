@@ -2,7 +2,7 @@
 
 Friction met while moving WorkBot's model calls to Amazon Bedrock during the hackathon, recorded as it happened. Each entry gives the task, the steps, what was expected and what happened, a severity, the workaround, and a suggestion. Severity: **High** blocks the task until worked around; **Medium** costs real time or risks a wrong setup; **Low** is a papercut. Error texts are quoted as shown; account IDs are left out.
 
-Setup at the time: a new account created through AWS Settings (projects owned by an AWS Builder ID, signed in with Google), AWS Free plan, project Region `eu-north-1` (Stockholm), AWS CLI 2.38.1, boto3/botocore 1.43.114, model Amazon Nova 2 Lite. All dates are 18 October 2026.
+Setup at the time: a new account created through AWS Settings (projects owned by an AWS Builder ID, signed in with Google), AWS Free plan, project Region `eu-north-1` (Stockholm), AWS CLI 2.38.1, boto3/botocore 1.43.114, model Amazon Nova 2 Lite. Entries 1–19 are from 18 October 2026, entry 20 from 20 October 2026.
 
 ## 1. The console search for Bedrock leads to a retired product
 
@@ -198,3 +198,13 @@ Setup at the time: a new account created through AWS Settings (projects owned by
 - **Severity:** Medium (each error was clear only after reading the SDK source).
 - **Workaround:** `await AsyncBedrockRuntimeConfig.resolve(..., transport=AWSCRTHTTPClient())` with `smithy-http[awscrt]` in the requirements. After that, a 3.6-second synthetic sentence came back word for word: in 5.6 s when sent in real time, and in 1.2 s when sent at once.
 - **Suggestion:** make the duplex-capable transport the default for clients with bidirectional operations, say in the error which `awscrt` version is required, and update the samples to the current SDK.
+
+## 20. Nova 2 Lite copies context text into its own fields, even when told not to
+
+- **Task:** give the first model call up to three "directory hints" (current duties from the synthetic company directory that share words with the idea) so it chooses the right areas, without the hint's wording ending up in the area's rationale, which the next call reads.
+- **Steps:** Converse with one forced tool on `global.amazon.nova-2-lite-v1:0`, `eu-north-1`, low reasoning effort; 10 runs of the same idea each time. A second set of 10 runs added this prompt sentence: "Use a hint only to decide which areas to include; write each area's rationale and consultation_need from the idea itself, not from a hint's wording." A final set of 10 kept it.
+- **Expected:** a rationale written from the idea, at least once the prompt asked for it.
+- **Actual:** in all 30 runs, the Finance rationale repeated the hint, for example "currently reviews marketing spend requests above the approval threshold" for the hint "Reviewing marketing spend requests above the approval threshold". The next call then tended to pick only the person that duty belongs to: a former approver appeared in 7 of 10 plans before the hints, 1 of 10 with them, and 4 and 3 of 10 with the sentence added.
+- **Severity:** Medium (a measured quality drop that prompt wording did not fix).
+- **Workaround:** none in the prompt. We kept the hints, which brought a missing compliance area from 1 to 10 of 10 runs, and report both numbers.
+- **Suggestion:** say in the Nova prompting guide how to keep reference material out of generated fields, with an example, or honour a per-field description such as "do not copy from the input" in tool schemas.
