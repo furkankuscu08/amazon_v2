@@ -525,6 +525,15 @@ def test_ended_duty_note_links_its_directory_source(web):
     assert "Elena Park — operator in" in page.text
     assert "to 2025-01-01." in page.text
     assert "directory:elena-old" not in plan + full_list + page.text
+    # Once the note's source is no longer visible, the plan and its sources go.
+    db = connect(web.path)
+    db.execute(
+        "UPDATE directory_sources SET visibility='restricted'"
+        " WHERE id='directory:elena-old'"
+    )
+    db.commit()
+    db.close()
+    assert client.get(url + "/sources/directory:elena-old").status_code == 410
 
 
 def test_routing_line_in_the_plan_is_not_linked_to_a_work_record(web):

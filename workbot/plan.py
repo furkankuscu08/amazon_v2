@@ -46,7 +46,9 @@ _KIND = {
 # A sentence ends at . ! or ? before a capital letter or the end of the excerpt,
 # unless the word before it is an abbreviation such as "e.g.", "Dr." or "U.S.".
 _SENTENCE_END = re.compile(r"[.!?](?=\s+[A-Z‘“]|$)")
-_ABBREVIATION = re.compile(r"(?:\b(?:[A-Za-z]\.){2,}|\b(?:etc|vs|Dr|Mr|Mrs|Ms)\.)$")
+_ABBREVIATION = re.compile(
+    r"(?:\b(?:[A-Za-z]\.){2,}|\b[A-Z]\.|\b(?:etc|vs|Dr|Mr|Mrs|Ms|No|Inc|approx)\.)$"
+)
 _ENDED = re.compile(r"^An earlier responsibility ended on (\S+): (.+?)(?: — .*)?\.$")
 # Spelled out here, not by the locale, so the spoken date never depends on the server.
 _MONTHS = (
@@ -82,7 +84,8 @@ def _first_sentence(quote: str) -> str:
 
 
 def _whole(quote: str) -> str:
-    """A cut excerpt up to its last whole sentence; without one it stays as stored."""
+    """A cut excerpt up to its last whole sentence, still marked as cut; without
+    one it stays as stored."""
     if not quote.endswith(" …"):
         return quote
     ends = [
@@ -90,7 +93,7 @@ def _whole(quote: str) -> str:
         for end in _SENTENCE_END.finditer(quote[:-2])
         if not _ABBREVIATION.search(quote[: end.end()])
     ]
-    return quote[: ends[-1]] if ends else quote
+    return f"{quote[: ends[-1]]} …" if ends else quote
 
 
 def _date(text: str) -> date | None:

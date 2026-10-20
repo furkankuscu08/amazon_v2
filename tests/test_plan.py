@@ -488,9 +488,12 @@ def test_full_list_lines_are_written_in_plain_words_with_dates_written_out():
         " 2026-08-10: ‘Hi.’",
         # A cut excerpt ends at its last whole sentence, not mid-sentence.
         "Author of document record on 2024-11-30: ‘Policy. Readers should treat it"
-        " as a …’": "Wrote a document on 30 November 2024: ‘Policy.’",
-        "Author of document record on 2024-11-30: ‘Use e.g. this. Then a …’": "Wrote"
-        " a document on 30 November 2024: ‘Use e.g. this.’",
+        " as a …’": "Wrote a document on 30 November 2024: ‘Policy. …’",
+        "Author of document record on 2024-11-30: ‘Policy. …’": "Wrote a document"
+        " on 30 November 2024: ‘Policy. …’",
+        # A period after an abbreviation or an initial does not end a sentence.
+        "Author of document record on 2024-11-30: ‘Spoke to Dr. Lee. Then a …’": "Wrote a document on 30 November 2024: ‘Spoke to Dr. Lee. …’",
+        "Author of document record on 2024-11-30: ‘Done. Ask J. Smith about …’": "Wrote a document on 30 November 2024: ‘Done. …’",
         # Without a whole sentence, or an abbreviation alone, it stays as stored.
         "Author of document record on 2024-11-30: ‘Spend per …’": "Wrote a document"
         " on 30 November 2024: ‘Spend per …’",

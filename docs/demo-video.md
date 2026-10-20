@@ -43,7 +43,7 @@ Facts of the saved plan, as the hosted page shows them on 20 October 2026:
 
 ## Before recording
 
-- Open the saved plan on the hosted demo and check it still says what "Facts of the saved plan" lists; a plan stops being shown if its evidence changes, so if it is gone or different, rewrite 0:00–1:40 and the Devpost text together.
+- Open the saved plan on the hosted demo and check it still says what "Facts of the saved plan" lists, including the **Source** link on Omar's ended-role note (it needs the hosted demo to run the version that added it); a plan stops being shown if its evidence changes, so if it is gone or different, rewrite 0:00–1:40 and the Devpost text together.
 - Film each suggestion before pressing it, so the chips on screen are the ones the plan offers.
 - The live segment needs a separately approved live run (and budget) on the hosted demo; record it uncut, speed up only the waiting page, never the app's voice, and fill in [DURATION] from that run. It adds an idea to the shared home page: ask the user whether to keep it afterwards.
 - Quote every question and "Alexa says" text in captions exactly as the app says them.
