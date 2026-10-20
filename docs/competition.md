@@ -1,6 +1,6 @@
 # Build, Ship, Shape: Amazon Developer Hackathon
 
-Working brief for the **Alexa+ track**, including both the real Agent Skill/MCP route and the simulated-web-experience route. Both mini-challenges remain possible. Sources checked **2026-09-26**; Rules, FAQs, Updates, and homepage rechecked **2026-10-14** (see [changes found](#changes-found-on-2026-10-14)). Rules and FAQs rechecked **2026-10-18** without changes, and organizer replies in the Discussions read the same day (see [organizer answers](#organizer-answers-read-on-2026-10-18)). Recheck live pages before making a submission because the Rules can change (§11.5).
+Working brief for the **Alexa+ track**, including both the real Agent Skill/MCP route and the simulated-web-experience route. Both mini-challenges remain possible. Sources checked **2026-09-26**; Rules, FAQs, Updates, and homepage rechecked **2026-10-14** (see [changes found](#changes-found-on-2026-10-14)). Rules and FAQs rechecked **2026-10-18** without changes, and organizer replies in the Discussions read the same day (see [organizer answers](#organizer-answers-read-on-2026-10-18)). Rules, FAQs, Updates, and Discussions read again **2026-10-20**; the Rules were unchanged (see [organizer updates](#organizer-updates-read-on-2026-10-20)). Recheck live pages before making a submission because the Rules can change (§11.5).
 
 ## Source precedence
 
@@ -18,6 +18,7 @@ If a Rules term is ambiguous, request clarification **in writing before the dead
 | 19 Oct 2026, 9:00 am | Office Hours #2 with the Amazon team (registration link in the [update](https://amazonappdev2026.devpost.com/updates/46771-office-hours-schedule)) | Updates |
 | ~~21 Oct 2026, 12:00 pm~~ | ~~Request optional $150 AWS Promotional Credits~~: **closed**; the Rules' 7 Oct update says credit codes ran out and no more requests are accepted | Rules §4; [details](competition/mini-challenges.md#aws-credits) |
 | **23 Oct 2026, 12:00 pm** | Devpost submission closes | Rules §1 |
+| 23 Oct 2026, 12:00 pm until winners are announced | Submissions are locked; do not edit the repository, video, or any project materials | Updates ([Final stretch](https://amazonappdev2026.devpost.com/updates/46539-final-stretch)) |
 | **9–20 Nov 2026** (noon to noon) | Judging; keep project freely available through the end | Rules §§1, 4 |
 | On or around **3 Dec 2026, 12:00 pm** | Winners announced | Rules §1 |
 
@@ -51,5 +52,15 @@ The live Rules and FAQs match the files in `competition/`. Replies by the Amazon
 - **Bedrock on new AWS accounts:** several entrants report blocked or suspended Bedrock access, and the organizers have no escalation path; Claude Code running on Bedrock counts for AWS Builder ([details](competition/mini-challenges.md#aws-builder)).
 - **Open Source:** the primary-track project's own repository does not count ([details](competition/mini-challenges.md#open-source)).
 - **Friction log:** a link in the description is enough; keeping it in the repository is easier for judges ([checklist](competition/submission.md#optional-but-useful)).
+
+## Organizer updates read on 2026-10-20
+
+The live Rules still carry only the 16 September repository note and the 7 October credits note. New or newly noted since 2026-10-18, all informative:
+
+- **Locked after the deadline** ([Final stretch](https://amazonappdev2026.devpost.com/updates/46539-final-stretch)): "Please do not edit your code repo, video, or any project materials from the deadline until after the winner announcement, even minor changes could affect your eligibility." For WorkBot that means no pushes or merges, no redeploys, and no changes to the hosted demo's settings or saved plans in that window, while the demo keeps running. The same update says to upload the video early, because "uploads can take much longer than expected", and asks that it be public, under three minutes, and show the app actually working, with the license visible at the top of the repository.
+- **Judge-only testing link** ([#45609](https://amazonappdev2026.devpost.com/forum_topics/45609-does-the-optional-project-testing-link-can-be-accessible-only-by-hackathon-judges)): the form's "[Optional] Project Testing Link" under Additional info is visible only to judges.
+- **Alexa+ add-on design guide** (the guide [#45058](https://amazonappdev2026.devpost.com/forum_topics/45058-clarification-on-simulated-alexa-web-experience-requirements) points to; [principles](https://developer.amazon.com/docs/alexaplus/add-ons/mcp-addon-design-guide-overview.html), [visual foundations](https://developer.amazon.com/docs/alexaplus/add-ons/mcp-addon-visual-foundations)): "Show only the information the customer needs to make the next decision", short declarative copy readable across a room, light and dark mode both, and brand colors for key actions rather than large backgrounds. Echo Show 8 and 15 render at 1280×800 from a 768×480 design canvas. The guide is for real add-ons, so the simulated route need not follow it, but it is the best public reference for a UI that "could reasonably work through an Echo device" ([#45567](https://amazonappdev2026.devpost.com/forum_topics/45567-questions-about-the-rules)). WorkBot follows it only in part: it has a single light theme.
+
+No new reply changes the Alexa+ routes or the submission requirements.
 
 Questions: [Devpost discussions](https://amazonappdev2026.devpost.com/forum_topics), `janet@devpost.com` (homepage), or `support@devpost.com` (Rules). [Discord](https://discord.gg/devpost), `#amazon-developer-checkin`, is for informal help; use a written request for a Rules ambiguity.
