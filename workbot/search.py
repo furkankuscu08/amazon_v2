@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+import sqlite3
 import uuid
 from collections import defaultdict
 from threading import Lock
@@ -49,6 +50,10 @@ _stop = {
     "process",
     "review",
 }
+# Process words most ideas and duties share; a match on them says nothing about an area.
+_generic = {"change", "new", "small", "request", "need", "use", "make", "work", "team"}
+HINT_MIN_SHARED = 2
+HINT_TEXT_MAX = 160
 
 
 def embed(text: str) -> list[float]:
@@ -116,6 +121,57 @@ def keywords(text: str) -> list[str]:
             if term not in _stop
         )
     )[:12]
+
+
+def _stems(texts: list[str]) -> list[set[str]]:
+    """Porter stems of each text, tokenized as the visible_fts index tokenizes."""
+    mem = sqlite3.connect(":memory:")
+    try:
+        mem.execute(
+            "CREATE VIRTUAL TABLE t USING fts5(text, tokenize='porter unicode61')"
+        )
+        mem.execute("CREATE VIRTUAL TABLE v USING fts5vocab(t, 'instance')")
+        mem.executemany(
+            "INSERT INTO t(rowid, text) VALUES (?, ?)", enumerate(texts, start=1)
+        )
+        stems = [set() for _ in texts]
+        for term, doc in mem.execute("SELECT term, doc FROM v"):
+            stems[doc - 1].add(term)
+        return stems
+    finally:
+        mem.close()
+
+
+def directory_hints(db, text: str, limit: int = 3) -> list[dict]:
+    """Current, visible directory duties of active people that share words with text.
+
+    One duty per org unit (the one sharing the most stems), at most `limit` units.
+    A hint carries only the org unit and the duty text: no person, no source ID.
+    """
+    rows = [
+        dict(row)
+        for row in db.execute(
+            "SELECT r.* FROM responsibilities r JOIN people p ON p.id=r.person_id "
+            "WHERE p.active=1 AND p.org_id=r.org_id ORDER BY r.org_id, r.id"
+        )
+        if current_and_visible(db, row)
+    ]
+    if not rows:
+        return []
+    ignored, idea, *duties = _stems(
+        [" ".join(_stop | _generic), text, *(row["scope"] for row in rows)]
+    )
+    idea = {stem for stem in idea if len(stem) >= 3} - ignored
+    best: dict[str, tuple[int, str]] = {}
+    for row, stems in zip(rows, duties):
+        shared = len(idea & stems)
+        if shared >= HINT_MIN_SHARED and shared > best.get(row["org_id"], (0, ""))[0]:
+            best[row["org_id"]] = (shared, row["scope"])
+    ranked = sorted(best.items(), key=lambda item: (-item[1][0], item[0]))[:limit]
+    return [
+        {"org_unit_id": org, "current_duty": duty[:HINT_TEXT_MAX]}
+        for org, (_, duty) in ranked
+    ]
 
 
 class SetupError(RuntimeError):

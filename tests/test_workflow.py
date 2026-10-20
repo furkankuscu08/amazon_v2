@@ -1356,3 +1356,22 @@ def test_advisor_needs_a_usable_tie_on_the_primary_source(db):
     # and a rejected advisor leaves a completed review, not an incomplete one.
     assert people("slack:mention-55") == ("not_found", [])
     assert people("jira:MKT-482") == ("people", ["elena"])
+
+
+def test_impact_call_gets_directory_hints_from_the_idea_and_answers(db):
+    question = Impact.model_validate(
+        {"question": "Which campaigns would this cover?", "areas": []}
+    )
+    model = StubModel(
+        [question, impact(AREA)], [evaluation()], [priority("campaign_review")]
+    )
+    sid, _ = card_for(db, model)
+    answer_question(db, sid, "Only campaign launch approvals.", model, StubSearcher())
+    first, second = [payload for task, payload in model.calls if task == "impact"]
+    # The idea alone shares one word with a duty; the answer adds the rest. The
+    # ended and restricted growth duties never appear.
+    assert first["directory_hints"] == []
+    assert second["directory_hints"] == [
+        {"org_unit_id": "growth", "current_duty": "Reviewing campaign launch approvals"}
+    ]
+    assert valid_card(db, load_session(db, sid)) is not None

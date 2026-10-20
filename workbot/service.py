@@ -13,7 +13,7 @@ from threading import Lock
 from workbot.llm import ModelError
 from workbot.models import AreaEvaluation, Impact, Priority
 from workbot.plan import ROLE_ORDER
-from workbot.search import candidate_pool, keywords
+from workbot.search import candidate_pool, directory_hints, keywords
 from workbot.storage import (
     current,
     current_and_visible,
@@ -196,6 +196,12 @@ def _ask_impact(db, sid: str, session: dict, answers: list, model) -> Impact | N
         "idea": session["sentence"],
         "answers": answers,
         "org_units": inventory,
+        "directory_hints": directory_hints(
+            db,
+            " ".join(
+                [session["sentence"], *(a["answer"] for a in answers if a["answer"])]
+            ),
+        ),
         "remaining_questions": 0 if skipped else max(0, 2 - session["questions_asked"]),
     }
     if len(json.dumps(payload)) > 12000:
