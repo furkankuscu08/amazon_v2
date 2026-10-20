@@ -147,6 +147,20 @@ The impact prompt says most ideas need no clarification: the model asks one only
 
 After the impact model returns areas, all per-area model calls of the idea run concurrently, six at a time (an idea has at most six areas). Search and permissioned database reads stay on the thread that runs the workflow; completed areas are audited there before the final priority call. Card area order does not depend on completion order. This per-request limit does not guarantee a global provider concurrency limit across simultaneous demo sessions.
 
+### Measured on live runs
+
+On 20 October 2026 the seven ideas in `tests/expectations.json` (the answer key: who must be shown, who must never be shown, who must not be a direct contact) were run end to end on Amazon Nova 2 Lite with this version: the three example ideas ten times each, the other four three times each. In half of the runs Maya answered the first clarification and in the other half skipped every one. Each run used a fresh copy of the synthetic company; the criteria were written down before the runs.
+
+| Idea | Runs | Plan produced | Answer key passed | Notes |
+|---|---|---|---|---|
+| Marketing spend threshold | 10 | 10 | 10 | The current reviewer of marketing spend requests was in every plan and among the first conversations every time; the author of the 2024 policy appeared in 7, each time with the note that this person's approver role ended in June 2025. |
+| Customer scoring | 10 | 10 | 10 | |
+| Stablecoin payments | 10 | 10 | 8 | One run named neither app checkout engineer; one made the marketing spend reviewer a direct contact in Finance, which the answer key rules out for this idea. |
+| Campaign AI, refund assistant, pickup lockers | 3 each | 9 | 8 | The refund queue owner was missing once. Two refund runs asked whether refund status comes from the Payments or the Finance system, a question the prompt forbids. |
+| Spending policy change | 3 | 3 | 1 | Twice Legal and Compliance was not among the areas, so its policy reviewer was not shown. |
+
+In all 42 runs no plan was refused and no area was left without a team. The three example ideas were asked one clarification in 30 runs. A run took 20 to 46 seconds and 4 to 8 model calls; one of 287 calls was repeated after a reply failed validation. Areas that are only loosely affected still get reviewed: in 6 of the 10 marketing-spend runs Brand Review was added, and three times its advertising-claims approver was shown as a direct contact there (never among the first conversations). The answer key checks only obvious outcomes, so a pass does not mean every person shown is relevant.
+
 ### Area output contract
 
 Each area person proposal must include an English `contribution` string of 5-600 characters. The prompt asks for at most two complete sentences under 250 characters; the schema cap is deliberately higher so that a provider enforcing it does not cut a sentence short. The prompt requests a factual summary of the primary source's personal work/current duty, its potential contribution to the actual consultation need, and relevant scope limits, before selecting the role. A routing contribution still needs both current manager and visible remit evidence. The field is a bounded, **unverified model claim**, not an independently checked explanation or semantic score. Length/type checks cannot establish factual correctness; a missing/invalid live field fails the area schema rather than being silently filled. The audit does not use the prose to promote, downgrade, or retain a person, and it is not stored on the card, shown, passed to the priority model, or written to diagnostic logs: an earlier version showed it labelled unverified, and it could misstate the record it summarized (a policy "in force at that time" read as the current one). The field stays in the schema because the prompt asks for it before the role is chosen.
