@@ -4,7 +4,7 @@
 
 Before you change how something works at a company, you need to know who to involve. Job titles and org charts do not say who handles a decision today or who only used to.
 
-WorkBot is a simulated Alexa+ experience: Maya, an employee at a fictional retailer, describes a change she wants to make at work and gets, as a short conversation, a plan of who to talk to first, with evidence-backed contacts, what to find out from each, and explicit gaps, and can then answer follow-up questions about that plan. The home page offers three example ideas that only fill the idea box (sending one is still a live model call) and lists her earlier ideas; a plan whose evidence or access has changed since is not shown when opened and is reported as no longer valid instead. It searches synthetic work traces and a structured directory; it does not make project decisions or contact people.
+WorkBot is a simulated Alexa+ experience: Maya, an employee at a fictional retailer, describes a change to make at work and gets, as a short conversation, a plan of who to talk to first, with evidence-backed contacts, what to find out from each, and explicit gaps, and can then ask follow-up questions about that plan. The home page offers three example ideas that only fill the idea box (sending one is still a live model call) and lists Maya's earlier ideas; a plan whose evidence or access has changed since is not shown when opened and is reported as no longer valid instead. It searches synthetic work traces and a structured directory; it does not make project decisions or contact people.
 
 For example, Maya asks: *"Raise the approval threshold for marketing spend requests so small changes need no review."* In the plan saved for this idea on the hosted demo (Amazon Nova 2 Lite, 20 October 2026), Alexa asked nothing and answered "Before you start, talk to four people. Start with Tara Reed and Omar Haddad in Finance. Omar Haddad's approver role ended in June 2025. Then Marcus Reed in Growth Marketing, and Anders Holm in Legal and Compliance." Tara reviews marketing spend requests above the threshold today; Omar wrote the 2024 budget approval policy, and a directory note says that Omar's approver role ended on 30 June 2025; Anders reviews changes to the spending approval policy for compliance. Each person comes with evidence linked to the source records, and each card says what to find out there. The people and wording vary from run to run; see [Measured on live runs](#measured-on-live-runs) for how often.
 
@@ -19,7 +19,6 @@ For example, Maya asks: *"Raise the approval threshold for marketing spend reque
 - [`docs/demo-video.md`](docs/demo-video.md) is a working draft of the demo-video script; it is not final and will change.
 - [`docs/friction-log.md`](docs/friction-log.md) records the friction met while building on AWS and Amazon Bedrock, for the hackathon's optional friction-log bonus.
 - [`docs/competition-winner-patterns.md`](docs/competition-winner-patterns.md) compares other competition winners for inspiration, not requirements or proof of what wins.
-- [`opencode.jsonc`](opencode.jsonc) holds OpenCode configuration, including optional built-in subagent model preferences.
 
 ## Stack
 

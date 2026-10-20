@@ -9,7 +9,6 @@ Read this file for working rules, then the code/tests relevant to the task. Use 
 - [`README.md`](README.md) is the human-facing guide to current setup, behavior, and limitations.
 - This file is for coding agents: how to work here and keep documentation accurate.
 - [`docs/archive/proposed-stakeholder-routing-design.md`](docs/archive/proposed-stakeholder-routing-design.md) is the user's original Turkish design draft. It is a **non-binding idea guide**, not a specification of current behavior or an implementation checklist. Confirm proposed product changes with the user before treating them as requirements.
-- [`opencode.jsonc`](opencode.jsonc) configures OpenCode subagent models. Do not duplicate model IDs here.
 
 ## Competition context
 
