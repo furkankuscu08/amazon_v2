@@ -6,7 +6,12 @@ import re
 from datetime import date
 from pathlib import Path
 
-from workbot.search import Searcher, candidate_pool, index_visible_records
+from workbot.search import (
+    Searcher,
+    candidate_pool,
+    directory_hints,
+    index_visible_records,
+)
 from workbot.seed import load_fixture, seed_db
 from workbot.storage import connect, visible_record
 
@@ -205,3 +210,66 @@ def test_keyword_tail_is_dropped_unless_the_vector_channel_agrees(tmp_path):
     finally:
         client.close()
         db.close()
+
+
+SPEND_DUTY = "Reviewing marketing spend requests above the approval threshold"
+POLICY_DUTY = "Compliance review of changes to the spending approval policy"
+DIRECTORY_HINTS = {
+    "campaign-ai": {
+        "growth": "Reviewing campaign launch approvals",
+        "brand": "Approving advertising claims in campaign copy",
+    },
+    "stablecoin": {},
+    "refund-assistant": {},
+    "pickup-lockers": {},
+    "customer-scoring": {},
+    "spend-threshold": {"finance": SPEND_DUTY, "legal": POLICY_DUTY},
+    "spend-policy": {"finance": SPEND_DUTY, "legal": POLICY_DUTY},
+}
+
+
+def test_directory_hints_for_the_demo_ideas(tmp_path):
+    db = connect(str(tmp_path / "fixture.sqlite3"))
+    seed_db(db)
+    expected = json.loads(
+        (Path(__file__).parent / "expectations.json").read_text("utf-8")
+    )
+    assert {idea["id"] for idea in expected["ideas"]} == set(DIRECTORY_HINTS)
+    for idea in expected["ideas"]:
+        hints = directory_hints(db, idea["idea"])
+        assert all(set(hint) == {"org_unit_id", "current_duty"} for hint in hints)
+        assert {h["org_unit_id"]: h["current_duty"] for h in hints} == (
+            DIRECTORY_HINTS[idea["id"]]
+        ), idea["id"]
+    db.close()
+
+
+def test_directory_hints_skip_ended_restricted_and_inactive_duties(tmp_path):
+    db = connect(str(tmp_path / "fixture.sqlite3"))
+    seed_db(db)
+    # Each text matches its duty word for word, so only the filters keep it out.
+    ended = "Approving marketing budget changes"
+    assert ended not in json.dumps(directory_hints(db, ended))
+    assert directory_hints(db, "Privacy impact assessments for customer scoring") == []
+    assert directory_hints(db, "Campaign budget authorization") == []  # restricted
+    assert {"org_unit_id": "finance", "current_duty": SPEND_DUTY} in (
+        directory_hints(db, SPEND_DUTY)
+    )
+    # A duty counts only for an active person still in that org unit.
+    db.execute("UPDATE people SET org_id='growth' WHERE id='tara'")
+    assert "finance" not in {h["org_unit_id"] for h in directory_hints(db, SPEND_DUTY)}
+    db.execute("UPDATE people SET org_id='finance', active=0 WHERE id='tara'")
+    assert "finance" not in {h["org_unit_id"] for h in directory_hints(db, SPEND_DUTY)}
+    assert "directory:" not in json.dumps(directory_hints(db, POLICY_DUTY))
+    db.close()
+
+
+def test_directory_duties_name_no_person():
+    # Duty texts reach the impact call as hints with no person attached.
+    directory, _ = load_fixture()
+    for claim in directory["responsibilities"] + directory["team_remits"]:
+        for person in directory["people"]:
+            assert not re.search(rf"\b{_first_name(person)}\b", claim["scope"]), (
+                claim["id"],
+                person["id"],
+            )

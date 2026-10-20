@@ -224,6 +224,11 @@ def _notes(groups: list[dict]) -> list[str]:
     return [note for note in notes if note]
 
 
+def _in_area(person: dict) -> bool:
+    # Older cards have no org_id; they keep the earlier wording.
+    return person.get("org_id") is None or person["org_id"] == person.get("area_org")
+
+
 def _spoken(groups: list[dict], more: int, open_areas: int) -> tuple[str, str]:
     """The plan's heading and the sentences after it, which together are read aloud.
 
@@ -235,8 +240,12 @@ def _spoken(groups: list[dict], more: int, open_areas: int) -> tuple[str, str]:
         lead = []
     else:
         headline = f"Before you start, talk to {_COUNTS[count - 1]}."
+        # "in" an area only when everyone named is in its team; otherwise "for" it,
+        # so the voice never puts someone in a team they are not in.
         places = [
-            f"{join_and([p['name'] for p in group['people']])} in {group['area']}"
+            f"{join_and([p['name'] for p in group['people']])}"
+            f" {'in' if all(_in_area(p) for p in group['people']) else 'for'}"
+            f" {group['area']}"
             for group in groups
         ]
         lead = [f"Start with {places[0]}.", *_notes(groups[:1])]
@@ -288,6 +297,7 @@ def build_plan(card: dict) -> dict:
             "label": _label(person),
             "evidence": _evidence(person),
             "area": area["label"],
+            "area_org": area.get("org_unit_id"),
             "need": area.get("consultation_need"),
         }
         for index, area in enumerate(areas)
