@@ -53,7 +53,7 @@ class Speech:
             reply = polly().synthesize_speech(
                 Text=text,
                 OutputFormat="mp3",
-                VoiceId=os.getenv("WORKBOT_POLLY_VOICE") or "Joanna",
+                VoiceId=os.getenv("WORKBOT_POLLY_VOICE") or "Brian",
                 Engine=os.getenv("WORKBOT_POLLY_ENGINE") or "standard",
             )
             audio = reply["AudioStream"].read()
