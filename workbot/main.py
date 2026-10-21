@@ -24,7 +24,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from workbot.followup import MAX_QUESTION, MAX_TURNS, carried, chips, reply
 from workbot.llm import default_model
-from workbot.plan import build_plan
+from workbot.plan import build_plan, first_names
 from workbot.search import Searcher, SetupError
 from workbot.service import (
     Conflict,
@@ -547,7 +547,7 @@ def speech(sid: str):
     """The page's spoken text, read by Polly: the plan summary or the question."""
     session, card = _get_session(sid)
     if session and card:
-        text = build_plan(card)["spoken"]
+        text = first_names(build_plan(card)["spoken"], card)
     elif session and session["state"] == "question" and session["question"]:
         text = f"One clarification before searching. {session['question']}"
     else:
@@ -567,7 +567,7 @@ def reply_speech(request: Request, sid: str, q: str = ""):
         raise HTTPException(
             429, "Answers were read aloud often. Wait a few minutes, then try again."
         )
-    return _audio(reply(question, build_plan(card), card)["text"])
+    return _audio(first_names(reply(question, build_plan(card), card)["text"], card))
 
 
 def _audio(text: str) -> Response:

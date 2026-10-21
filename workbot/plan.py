@@ -394,3 +394,18 @@ def build_plan(card: dict) -> dict:
             for index, area in enumerate(areas)
         ],
     }
+
+
+def first_names(text: str, card: dict) -> str:
+    """The text as read aloud: each person on the card by first name, which Polly's
+    standard voices say more clearly than a surname, unless another person on the
+    card shares it. The page keeps the full names."""
+    # Counted per person, like the chips, so two people with one name stay full.
+    people = {p["person_id"]: p["name"] for a in card["areas"] for p in a["people"]}
+    firsts = [name.split()[0] for name in people.values()]
+    # Longest first, so a name never replaces part of a longer one.
+    for name in sorted(set(people.values()), key=len, reverse=True):
+        first = name.split()[0]
+        if first != name and firsts.count(first) == 1:
+            text = re.sub(rf"\b{re.escape(name)}\b", first, text)
+    return text

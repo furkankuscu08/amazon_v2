@@ -1,6 +1,6 @@
 """The first-conversations plan is a pure regrouping of an audited card."""
 
-from workbot.plan import _line, _short, build_plan, placements
+from workbot.plan import _line, _short, build_plan, first_names, placements
 
 
 def person(pid, role, org, confidence="medium", kind="assignee"):
@@ -521,3 +521,28 @@ def test_the_voice_puts_people_in_an_area_only_when_it_is_their_team():
         ]
     }
     assert "Start with Omar in Data." in build_plan(old)["spoken"]
+
+
+def test_first_names_shorten_card_people_unless_a_first_name_is_shared():
+    def named(name, pid=None):
+        return {"person_id": pid or name, "name": name}
+
+    card = {
+        "areas": [
+            area("Finance", "finance", named("Omar Haddad"), named("Tara Reed")),
+            area("Growth", "growth", named("Tara Novak"), named("Omar Haddad")),
+            area("Legal", "legal", named("Anders Holm"), named("Prince")),
+            area("Data", "data", named("Lin Zhao", "a"), named("Lin Zhao", "b")),
+        ]
+    }
+    text = (
+        "Start with Omar Haddad and Tara Reed in Finance. Omar Haddad's approver"
+        " role ended. Ask Tara Novak, Anders Holm, Prince, Lin Zhao, or Lena Marsh."
+    )
+    assert first_names(text, card) == (
+        "Start with Omar and Tara Reed in Finance. Omar's approver"
+        " role ended. Ask Tara Novak, Anders, Prince, Lin Zhao, or Lena Marsh."
+    )
+    assert first_names("No contact was found for Legal.", card) == (
+        "No contact was found for Legal."
+    )

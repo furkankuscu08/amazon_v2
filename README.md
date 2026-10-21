@@ -158,7 +158,7 @@ Below the summary, Maya can ask about the plan by typing, by **Speak**, or by pr
 
 ### Voice
 
-- **Listen** reads the summary, a question, or a follow-up answer with Amazon Polly. A question, plan, or answer that arrives after a click is read aloud at once; "Read answers aloud" turns this off in that browser. Browsers play sound only after a click, so the page swaps in each new page without a full reload; if a browser still refuses, it says "Press Listen to hear it." Checked in Chromium and Firefox; Safari has not been tested. Polly receives only text the page shows, never what the visitor typed. Without JavaScript nothing is read aloud.
+- **Listen** reads the summary, a question, or a follow-up answer with Amazon Polly. A question, plan, or answer that arrives after a click is read aloud at once; "Read answers aloud" turns this off in that browser. Browsers play sound only after a click, so the page swaps in each new page without a full reload; if a browser still refuses, it says "Press Listen to hear it." Checked in Chromium and Firefox; Safari has not been tested. Polly receives only text the page shows, never what the visitor typed; the voice calls each person on the plan by first name (the full name when two share it), while the page shows full names. Without JavaScript nothing is read aloud.
 - **Speak**, beside the idea, answer, and follow-up boxes, records up to 20 seconds and sends it to Amazon Nova 2 Sonic; the transcript only fills the box, and the form is sent only when the person presses its button. It needs microphone permission and https or localhost. In live checks, four-second synthetic sentences came back word for word in one to three seconds.
 - If Polly or Sonic is unavailable, the page says so and nothing else changes.
 
