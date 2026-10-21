@@ -828,7 +828,7 @@ def test_speech_asks_polly_once_per_text_and_logs_no_text(monkeypatch, caplog):
             {
                 "Text": "Before you start, talk to one person.",
                 "OutputFormat": "mp3",
-                "VoiceId": "Joanna",
+                "VoiceId": "Brian",
                 "Engine": "standard",
             },
         )

@@ -27,7 +27,7 @@ For example, Maya asks: *"Raise the approval threshold for marketing spend reque
 | Web | FastAPI + Jinja2 templating, served by **uvicorn** (`workbot.main:app`); one inline stylesheet whose light and dark mode follow the device setting |
 | LLM | Amazon Bedrock — Amazon Nova 2 Lite through the `global.amazon.nova-2-lite-v1:0` cross-Region inference profile, Converse API with extended thinking at low effort for all three tasks. Fallback: OpenRouter — `z-ai/glm-5.3-flash` (area low; impact/priority high) on the tested `open-inference/fp4` endpoint |
 | Vectors | Local Qdrant (Docker, REST 6333, bound to localhost) |
-| Speech | Amazon Polly — the plan summary, the clarification question, and follow-up answers read aloud as they arrive or on **Listen**, standard voice `Joanna` in the profile's Region |
+| Speech | Amazon Polly — the plan summary, the clarification question, and follow-up answers read aloud as they arrive or on **Listen**, standard voice `Brian` (British English) in the profile's Region |
 | Voice input | Amazon Nova 2 Sonic on Bedrock (`amazon.nova-2-sonic-v1:0`, bidirectional stream through the `aws-sdk-bedrock-runtime` SDK, 16 kHz PCM) — **Speak** next to the idea, answer, and follow-up boxes fills the box with Sonic's transcript of what was said; Amazon Transcribe is not open to this project's account |
 | Embeddings | Local FastEmbed / all-MiniLM-L6-v2 (no cloud embedding calls) |
 | Relational data | SQLite via `WORKBOT_DB_PATH` (default `data/workbot.sqlite3`) |
@@ -111,7 +111,7 @@ Only Caddy publishes ports; Qdrant and the app are reachable on the Compose netw
 | `AWS_PROFILE` | *(unset)* | AWS CLI profile whose credentials boto3 uses; unset, the standard AWS credential chain applies (for example an instance role) |
 | `AWS_REGION` | *(the profile's)* | Region of the Bedrock and Polly endpoints; boto3 itself reads only `AWS_DEFAULT_REGION` or the profile, so WorkBot passes this one explicitly |
 | `WORKBOT_BEDROCK_MODEL` | `global.amazon.nova-2-lite-v1:0` | Bedrock model or inference profile ID |
-| `WORKBOT_POLLY_VOICE` | `Joanna` | Amazon Polly voice for **Listen** |
+| `WORKBOT_POLLY_VOICE` | `Brian` | Amazon Polly voice for **Listen** |
 | `WORKBOT_POLLY_ENGINE` | `standard` | Polly engine; `neural` or `generative` only where the Region offers them |
 | `OPENROUTER_API_KEY` | *(unset)* | OpenRouter API key; needed only with `WORKBOT_MODEL_PROVIDER=openrouter` |
 | `QDRANT_URL` | `http://localhost:6333` | Qdrant endpoint |
