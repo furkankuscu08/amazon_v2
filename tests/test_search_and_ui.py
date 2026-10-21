@@ -671,10 +671,13 @@ def test_listen_reads_exactly_the_spoken_plan_on_the_page(web, monkeypatch):
     assert reply.headers["content-type"] == "audio/mpeg"
     assert reply.content == b"ID3-synthetic-audio"
     [text] = speech.texts
-    assert text.startswith("Before you start, talk to one person. Start with Nina")
-    # Every sentence that is read aloud is also shown in the panel.
+    assert text.startswith("Before you start, talk to one person. Start with Nina in")
+    # Every sentence that is read aloud is also shown in the panel, where the
+    # person keeps the full name the voice shortens to the first.
     panel = page.split('<section class="screen"', 1)[1].split("</section>", 1)[0]
-    assert all(sentence.strip() in panel for sentence in text.split(". "))
+    assert "Nina Ellis" in panel and "Nina Ellis" not in text
+    heard = panel.replace("Nina Ellis", "Nina")
+    assert all(sentence.strip() in heard for sentence in text.split(". "))
 
 
 def test_listen_reads_the_question_and_nothing_elsewhere(web, monkeypatch):
@@ -1153,9 +1156,10 @@ def test_follow_up_speech_reads_only_the_answer_built_from_the_plan(web, monkeyp
     reply = client.get(url + "/reply.mp3?q=Why%20Nina%3F")
     assert reply.status_code == 200 and reply.content == b"ID3-synthetic-audio"
     [text] = speech.texts
-    assert text.startswith("Nina Ellis is listed under Growth Marketing")
+    assert text.startswith("Nina is listed under Growth Marketing")
     answer = page.split("data-speech-auto", 1)[1].split('<p class="answer">', 1)[1]
-    assert answer.startswith(text)
+    assert answer.startswith("Nina Ellis is listed under Growth Marketing")
+    assert answer.replace("Nina Ellis", "Nina").startswith(text)
     # A question naming someone known only through restricted sources gets the
     # same answer as one naming nobody, and the question itself is never read.
     client.get(url + "/reply.mp3?q=Why%20Eve%20Restricted%3F")
