@@ -2,7 +2,7 @@
 
 Friction met while building WorkBot on Amazon Bedrock (Amazon Nova 2 Lite and Nova 2 Sonic), Amazon Polly, and the AWS account, console, CLI, and SDKs during the hackathon, recorded as it happened. Each entry gives the task, the steps, what was expected and what happened, a severity, the workaround, and a suggestion. Severity: **High** blocks the task until worked around; **Medium** costs real time or risks a wrong setup; **Low** is a papercut. Error texts are quoted as shown; account IDs are left out.
 
-Setup at the time: a new account created through AWS Settings (projects owned by an AWS Builder ID, signed in with Google), AWS Free plan, project Region `eu-north-1` (Stockholm), AWS CLI 2.38.1, boto3/botocore 1.43.114, model Amazon Nova 2 Lite. Entries 1–19 are from 18 October 2026, entry 20 from 20 October 2026.
+Setup at the time: a new account created through AWS Settings (projects owned by an AWS Builder ID, signed in with Google), AWS Free plan, project Region `eu-north-1` (Stockholm), AWS CLI 2.38.1, boto3/botocore 1.43.114, model Amazon Nova 2 Lite. Entries 1–19 are from 18 October 2026, entry 20 from 20 October 2026; the updates in entries 10 and 17 are from 22 October 2026.
 
 ## Summary
 
@@ -135,6 +135,7 @@ The three that cost us most:
 - **Severity:** Medium.
 - **Workaround:** read the guide; the limit was raised to $100 before a hosted demo.
 - **Suggestion:** say beside the limit what stops working when it is reached.
+- **Update, 22 October:** the Budgets overview in Billing and Cost Management says "When you reach your $100.00 spend limit, this project will pause until you reactivate it." The line itself does not say which services stop.
 
 ## 11. Nova 2 Lite supports neither structured-output mechanism in the guide
 
@@ -205,6 +206,7 @@ The three that cost us most:
 - **Severity:** Low (nothing has been blocked so far).
 - **Workaround:** none needed yet; Bedrock errors are watched for `AccessDeniedException`.
 - **Suggestion:** state what triggers the spend-limit policies, and base the warning on more than one burst of use.
+- **Update, 22 October:** after four more days of development and the hosted demo, the Budgets overview in Billing and Cost Management showed month-to-date spend of $7.39 in total (Bedrock $4.81, EC2 $2.08, VPC $0.43, Polly $0.06) against the $100 limit, with no forecast figure and no warning. At this spend it still does not show whether the forecast or the actual spend triggers the policies.
 
 ## 18. Transcribe streaming says the account is not authorized, without saying why
 
