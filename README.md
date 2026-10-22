@@ -85,6 +85,14 @@ docker compose --profile app run --rm app python -m workbot.seed
 
 The container does not see your AWS profile. Either set `WORKBOT_MODEL_PROVIDER=openrouter` and `OPENROUTER_API_KEY` in `.env`, or give the container AWS credentials yourself, for example a read-only mount of an AWS config directory at `/home/workbot/.aws`; the image runs as the user `workbot` (uid 10001), which must be able to read those files, and a `~/.aws` with the usual owner-only permissions is not readable to it. The image downloads the embedding model when it is built. A `workbot_data` volume left by an earlier image that ran as root is not writable to that user: remove it with `docker compose down -v` (this deletes the local container's sessions).
 
+Instead of a mount, you can pass the profile's credentials to the app container as environment variables. First comment out `AWS_PROFILE` in `.env` (restore it to run the app outside Docker): the container has no AWS profiles, and boto3 refuses a profile it cannot find. Then replace the app container with one that has the credentials. They are not written to any project file, though `docker inspect` shows them; `AWS_SESSION_TOKEN` is passed only when it is set, as with temporary credentials, which expire, so repeat the last two commands to refresh them. Stop everything later with `docker compose --profile app down --remove-orphans`.
+
+```bash
+docker compose --profile app stop app
+eval "$(aws configure export-credentials --profile workbot --format env)"
+docker compose --profile app run -d --service-ports -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOKEN app
+```
+
 ### Optional: hosted demo on AWS
 
 `deploy/` puts the demo on one Amazon EC2 server behind HTTPS, as the hackathon's hosted test link; **Speak** needs a secure page, so plain `http` on a public address would lose it. Keep the guards on: a public demo without `WORKBOT_ACCESS_CODE` and `WORKBOT_DAILY_IDEAS` lets anyone spend your Bedrock budget.
