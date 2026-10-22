@@ -14,11 +14,9 @@ For example, Maya asks: *"Raise the approval threshold for marketing spend reque
 
 - This `README.md` is the human guide to the current prototype and its limits.
 - [`AGENTS.md`](AGENTS.md) guides coding agents working in this repository.
-- [`docs/archive/`](docs/archive/) preserves the original non-binding Turkish design proposal; it is not current behavior or an active implementation plan.
 - [`docs/competition.md`](docs/competition.md) is a dated working brief for the hackathon; recheck the [live official rules](https://amazonappdev2026.devpost.com/rules) before submitting.
 - [`docs/demo-video.md`](docs/demo-video.md) is the demo-video script, matching the final cut (recorded on 20 October 2026, last re-cut and approved on 22 October).
 - [`docs/friction-log.md`](docs/friction-log.md) records the friction met while building on AWS and Amazon Bedrock, for the hackathon's optional friction-log bonus.
-- [`docs/competition-winner-patterns.md`](docs/competition-winner-patterns.md) compares other competition winners for inspiration, not requirements or proof of what wins.
 
 ## Stack
 
