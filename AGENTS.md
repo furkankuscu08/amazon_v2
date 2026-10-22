@@ -8,7 +8,6 @@ Read this file for working rules, then the code and tests relevant to the task. 
 
 - [`README.md`](README.md) is the human-facing guide to current setup, behavior, and limitations.
 - This file is for coding agents: how to work here, where things live, and the rules the code must keep.
-- [`docs/archive/proposed-stakeholder-routing-design.md`](docs/archive/proposed-stakeholder-routing-design.md) is the user's original Turkish design draft: a **non-binding idea guide**, not a specification or checklist. Confirm proposed product changes with the user before treating them as requirements.
 
 ## Competition context
 
@@ -16,7 +15,6 @@ Read this file for working rules, then the code and tests relevant to the task. 
 - [`docs/demo-video.md`](docs/demo-video.md) is the demo-video script, matching the final cut (recorded on 20 October 2026, last re-cut and approved on 22 October); only objective errors are fixed after it. Keep its claims within what the code does. Its story is told on a saved plan on the hosted demo, quoted word for word as the Devpost text quotes it; before any re-recording, recheck that plan against the hosted page, and re-record the live segment only with a fresh, user-approved live run.
 - [`docs/friction-log.md`](docs/friction-log.md) is the friction log submitted for the optional bonus (see [`docs/competition/submission.md`](docs/competition/submission.md#optional-but-useful)). When AWS or Bedrock setup, docs, or SDKs cause friction, add an entry in its format, and a row in its summary table, with the exact error text and request IDs, never account IDs, keys, or other secrets.
 - From the submission deadline until the winners are announced, the organizers ask that the repository, video, and project materials stay unchanged ([`docs/competition.md`](docs/competition.md#organizer-updates-read-on-2026-10-20)): in that window do not push, merge, redeploy the hosted demo, or change its settings or saved plans unless the user decides otherwise (restarting the same version is fine).
-- [`docs/competition-winner-patterns.md`](docs/competition-winner-patterns.md) compares winners from other competitions: possible inspiration, not contest rules, requirements, or proof of what wins.
 - For submission or eligibility decisions, recheck the [live official rules](https://amazonappdev2026.devpost.com/rules); they take precedence over the local extract and working briefs. Ask the user about unclear or conflicting requirements. Do not copy dates, prizes, or other changeable rules into agent instructions. Do not modify `docs/competition/` unless the user explicitly asks.
 
 ## Removed evaluation history
@@ -110,9 +108,9 @@ The earlier evaluation apparatus (scripts, captured traces and labels, compariso
 ## Working with the user and other agents
 
 - Inspect the working tree and relevant tests before editing; preserve existing user changes.
-- If the request, scope, or intended behavior is unclear, **ask the user before proceeding rather than guessing**. Do not silently turn a design-draft idea into current behavior.
+- If the request, scope, or intended behavior is unclear, **ask the user before proceeding rather than guessing**. Do not silently turn a proposed idea into current behavior.
 - The user's quality goal is **no obvious errors**, not resolving every edge case, and the aim is to win the competition. Prefer fixes that remove visible mistakes over further calibration of debatable cases.
-- Keep the repository small. Do not add experiment logs, dated reports, or preserved artifacts unless the user asks; delete superseded material instead of archiving it in place (the design draft in `docs/archive/` is kept on purpose).
+- Keep the repository small. Do not add experiment logs, dated reports, or preserved artifacts unless the user asks; delete superseded material instead of archiving it in place.
 - Delegation is optional. Communicate with subagents in English and integrate and verify their findings yourself.
 
 ## Validation and documentation upkeep
